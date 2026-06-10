@@ -1,0 +1,56 @@
+{
+  "name": "sga-vale-rio-pardo",
+  "version": "3.0.0",
+  "description": "Sistema de Gestão e Alertas — Vale do Rio Pardo · Cidades Acolhedoras · RS",
+  "author": "Correa Eco Social <contato@correaecosocial.com.br>",
+  "license": "MIT",
+  "homepage": "https://correaecosocial.github.io/sga-vale-rio-pardo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/correaecosocial/sga-vale-rio-pardo.git"
+  },
+  "keywords": [
+    "defesa-civil",
+    "alertas-climaticos",
+    "vale-do-rio-pardo",
+    "rio-grande-do-sul",
+    "cidades-acolhedoras",
+    "hidrologia",
+    "geoprocessamento",
+    "leaflet",
+    "openstreetmap",
+    "ana-hidroweb",
+    "cprm",
+    "IA-preditiva",
+    "gestao-de-riscos"
+  ],
+  "scripts": {
+    "dev": "npx serve . --listen 8080 --single",
+    "build": "npm run copy-assets && echo 'Build OK — arquivos prontos em /public'",
+    "copy-assets": "cp -r src/assets/data public/data 2>/dev/null || true",
+    "deploy": "gh-pages -d public",
+    "fetch-data": "node scripts/fetch-data.js",
+    "export-report": "node scripts/export-report.js",
+    "lint": "echo 'Linting...' && npx jshint src/**/*.js",
+    "test": "echo 'Testes unitários — em implementação'",
+    "start": "npm run dev"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "chart.js": "^4.4.0",
+    "gh-pages": "^6.1.1"
+  },
+  "devDependencies": {
+    "jshint": "^2.13.6",
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Edge versions",
+    "last 2 Safari versions"
+  ]
+}

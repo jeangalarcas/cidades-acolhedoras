@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════════════════
+   SGA — Design Tokens / CSS Variables
+   Vale do Rio Pardo · Cidades Acolhedoras
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  /* ── Paleta principal (verde-floresta = identidade do Vale) ── */
+  --green-deep:   #1B3A2D;   /* Sidebar, topbar */
+  --green-mid:    #2D7A5C;   /* Botão primário, links */
+  --green-light:  #4BAF82;   /* Indicadores OK, acentos */
+  --green-pale:   #E4F2EB;   /* Fundos informativos OK */
+
+  /* ── Alertas ── */
+  --amber:        #C17D2A;   /* Atenção / Alto */
+  --amber-pale:   #F9F0E0;
+  --red:          #B83A2E;   /* Crítico / Emergência */
+  --red-pale:     #FAECEB;
+
+  /* ── Informativo ── */
+  --blue:         #2A5A8C;   /* Dados hidrológicos, réguas ANA */
+  --blue-pale:    #E8F0F9;
+  --purple:       #5A3AB8;   /* CPRM, abrigos */
+  --purple-pale:  #EEE8FA;
+
+  /* ── Fundos ── */
+  --bg:           #F2EFE9;   /* Fundo principal (quente, neutro) */
+  --bg-2:         #EAE7E0;   /* Superfícies secundárias */
+  --white:        #FFFFFF;
+
+  /* ── Tipografia ── */
+  --text:         #1A1A18;
+  --text-2:       #555550;
+  --text-3:       #888880;
+
+  /* ── Bordas ── */
+  --border:       #DEDAD2;
+
+  /* ── Dimensões de layout ── */
+  --sidebar-w:    224px;
+  --topbar-h:     48px;
+  --border-r:     10px;
+  --border-r-sm:  7px;
+
+  /* ── Tipografia ── */
+  --font:  -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --mono:  'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+
+  /* ── Sombras ── */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+
+  /* ── Transições ── */
+  --transition: all .15s ease;
+}
+
+/* ── Modo escuro (reservado para futuro) ── */
+@media (prefers-color-scheme: dark) {
+  /* Implementar quando necessário */
+}

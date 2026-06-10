@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SGA RS — Escalonamento para 497 Municípios</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --green-deep: #1B3A2D;
+      --green-mid:  #2D7A5C;
+      --green-light:#4BAF82;
+      --bg:         #F2EFE9;
+      --white:      #FFFFFF;
+      --border:     #DEDAD2;
+      --text:       #1A1A18;
+      --text-2:     #555550;
+      --text-3:     #888880;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      --mono: 'SF Mono', 'Fira Code', Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOPBAR ── */
+    .top {
+      background: var(--green-deep);
+      color: #fff;
+      padding: 0 20px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .top-logo {
+      background: var(--green-light);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 4px;
+      letter-spacing: .6px;
+    }
+    .top-title { font-size: 14px; font-weight: 600; }
+    .top-sub   { font-size: 11px; color: rgba(255,255,255,.45); margin-left: 4px; }
+    .top-badge {
+      margin-left: auto;
+      background: var(--green-light);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* ── LAYOUT ── */
+    .body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── PAINEL ESQUERDO — SELETOR ── */
+    .painel-left {
+      width: 380px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      background: var(--white);
+      overflow: hidden;
+    }
+
+    /* Selector wrap */
+    .msel-wrap { display: flex; flex-direction: column; height: 100%; }
+
+    .msel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .msel-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .msel-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+    .msel-stat  { font-size: 10px; font-weight: 700; }
+
+    .msel-search-row {
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .msel-input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 13px;
+      font-family: var(--font);
+      background: var(--white);
+    }
+    .msel-input:focus { outline: none; border-color: var(--green-light); }
+    .msel-selects { display: flex; gap: 6px; }
+    .msel-select {
+      flex: 1;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: var(--font);
+      background: var(--white);
+    }
+
+    .msel-results {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .msel-results::-webkit-scrollbar { width: 4px; }
+    .msel-results::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .msel-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .msel-item:hover  { background: var(--bg); }
+    .msel-item.active { background: #E4F2EB; border-left: 3px solid var(--green-light); }
+
+    .msel-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .msel-info { flex: 1; min-width: 0; }
+    .msel-nome { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msel-sub  { font-size: 10px; color: var(--text-3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msel-nivel { font-size: 9px; font-weight: 700; white-space: nowrap; }
+
+    .msel-empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 12px;
+    }
+
+    .msel-footer {
+      padding: 8px 14px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      font-size: 10px;
+      color: var(--text-3);
+    }
+
+    /* ── PAINEL DIREITO — DETALHES ── */
+    .painel-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detalhe-header {
+      padding: 14px 20px 12px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dh-nome { font-size: 20px; font-weight: 800; }
+    .dh-ibge { font-size: 11px; color: var(--text-3); font-family: var(--mono); }
+    .dh-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      margin-left: auto;
+    }
+    .dh-btn {
+      padding: 7px 16px;
+      background: var(--green-mid);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .dh-btn:hover { background: var(--green-deep); }
+
+    .detalhe-body { flex: 1; overflow-y: auto; display: flex; gap: 0; }
+
+    /* Grid de métricas */
+    .metrics-col {
+      width: 320px;
+      flex-shrink: 0;
+      padding: 16px;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+    }
+    .metric-group { margin-bottom: 16px; }
+    .mg-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 8px;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .metric-row:last-child { border-bottom: none; }
+    .mr-label { color: var(--text-2); }
+    .mr-value { font-weight: 700; font-family: var(--mono); font-size: 12px; }
+
+    /* Mapa */
+    .map-col { flex: 1; position: relative; }
+    #detalhe-map { width: 100%; height: 100%; }
+
+    /* Placeholder */
+    .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-3);
+      gap: 12px;
+    }
+    .placeholder-icon { font-size: 48px; }
+    .placeholder-text { font-size: 14px; font-weight: 600; }
+    .placeholder-sub  { font-size: 12px; }
+
+    /* Mapa risco bar */
+    .risco-bar {
+      height: 5px;
+      border-radius: 3px;
+      margin-top: 4px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .risco-fill { height: 5px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="top">
+  <span class="top-logo">SGA · RS</span>
+  <span class="top-title">Cidades Acolhedoras</span>
+  <span class="top-sub">— Sistema de Gestão e Alertas</span>
+  <span class="top-badge">497 municípios disponíveis</span>
+</div>
+
+<div class="body">
+
+  <!-- PAINEL ESQUERDO: SELETOR -->
+  <div class="painel-left" id="selector-container">
+    <div style="padding:20px;color:#888;font-size:12px">Carregando municípios...</div>
+  </div>
+
+  <!-- PAINEL DIREITO: DETALHES DO MUNICÍPIO SELECIONADO -->
+  <div class="painel-right">
+    <div class="detalhe-header" id="dh-header" style="display:none">
+      <div>
+        <div class="dh-nome" id="dh-nome">—</div>
+        <div class="dh-ibge" id="dh-ibge">—</div>
+      </div>
+      <span class="dh-badge" id="dh-badge">—</span>
+      <button class="dh-btn" onclick="abrirSGA()">▶ Abrir SGA neste município</button>
+    </div>
+
+    <div class="detalhe-body" id="dh-body">
+      <div class="placeholder">
+        <div class="placeholder-icon">🗺</div>
+        <div class="placeholder-text">Selecione um município</div>
+        <div class="placeholder-sub">497 municípios do RS disponíveis</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="../src/services/municipioService.js"></script>
+<script src="../src/services/selectorUI.js"></script>
+<script>
+
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+let municipioAtivo = null;
+let mapaDetalhe   = null;
+
+// ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  // Monta seletor
+  await SelectorUI.montar('#selector-container');
+
+  // Callback ao selecionar
+  SelectorUI.aoSelecionar(async (m) => {
+    municipioAtivo = m;
+    await renderDetalhe(m);
+  });
+});
+
+// ── RENDER DETALHE ────────────────────────────────────────────────────────────
+async function renderDetalhe(m) {
+  // Header
+  document.getElementById('dh-header').style.display = 'flex';
+  document.getElementById('dh-nome').textContent  = m.nome;
+  document.getElementById('dh-ibge').textContent  = `IBGE: ${m.cod_ibge} · ${m.mesorregiao} · ${m.microrregiao}`;
+
+  const badge = document.getElementById('dh-badge');
+  badge.textContent = m.risco.nivel_str;
+  badge.style.background = m.risco.cor;
+
+  // Body
+  const body = document.getElementById('dh-body');
+  body.innerHTML = `
+    <div class="metrics-col">
+      <div class="metric-group">
+        <div class="mg-title">Identificação</div>
+        <div class="metric-row"><span class="mr-label">Município</span><span class="mr-value">${m.nome}</span></div>
+        <div class="metric-row"><span class="mr-label">Código IBGE</span><span class="mr-value">${m.cod_ibge}</span></div>
+        <div class="metric-row"><span class="mr-label">Mesorregião</span><span class="mr-value">${m.mesorregiao}</span></div>
+        <div class="metric-row"><span class="mr-label">Microrregião</span><span class="mr-value">${m.microrregiao}</span></div>
+        <div class="metric-row"><span class="mr-label">Bacia Hidrográfica</span><span class="mr-value">${m.bacia_hidrografica}</span></div>
+        <div class="metric-row"><span class="mr-label">Coordenadas</span><span class="mr-value">${m.lat}, ${m.lng}</span></div>
+        <div class="metric-row"><span class="mr-label">População</span><span class="mr-value">${m.populacao.toLocaleString('pt-BR')} hab.</span></div>
+      </div>
+
+      <div class="metric-group">
+        <div class="mg-title">Risco Climático</div>
+        <div class="metric-row"><span class="mr-label">Tipo de Risco</span><span class="mr-value" style="color:${m.risco.cor}">${m.risco.tipo}</span></div>
+        <div class="metric-row"><span class="mr-label">Nível</span><span class="mr-value" style="color:${m.risco.cor}">${m.risco.nivel_str} (${m.risco.nivel}/5)</span></div>
+        <div class="metric-row">
+          <span class="mr-label">Score IA</span>
+          <span class="mr-value">${m.risco.score_ia}</span>
+        </div>
+        <div class="risco-bar">
+          <div class="risco-fill" style="width:${m.risco.score_ia*100}%;background:${m.risco.cor}"></div>
+        </div>
+      </div>
+
+      <div class="metric-group">
+        <div class="mg-title">Estações de Monitoramento</div>
+        <div class="metric-row"><span class="mr-label">Estação ANA</span><span class="mr-value">${m.estacoes.ana_cod}</span></div>
+        <div class="metric-row"><span class="mr-label">CEMADEN ID</span><span class="mr-value">${m.estacoes.cemaden_id}</span></div>
+      </div>
+
+      <div class="metric-group">
+        <div class="mg-title">Integrações disponíveis</div>
+        ${['ANA HidroWeb','CEMADEN','CPRM GeoSGB','IBGE','MapBiomas','OSM','Open-Meteo','CadÚnico','SUAS','SAMU/CAD'].map(i =>
+          `<div class="metric-row"><span class="mr-label">${i}</span><span class="mr-value" style="color:#2D7A5C">✓ Disponível</span></div>`
+        ).join('')}
+      </div>
+    </div>
+
+    <div class="map-col">
+      <div id="detalhe-map"></div>
+    </div>
+  `;
+
+  // Mapa
+  setTimeout(() => {
+    if (mapaDetalhe) {
+      mapaDetalhe.remove();
+      mapaDetalhe = null;
+    }
+    mapaDetalhe = L.map('detalhe-map').setView([m.lat, m.lng], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18
+    }).addTo(mapaDetalhe);
+
+    // Marcador com cor de risco
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:18px;height:18px;border-radius:50%;
+        background:${m.risco.cor};border:3px solid #fff;
+        box-shadow:0 2px 6px rgba(0,0,0,.4)
+      "></div>`,
+      iconSize: [18,18]
+    });
+
+    L.marker([m.lat, m.lng], {icon})
+      .bindPopup(`<b>${m.nome}</b><br>Risco: ${m.risco.nivel_str}<br>Score IA: ${m.risco.score_ia}`)
+      .addTo(mapaDetalhe)
+      .openPopup();
+
+    // Círculo de influência
+    L.circle([m.lat, m.lng], {
+      radius: 8000,
+      color: m.risco.cor,
+      fillColor: m.risco.cor,
+      fillOpacity: 0.15,
+      weight: 1.5
+    }).addTo(mapaDetalhe);
+
+  }, 100);
+}
+
+// ── ABRIR SGA ────────────────────────────────────────────────────────────────
+function abrirSGA() {
+  if (!municipioAtivo) return;
+  // Salva seleção e redireciona para o SGA principal
+  sessionStorage.setItem('sga_municipio_id',    municipioAtivo.id);
+  sessionStorage.setItem('sga_municipio_ibge',  municipioAtivo.cod_ibge);
+  sessionStorage.setItem('sga_municipio_nome',  municipioAtivo.nome);
+  sessionStorage.setItem('sga_municipio_json',  JSON.stringify(municipioAtivo));
+  // Redireciona para o SGA principal
+  window.location.href = 'index.html?municipio=' + municipioAtivo.id;
+}
+</script>
+</body>
+</html>

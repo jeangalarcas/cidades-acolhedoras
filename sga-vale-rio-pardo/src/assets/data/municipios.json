@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "fonte": "IBGE 2022 + dados operacionais SGA",
+    "regiao": "Vale do Rio Pardo",
+    "estado": "RS",
+    "updated": "2026-06-09"
+  },
+  "municipios": [
+    { "id": "rio-pardo",       "nome": "Rio Pardo",           "cod_ibge": 4315602, "lat": -29.99, "lng": -52.37, "populacao": 38700,  "area_km2": 2658 },
+    { "id": "santa-cruz",      "nome": "Santa Cruz do Sul",   "cod_ibge": 4316808, "lat": -29.72, "lng": -52.43, "populacao": 130400, "area_km2": 783  },
+    { "id": "venancio-aires",  "nome": "Venâncio Aires",      "cod_ibge": 4322905, "lat": -29.61, "lng": -52.19, "populacao": 68200,  "area_km2": 756  },
+    { "id": "passo-sobrado",   "nome": "Passo do Sobrado",    "cod_ibge": 4314050, "lat": -29.78, "lng": -52.05, "populacao": 8900,   "area_km2": 306  },
+    { "id": "cachoeira-sul",   "nome": "Cachoeira do Sul",    "cod_ibge": 4303003, "lat": -30.04, "lng": -52.89, "populacao": 83200,  "area_km2": 3736 },
+    { "id": "candelaria",      "nome": "Candelária",           "cod_ibge": 4304804, "lat": -29.67, "lng": -52.77, "populacao": 30800,  "area_km2": 938  },
+    { "id": "arroio-tigre",    "nome": "Arroio do Tigre",     "cod_ibge": 4301404, "lat": -29.34, "lng": -53.10, "populacao": 13900,  "area_km2": 767  },
+    { "id": "vale-sol",        "nome": "Vale do Sol",          "cod_ibge": 4322251, "lat": -29.51, "lng": -52.68, "populacao": 10600,  "area_km2": 422  },
+    { "id": "sinimbu",         "nome": "Sinimbu",              "cod_ibge": 4318002, "lat": -29.52, "lng": -52.52, "populacao": 12200,  "area_km2": 690  },
+    { "id": "encruzilhada",    "nome": "Encruzilhada do Sul", "cod_ibge": 4306403, "lat": -30.54, "lng": -52.52, "populacao": 24900,  "area_km2": 6124 },
+    { "id": "pantano-grande",  "nome": "Pantano Grande",       "cod_ibge": 4313805, "lat": -30.19, "lng": -52.37, "populacao": 10200,  "area_km2": 1325 },
+    { "id": "ibarama",         "nome": "Ibarama",              "cod_ibge": 4309308, "lat": -29.36, "lng": -53.01, "populacao": 6100,   "area_km2": 534  },
+    { "id": "herveiras",       "nome": "Herveiras",            "cod_ibge": 4308201, "lat": -29.23, "lng": -52.77, "populacao": 3600,   "area_km2": 316  },
+    { "id": "lagoa-bonita",    "nome": "Lagoa Bonita do Sul", "cod_ibge": 4311122, "lat": -29.44, "lng": -52.89, "populacao": 3800,   "area_km2": 250  },
+    { "id": "general-camara",  "nome": "General Câmara",       "cod_ibge": 4308508, "lat": -29.90, "lng": -51.79, "populacao": 8900,   "area_km2": 632  }
+  ],
+  "estacoes_ana": [
+    { "codigo": "87480000", "nome": "Rio Pardo — Ponte Nova",  "rio": "Rio Pardo",    "municipio_id": "rio-pardo",      "lat": -29.98, "lng": -52.36 },
+    { "codigo": "87600000", "nome": "Pardinho — Santa Cruz",   "rio": "Rio Pardinho", "municipio_id": "santa-cruz",     "lat": -29.72, "lng": -52.42 },
+    { "codigo": "87620000", "nome": "Venâncio Aires",           "rio": "Rio Pardo",    "municipio_id": "venancio-aires", "lat": -29.61, "lng": -52.18 },
+    { "codigo": "87400000", "nome": "Cachoeira do Sul",         "rio": "Rio Jacuí",    "municipio_id": "cachoeira-sul",  "lat": -30.04, "lng": -52.88 },
+    { "codigo": "87520000", "nome": "Candelária",               "rio": "Rio Pardo",    "municipio_id": "candelaria",     "lat": -29.67, "lng": -52.79 },
+    { "codigo": "87540000", "nome": "Encruzilhada",             "rio": "Rio Camaquã",  "municipio_id": "encruzilhada",   "lat": -30.54, "lng": -52.51 }
+  ],
+  "abrigos": [
+    { "id": "a1", "nome": "Ginásio Municipal — Rio Pardo",   "municipio_id": "rio-pardo",     "lat": -29.99, "lng": -52.37, "capacidade": 2000, "cota_m": 24, "acessivel": true,  "agua": true, "energia": true },
+    { "id": "a2", "nome": "SENAI — Santa Cruz do Sul",       "municipio_id": "santa-cruz",    "lat": -29.70, "lng": -52.45, "capacidade": 2500, "cota_m": 28, "acessivel": true,  "agua": true, "energia": true },
+    { "id": "a3", "nome": "Escola Tiradentes — V. Aires",   "municipio_id": "venancio-aires", "lat": -29.61, "lng": -52.21, "capacidade": 1200, "cota_m": 31, "acessivel": true,  "agua": true, "energia": true },
+    { "id": "a4", "nome": "Ginásio Candelária",               "municipio_id": "candelaria",    "lat": -29.67, "lng": -52.79, "capacidade": 900,  "cota_m": 26, "acessivel": true,  "agua": true, "energia": true },
+    { "id": "a5", "nome": "Centro Comunitário Cachoeira",    "municipio_id": "cachoeira-sul", "lat": -30.04, "lng": -52.91, "capacidade": 1800, "cota_m": 22, "acessivel": false, "agua": true, "energia": true }
+  ]
+}

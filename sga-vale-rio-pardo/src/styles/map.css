@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════
+   SGA — Map Styles (Leaflet + OSM)
+   ═══════════════════════════════════════════════════ */
+
+/* Wrapper do mapa */
+.map-wrap {
+  position: relative;
+  border-radius: var(--border-r);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+/* Container do Leaflet */
+#leaflet-map,
+#mini-map {
+  z-index: 1;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Toolbar de camadas */
+.map-toolbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Legenda sobre o mapa */
+.map-legend {
+  position: absolute;
+  bottom: 30px;
+  left: 10px;
+  background: rgba(255, 255, 255, .94);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  z-index: 500;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.map-legend-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  margin-bottom: 5px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+.legend-row:last-child { margin-bottom: 0; }
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Tooltips do Leaflet — override */
+.leaflet-tooltip {
+  font-family: var(--font) !important;
+  font-size: 12px !important;
+  border-radius: 7px !important;
+  padding: 6px 10px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--text) !important;
+}
+
+/* Controles do Leaflet */
+.leaflet-control-zoom a {
+  font-family: var(--font) !important;
+  color: var(--text) !important;
+}
+
+.leaflet-control-attribution {
+  font-size: 9px !important;
+}
+
+/* Ícones customizados — municipios, sensores, abrigos */
+.map-icon-muni {
+  font-size: 10px;
+  font-weight: 700;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.map-icon-sensor {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+
+.map-icon-abrigo {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--purple);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}

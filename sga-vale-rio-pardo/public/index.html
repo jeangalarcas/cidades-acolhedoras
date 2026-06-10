@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="SGA — Sistema de Gestão e Alertas · Cidades Acolhedoras · RS">
+  <title>SGA — Cidades Acolhedoras · RS</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <!-- Estilos do sistema -->
+  <link rel="stylesheet" href="../src/styles/variables.css">
+  <link rel="stylesheet" href="../src/styles/base.css">
+  <link rel="stylesheet" href="../src/styles/layout.css">
+  <link rel="stylesheet" href="../src/styles/components.css">
+  <link rel="stylesheet" href="../src/styles/map.css">
+
+  <!-- Seletor de município (msel) -->
+  <style>
+    .msel-select{padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--font);background:var(--white)}
+    .msel-item{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+    .msel-item:hover{background:var(--bg)}
+    .msel-item.active{background:#E4F2EB;border-left:3px solid var(--green-light)}
+    .msel-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .msel-info{flex:1;min-width:0}
+    .msel-nome{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .msel-sub{font-size:10px;color:var(--text-3);margin-top:1px}
+    .msel-nivel{font-size:9px;font-weight:700;white-space:nowrap}
+    .msel-empty{padding:20px;text-align:center;color:var(--text-3);font-size:12px}
+  </style>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+  <div id="app">
+    <div id="loading-screen" style="
+      position:fixed;inset:0;background:#1B3A2D;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      font-family:-apple-system,sans-serif;color:#fff;gap:16px;z-index:9999
+    ">
+      <div style="font-size:13px;font-weight:700;background:#4BAF82;padding:4px 12px;border-radius:4px;letter-spacing:.6px">SGA · v3</div>
+      <div style="font-size:18px;font-weight:600">Cidades Acolhedoras</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.55)">Rio Grande do Sul · 497 Municípios</div>
+      <div style="width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;margin-top:8px">
+        <div id="load-bar" style="height:100%;background:#4BAF82;border-radius:2px;width:0%;transition:width .4s"></div>
+      </div>
+      <div id="load-msg" style="font-size:11px;color:rgba(255,255,255,.45)">Inicializando...</div>
+    </div>
+  </div>
+
+  <script>
+    const bar = document.getElementById('load-bar');
+    const msg = document.getElementById('load-msg');
+    const steps = [
+      [20,'Carregando 497 municípios...'],
+      [45,'Inicializando mapa OSM...'],
+      [65,'Conectando ANA HidroWeb...'],
+      [80,'Carregando sensores IoT...'],
+      [95,'Preparando motor de alertas...'],
+      [100,'Pronto!']
+    ];
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < steps.length) { bar.style.width=steps[i][0]+'%'; msg.textContent=steps[i][1]; i++; }
+      else {
+        clearInterval(iv);
+        setTimeout(() => {
+          const ls = document.getElementById('loading-screen');
+          ls.style.opacity='0'; ls.style.transition='opacity .4s';
+          setTimeout(() => ls.remove(), 400);
+        }, 300);
+      }
+    }, 280);
+  </script>
+
+  <!-- Estado global -->
+  <script src="../src/state.js"></script>
+
+  <!-- Utilitários -->
+  <script src="../src/utils/formatters.js"></script>
+  <script src="../src/utils/sparklineUtils.js"></script>
+  <script src="../src/utils/mapUtils.js"></script>
+  <script src="../src/utils/municipioInit.js"></script>
+
+  <!-- Serviços -->
+  <script src="../src/services/municipioService.js"></script>
+  <script src="../src/services/selectorUI.js"></script>
+  <script src="../src/services/anaService.js"></script>
+  <script src="../src/services/osmService.js"></script>
+  <script src="../src/services/alertEngine.js"></script>
+
+  <!-- Componentes de Layout -->
+  <script src="../src/components/TopBar.js"></script>
+  <script src="../src/components/Sidebar.js"></script>
+
+  <!-- Páginas -->
+  <script src="../src/pages/Painel.js"></script>
+  <script src="../src/pages/Mapa.js"></script>
+  <script src="../src/pages/Alertas.js"></script>
+  <script src="../src/pages/Municipios.js"></script>
+  <script src="../src/pages/PaginasRestantes.js"></script>
+
+  <!-- Router + App -->
+  <script src="../src/router.js"></script>
+  <script src="../src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+/* ═══════════════════════════════════════════════════
+   SGA — Base Styles & Reset
+   ═══════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: var(--green-mid); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: var(--font);
+  font-size: 13px;
+}
+
+/* Scrollbar global */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* Utilitários */
+.mono { font-family: var(--mono); font-size: 11px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* Animações de status */
+@keyframes pulse-g { 0%,100%{opacity:1} 50%{opacity:.25} }
+@keyframes pulse-r { 0%,100%{opacity:1} 50%{opacity:.2} }
+@keyframes pulse-y { 0%,100%{opacity:1} 50%{opacity:.3} }
+@keyframes badge-pulse { 0%,100%{opacity:1} 50%{opacity:.65} }
+@keyframes ring-alert {
+  0%,100% { box-shadow: 0 0 0 0 rgba(184,58,46,.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(184,58,46,.0); }
+}

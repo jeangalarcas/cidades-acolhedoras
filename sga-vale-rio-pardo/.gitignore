@@ -1,0 +1,66 @@
+# Dependências
+node_modules/
+.npm
+
+# Build
+dist/
+build/
+.cache/
+
+# Ambiente
+.env
+.env.local
+.env.production
+.env.*.local
+
+# API Keys (NUNCA commitar)
+config/api-keys.json
+config/secrets.js
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Sistema operacional
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.history/
+
+# Dados sensíveis (produção)
+data/cadunico-*.json
+data/suas-beneficiarios.json
+data/samu-ocorrencias-*.json
+
+# Modelos ML (arquivos grandes — usar Git LFS)
+models/*.h5
+models/*.pkl
+models/*.joblib
+# Manter apenas metadados e configs dos modelos
+!models/README.md
+!models/config.json
+
+# Temporários
+tmp/
+temp/
+*.tmp
+*.bak
+
+# GitHub Pages (gerado automaticamente)
+_site/
