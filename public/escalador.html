@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SGA RS — Escalonamento para 497 Municípios</title>
+  <title>SGA RS â€” Escalonamento para 497 MunicÃ­pios</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -31,7 +31,7 @@
       flex-direction: column;
     }
 
-    /* ── TOPBAR ── */
+    /* â”€â”€ TOPBAR â”€â”€ */
     .top {
       background: var(--green-deep);
       color: #fff;
@@ -62,10 +62,10 @@
       border-radius: 20px;
     }
 
-    /* ── LAYOUT ── */
+    /* â”€â”€ LAYOUT â”€â”€ */
     .body { display: flex; flex: 1; overflow: hidden; }
 
-    /* ── PAINEL ESQUERDO — SELETOR ── */
+    /* â”€â”€ PAINEL ESQUERDO â€” SELETOR â”€â”€ */
     .painel-left {
       width: 380px;
       flex-shrink: 0;
@@ -160,7 +160,7 @@
       color: var(--text-3);
     }
 
-    /* ── PAINEL DIREITO — DETALHES ── */
+    /* â”€â”€ PAINEL DIREITO â€” DETALHES â”€â”€ */
     .painel-right {
       flex: 1;
       display: flex;
@@ -201,7 +201,7 @@
 
     .detalhe-body { flex: 1; overflow-y: auto; display: flex; gap: 0; }
 
-    /* Grid de métricas */
+    /* Grid de mÃ©tricas */
     .metrics-col {
       width: 320px;
       flex-shrink: 0;
@@ -262,50 +262,50 @@
 <body>
 
 <div class="top">
-  <span class="top-logo">SGA · RS</span>
+  <span class="top-logo">SGA Â· RS</span>
   <span class="top-title">Cidades Acolhedoras</span>
-  <span class="top-sub">— Sistema de Gestão e Alertas</span>
-  <span class="top-badge">497 municípios disponíveis</span>
+  <span class="top-sub">â€” Sistema de GestÃ£o e Alertas</span>
+  <span class="top-badge">497 municÃ­pios disponÃ­veis</span>
 </div>
 
 <div class="body">
 
   <!-- PAINEL ESQUERDO: SELETOR -->
   <div class="painel-left" id="selector-container">
-    <div style="padding:20px;color:#888;font-size:12px">Carregando municípios...</div>
+    <div style="padding:20px;color:#888;font-size:12px">Carregando municÃ­pios...</div>
   </div>
 
-  <!-- PAINEL DIREITO: DETALHES DO MUNICÍPIO SELECIONADO -->
+  <!-- PAINEL DIREITO: DETALHES DO MUNICÃPIO SELECIONADO -->
   <div class="painel-right">
     <div class="detalhe-header" id="dh-header" style="display:none">
       <div>
-        <div class="dh-nome" id="dh-nome">—</div>
-        <div class="dh-ibge" id="dh-ibge">—</div>
+        <div class="dh-nome" id="dh-nome">â€”</div>
+        <div class="dh-ibge" id="dh-ibge">â€”</div>
       </div>
-      <span class="dh-badge" id="dh-badge">—</span>
-      <button class="dh-btn" onclick="abrirSGA()">▶ Abrir SGA neste município</button>
+      <span class="dh-badge" id="dh-badge">â€”</span>
+      <button class="dh-btn" onclick="abrirSGA()">â–¶ Abrir SGA neste municÃ­pio</button>
     </div>
 
     <div class="detalhe-body" id="dh-body">
       <div class="placeholder">
-        <div class="placeholder-icon">🗺</div>
-        <div class="placeholder-text">Selecione um município</div>
-        <div class="placeholder-sub">497 municípios do RS disponíveis</div>
+        <div class="placeholder-icon">ðŸ—º</div>
+        <div class="placeholder-text">Selecione um municÃ­pio</div>
+        <div class="placeholder-sub">497 municÃ­pios do RS disponÃ­veis</div>
       </div>
     </div>
   </div>
 
 </div>
 
-<script src="../src/services/municipioService.js"></script>
-<script src="../src/services/selectorUI.js"></script>
+<script src="/src/services/municipioService.js"></script>
+<script src="/src/services/selectorUI.js"></script>
 <script>
 
-// ── ESTADO ────────────────────────────────────────────────────────────────────
+// â”€â”€ ESTADO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let municipioAtivo = null;
 let mapaDetalhe   = null;
 
-// ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────────
+// â”€â”€ INICIALIZAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 window.addEventListener('DOMContentLoaded', async () => {
   // Monta seletor
   await SelectorUI.montar('#selector-container');
@@ -317,12 +317,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// ── RENDER DETALHE ────────────────────────────────────────────────────────────
+// â”€â”€ RENDER DETALHE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function renderDetalhe(m) {
   // Header
   document.getElementById('dh-header').style.display = 'flex';
   document.getElementById('dh-nome').textContent  = m.nome;
-  document.getElementById('dh-ibge').textContent  = `IBGE: ${m.cod_ibge} · ${m.mesorregiao} · ${m.microrregiao}`;
+  document.getElementById('dh-ibge').textContent  = `IBGE: ${m.cod_ibge} Â· ${m.mesorregiao} Â· ${m.microrregiao}`;
 
   const badge = document.getElementById('dh-badge');
   badge.textContent = m.risco.nivel_str;
@@ -333,20 +333,20 @@ async function renderDetalhe(m) {
   body.innerHTML = `
     <div class="metrics-col">
       <div class="metric-group">
-        <div class="mg-title">Identificação</div>
-        <div class="metric-row"><span class="mr-label">Município</span><span class="mr-value">${m.nome}</span></div>
-        <div class="metric-row"><span class="mr-label">Código IBGE</span><span class="mr-value">${m.cod_ibge}</span></div>
-        <div class="metric-row"><span class="mr-label">Mesorregião</span><span class="mr-value">${m.mesorregiao}</span></div>
-        <div class="metric-row"><span class="mr-label">Microrregião</span><span class="mr-value">${m.microrregiao}</span></div>
-        <div class="metric-row"><span class="mr-label">Bacia Hidrográfica</span><span class="mr-value">${m.bacia_hidrografica}</span></div>
+        <div class="mg-title">IdentificaÃ§Ã£o</div>
+        <div class="metric-row"><span class="mr-label">MunicÃ­pio</span><span class="mr-value">${m.nome}</span></div>
+        <div class="metric-row"><span class="mr-label">CÃ³digo IBGE</span><span class="mr-value">${m.cod_ibge}</span></div>
+        <div class="metric-row"><span class="mr-label">MesorregiÃ£o</span><span class="mr-value">${m.mesorregiao}</span></div>
+        <div class="metric-row"><span class="mr-label">MicrorregiÃ£o</span><span class="mr-value">${m.microrregiao}</span></div>
+        <div class="metric-row"><span class="mr-label">Bacia HidrogrÃ¡fica</span><span class="mr-value">${m.bacia_hidrografica}</span></div>
         <div class="metric-row"><span class="mr-label">Coordenadas</span><span class="mr-value">${m.lat}, ${m.lng}</span></div>
-        <div class="metric-row"><span class="mr-label">População</span><span class="mr-value">${m.populacao.toLocaleString('pt-BR')} hab.</span></div>
+        <div class="metric-row"><span class="mr-label">PopulaÃ§Ã£o</span><span class="mr-value">${m.populacao.toLocaleString('pt-BR')} hab.</span></div>
       </div>
 
       <div class="metric-group">
-        <div class="mg-title">Risco Climático</div>
+        <div class="mg-title">Risco ClimÃ¡tico</div>
         <div class="metric-row"><span class="mr-label">Tipo de Risco</span><span class="mr-value" style="color:${m.risco.cor}">${m.risco.tipo}</span></div>
-        <div class="metric-row"><span class="mr-label">Nível</span><span class="mr-value" style="color:${m.risco.cor}">${m.risco.nivel_str} (${m.risco.nivel}/5)</span></div>
+        <div class="metric-row"><span class="mr-label">NÃ­vel</span><span class="mr-value" style="color:${m.risco.cor}">${m.risco.nivel_str} (${m.risco.nivel}/5)</span></div>
         <div class="metric-row">
           <span class="mr-label">Score IA</span>
           <span class="mr-value">${m.risco.score_ia}</span>
@@ -357,15 +357,15 @@ async function renderDetalhe(m) {
       </div>
 
       <div class="metric-group">
-        <div class="mg-title">Estações de Monitoramento</div>
-        <div class="metric-row"><span class="mr-label">Estação ANA</span><span class="mr-value">${m.estacoes.ana_cod}</span></div>
+        <div class="mg-title">EstaÃ§Ãµes de Monitoramento</div>
+        <div class="metric-row"><span class="mr-label">EstaÃ§Ã£o ANA</span><span class="mr-value">${m.estacoes.ana_cod}</span></div>
         <div class="metric-row"><span class="mr-label">CEMADEN ID</span><span class="mr-value">${m.estacoes.cemaden_id}</span></div>
       </div>
 
       <div class="metric-group">
-        <div class="mg-title">Integrações disponíveis</div>
-        ${['ANA HidroWeb','CEMADEN','CPRM GeoSGB','IBGE','MapBiomas','OSM','Open-Meteo','CadÚnico','SUAS','SAMU/CAD'].map(i =>
-          `<div class="metric-row"><span class="mr-label">${i}</span><span class="mr-value" style="color:#2D7A5C">✓ Disponível</span></div>`
+        <div class="mg-title">IntegraÃ§Ãµes disponÃ­veis</div>
+        ${['ANA HidroWeb','CEMADEN','CPRM GeoSGB','IBGE','MapBiomas','OSM','Open-Meteo','CadÃšnico','SUAS','SAMU/CAD'].map(i =>
+          `<div class="metric-row"><span class="mr-label">${i}</span><span class="mr-value" style="color:#2D7A5C">âœ“ DisponÃ­vel</span></div>`
         ).join('')}
       </div>
     </div>
@@ -383,7 +383,7 @@ async function renderDetalhe(m) {
     }
     mapaDetalhe = L.map('detalhe-map').setView([m.lat, m.lng], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+      attribution: 'Â© OpenStreetMap contributors',
       maxZoom: 18
     }).addTo(mapaDetalhe);
 
@@ -403,7 +403,7 @@ async function renderDetalhe(m) {
       .addTo(mapaDetalhe)
       .openPopup();
 
-    // Círculo de influência
+    // CÃ­rculo de influÃªncia
     L.circle([m.lat, m.lng], {
       radius: 8000,
       color: m.risco.cor,
@@ -415,10 +415,10 @@ async function renderDetalhe(m) {
   }, 100);
 }
 
-// ── ABRIR SGA ────────────────────────────────────────────────────────────────
+// â”€â”€ ABRIR SGA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function abrirSGA() {
   if (!municipioAtivo) return;
-  // Salva seleção e redireciona para o SGA principal
+  // Salva seleÃ§Ã£o e redireciona para o SGA principal
   sessionStorage.setItem('sga_municipio_id',    municipioAtivo.id);
   sessionStorage.setItem('sga_municipio_ibge',  municipioAtivo.cod_ibge);
   sessionStorage.setItem('sga_municipio_nome',  municipioAtivo.nome);
