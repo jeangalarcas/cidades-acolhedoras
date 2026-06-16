@@ -1,9 +1,9 @@
-/**
- * SGA RS — Serviço de Municípios
+﻿/**
+ * SGA RS â€” ServiÃ§o de MunicÃ­pios
  * Carrega, filtra e configura o sistema para qualquer
- * um dos 497 municípios do Rio Grande do Sul.
+ * um dos 497 municÃ­pios do Rio Grande do Sul.
  *
- * USO RÁPIDO:
+ * USO RÃPIDO:
  *   await MunicipioService.ativar("canoas");
  *   await MunicipioService.ativarPorIBGE(4304606);
  *   await MunicipioService.ativarPorNome("Santa Cruz do Sul");
@@ -11,25 +11,25 @@
 
 const MunicipioService = {
 
-  // Dataset completo — carregado uma vez
+  // Dataset completo â€” carregado uma vez
   _todos: null,
 
-  // Município atualmente ativo
+  // MunicÃ­pio atualmente ativo
   _ativo: null,
 
-  // ── CARREGAMENTO ──────────────────────────────────────────────────────────
+  // â”€â”€ CARREGAMENTO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /**
-   * Carrega o JSON completo dos 497 municípios.
-   * Usa cache após o primeiro carregamento.
+   * Carrega o JSON completo dos 497 municÃ­pios.
+   * Usa cache apÃ³s o primeiro carregamento.
    */
   async carregarTodos() {
     if (this._todos) return this._todos;
 
     try {
-      const resp = await fetch('../src/data/municipios_rs.json');
+      const resp = await fetch('/src/data/municipios_rs.json');
       this._todos = await resp.json();
-      console.log(`[MunicipioService] ${this._todos.length} municípios carregados`);
+      console.log(`[MunicipioService] ${this._todos.length} municÃ­pios carregados`);
       return this._todos;
     } catch (e) {
       console.error('[MunicipioService] Erro ao carregar JSON:', e);
@@ -37,27 +37,27 @@ const MunicipioService = {
     }
   },
 
-  // ── SELEÇÃO ───────────────────────────────────────────────────────────────
+  // â”€â”€ SELEÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   /**
-   * Ativa um município pelo slug (id).
+   * Ativa um municÃ­pio pelo slug (id).
    * @param {string} id - ex: "canoas", "santa-cruz-do-sul"
    */
   async ativar(id) {
     const todos = await this.carregarTodos();
     const m = todos.find(m => m.id === id);
-    if (!m) { console.warn(`[MunicipioService] Município não encontrado: ${id}`); return null; }
+    if (!m) { console.warn(`[MunicipioService] MunicÃ­pio nÃ£o encontrado: ${id}`); return null; }
     return this._setAtivo(m);
   },
 
   /**
-   * Ativa pelo código IBGE.
+   * Ativa pelo cÃ³digo IBGE.
    * @param {number} cod - ex: 4304606
    */
   async ativarPorIBGE(cod) {
     const todos = await this.carregarTodos();
     const m = todos.find(m => m.cod_ibge === cod);
-    if (!m) { console.warn(`[MunicipioService] Código IBGE não encontrado: ${cod}`); return null; }
+    if (!m) { console.warn(`[MunicipioService] CÃ³digo IBGE nÃ£o encontrado: ${cod}`); return null; }
     return this._setAtivo(m);
   },
 
@@ -69,12 +69,12 @@ const MunicipioService = {
     const todos = await this.carregarTodos();
     const q = nome.toLowerCase();
     const m = todos.find(m => m.nome.toLowerCase().includes(q));
-    if (!m) { console.warn(`[MunicipioService] Município não encontrado por nome: ${nome}`); return null; }
+    if (!m) { console.warn(`[MunicipioService] MunicÃ­pio nÃ£o encontrado por nome: ${nome}`); return null; }
     return this._setAtivo(m);
   },
 
   /**
-   * Define o município ativo e atualiza o estado global do SGA.
+   * Define o municÃ­pio ativo e atualiza o estado global do SGA.
    */
   _setAtivo(m) {
     this._ativo = m;
@@ -89,33 +89,33 @@ const MunicipioService = {
       SGA.config.risco = m.risco;
     }
 
-    console.log(`[MunicipioService] Ativo: ${m.nome} (${m.cod_ibge}) — Risco ${m.risco.nivel_str}`);
+    console.log(`[MunicipioService] Ativo: ${m.nome} (${m.cod_ibge}) â€” Risco ${m.risco.nivel_str}`);
     return m;
   },
 
-  // ── GETTERS ───────────────────────────────────────────────────────────────
+  // â”€â”€ GETTERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  /** Retorna o município atualmente ativo. */
+  /** Retorna o municÃ­pio atualmente ativo. */
   getAtivo() { return this._ativo; },
 
-  /** Retorna todos os municípios carregados. */
+  /** Retorna todos os municÃ­pios carregados. */
   async getTodos() { return this.carregarTodos(); },
 
-  // ── FILTROS ───────────────────────────────────────────────────────────────
+  // â”€â”€ FILTROS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  /** Municípios por nível de risco (1–5). */
+  /** MunicÃ­pios por nÃ­vel de risco (1â€“5). */
   async filtrarPorRisco(nivel) {
     const todos = await this.carregarTodos();
     return todos.filter(m => m.risco.nivel === nivel);
   },
 
-  /** Municípios por mesorregião. */
+  /** MunicÃ­pios por mesorregiÃ£o. */
   async filtrarPorMesorregiao(meso) {
     const todos = await this.carregarTodos();
     return todos.filter(m => m.mesorregiao.toLowerCase().includes(meso.toLowerCase()));
   },
 
-  /** Municípios por bacia hidrográfica. */
+  /** MunicÃ­pios por bacia hidrogrÃ¡fica. */
   async filtrarPorBacia(bacia) {
     const todos = await this.carregarTodos();
     return todos.filter(m => m.bacia_hidrografica.toLowerCase().includes(bacia.toLowerCase()));
@@ -132,19 +132,19 @@ const MunicipioService = {
     ).slice(0, 20);
   },
 
-  // ── ESTATÍSTICAS ──────────────────────────────────────────────────────────
+  // â”€â”€ ESTATÃSTICAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  /** Resumo por nível de risco. */
+  /** Resumo por nÃ­vel de risco. */
   async resumoPorRisco() {
     const todos = await this.carregarTodos();
-    const resumo = { Crítico:[], Alto:[], 'Médio-Alto':[], Médio:[], Baixo:[] };
+    const resumo = { CrÃ­tico:[], Alto:[], 'MÃ©dio-Alto':[], MÃ©dio:[], Baixo:[] };
     todos.forEach(m => {
       if (resumo[m.risco.nivel_str]) resumo[m.risco.nivel_str].push(m);
     });
     return resumo;
   },
 
-  /** Top N municípios com maior score de risco. */
+  /** Top N municÃ­pios com maior score de risco. */
   async topRisco(n = 10) {
     const todos = await this.carregarTodos();
     return [...todos]
@@ -152,9 +152,9 @@ const MunicipioService = {
       .slice(0, n);
   },
 
-  // ── EXPORTAÇÃO ────────────────────────────────────────────────────────────
+  // â”€â”€ EXPORTAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  /** Retorna o município ativo como config pronta para o SGA. */
+  /** Retorna o municÃ­pio ativo como config pronta para o SGA. */
   getConfigAtivo() {
     const m = this._ativo;
     if (!m) return null;
@@ -176,3 +176,5 @@ const MunicipioService = {
 };
 
 window.MunicipioService = MunicipioService;
+
+

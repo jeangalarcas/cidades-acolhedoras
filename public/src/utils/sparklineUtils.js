@@ -1,5 +1,5 @@
-/**
- * SGA — Sparkline Utilities
+﻿/**
+ * SGA â€” Sparkline Utilities
  */
 const SparklineUtils = {
   render(id, values, color) {
@@ -29,13 +29,13 @@ window.SparklineUtils = SparklineUtils;
 
 
 /**
- * SGA — Risk Utilities
+ * SGA â€” Risk Utilities
  */
 const RiskUtils = {
   scoreToLevel(score) {
-    if (score >= 0.85) return { label:'Crítico',  pillClass:'pill-red',    color:'#B83A2E' };
+    if (score >= 0.85) return { label:'CrÃ­tico',  pillClass:'pill-red',    color:'#B83A2E' };
     if (score >= 0.65) return { label:'Alto',      pillClass:'pill-amber',  color:'#E85B50' };
-    if (score >= 0.40) return { label:'Médio',     pillClass:'pill-amber',  color:'#E8A23A' };
+    if (score >= 0.40) return { label:'MÃ©dio',     pillClass:'pill-amber',  color:'#E8A23A' };
     return                    { label:'Baixo',     pillClass:'pill-green',  color:'#4BAF82' };
   },
 
@@ -52,7 +52,7 @@ window.RiskUtils = RiskUtils;
 
 
 /**
- * SGA — Formatters
+ * SGA â€” Formatters
  */
 const Fmt = {
   date(d) {
@@ -62,34 +62,34 @@ const Fmt = {
   },
   num(v, dec=0)  { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits:dec, maximumFractionDigits:dec }); },
   pct(v)         { return Math.round(v) + '%'; },
-  cota(v)        { return v != null ? v.toFixed(2) + 'm' : '—'; },
-  mmh(v)         { return v != null ? v + 'mm/h' : '—'; },
+  cota(v)        { return v != null ? v.toFixed(2) + 'm' : 'â€”'; },
+  mmh(v)         { return v != null ? v + 'mm/h' : 'â€”'; },
 };
 window.Fmt = Fmt;
 
 
 /**
- * SGA — Hydrological Utilities
- * Fórmulas para cálculo de CN, IDF e runoff
+ * SGA â€” Hydrological Utilities
+ * FÃ³rmulas para cÃ¡lculo de CN, IDF e runoff
  */
 const HydroUtils = {
   /**
-   * Runoff pelo método SCS-CN
-   * @param {number} P  - Precipitação acumulada (mm)
+   * Runoff pelo mÃ©todo SCS-CN
+   * @param {number} P  - PrecipitaÃ§Ã£o acumulada (mm)
    * @param {number} CN - Curve Number da bacia
    * @returns {number} Runoff Q (mm)
    */
   runoffSCS(P, CN) {
-    const S = 25400 / CN - 254;       // Retenção potencial (mm)
-    const Ia = 0.2 * S;               // Abstração inicial
+    const S = 25400 / CN - 254;       // RetenÃ§Ã£o potencial (mm)
+    const Ia = 0.2 * S;               // AbstraÃ§Ã£o inicial
     if (P <= Ia) return 0;
     return Math.pow(P - Ia, 2) / (P - Ia + S);
   },
 
   /**
-   * Intensidade IDF simplificada (Método de Bell, adaptado RS)
+   * Intensidade IDF simplificada (MÃ©todo de Bell, adaptado RS)
    * @param {number} T  - Tempo de retorno (anos)
-   * @param {number} t  - Duração (minutos)
+   * @param {number} t  - DuraÃ§Ã£o (minutos)
    * @returns {number} Intensidade (mm/h)
    */
   intensidadeIDF(T, t) {
@@ -98,7 +98,7 @@ const HydroUtils = {
     return K * Math.pow(T, m) / Math.pow(t + b, n);
   },
 
-  /** CN médio por tipo de uso do solo (USDA SCS) */
+  /** CN mÃ©dio por tipo de uso do solo (USDA SCS) */
   CN_POR_USO: {
     'mata_nativa':    40,
     'campo':          65,
@@ -109,7 +109,7 @@ const HydroUtils = {
     'agua':           98,
   },
 
-  /** Tempo de concentração (Fórmula de Kirpich) */
+  /** Tempo de concentraÃ§Ã£o (FÃ³rmula de Kirpich) */
   tempConcentracao(L_km, deltaH_m) {
     return 0.0663 * Math.pow(L_km, 0.77) * Math.pow(deltaH_m / L_km, -0.385);
   },
@@ -118,7 +118,7 @@ window.HydroUtils = HydroUtils;
 
 
 /**
- * SGA — Export Utilities
+ * SGA â€” Export Utilities
  */
 const ExportUtils = {
   toCSV(data, filename) {
@@ -135,3 +135,4 @@ const ExportUtils = {
   printPage() { window.print(); },
 };
 window.ExportUtils = ExportUtils;
+
