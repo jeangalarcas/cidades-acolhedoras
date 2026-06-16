@@ -43,7 +43,6 @@
     "pg": "^8.21.0"
   },
   "devDependencies": {
-    "jshint": "^2.13.6",
     "serve": "^14.2.1"
   },
   "engines": {
