@@ -109,3 +109,53 @@ function checkMobile() {
 window.addEventListener('resize', checkMobile);
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(checkMobile, 600); });
 window.toggleSidebar = toggleSidebar;
+
+// -- MENU MOBILE --------------------------------------------------
+function toggleSidebar() {
+  var sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  var overlay = document.getElementById('sidebar-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'sidebar-overlay';
+    overlay.className = 'sidebar-overlay';
+    overlay.addEventListener('click', toggleSidebar);
+    document.querySelector('.app-wrap').appendChild(overlay);
+  }
+  var isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('active', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+
+function checkMobile() {
+  var btn = document.getElementById('btn-menu');
+  if (!btn) return;
+  btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+  // Fechar sidebar se redimensionou para desktop
+  if (window.innerWidth > 768) {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+// Fechar sidebar ao navegar para outra página
+var _goOriginal = window.go;
+window.go = function(id) {
+  if (window.innerWidth <= 768) {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  if (_goOriginal) _goOriginal(id);
+};
+
+window.toggleSidebar = toggleSidebar;
+window.addEventListener('resize', checkMobile);
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(checkMobile, 800);
+});

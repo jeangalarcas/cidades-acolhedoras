@@ -1,87 +1,214 @@
-﻿/* SGA — Responsivo Mobile */
+/* ═══════════════════════════════════════════════════
+   SGA — Layout Mobile-First v2
+   ═══════════════════════════════════════════════════ */
 
-@media (max-width: 1024px) {
-  :root { --sidebar-w: 200px; }
-  .metric-grid.cols-5 { grid-template-columns: repeat(3, 1fr); }
-  .g4 { grid-template-columns: repeat(2, 1fr); }
-  .g3 { grid-template-columns: repeat(2, 1fr); }
-  .g-map { grid-template-columns: 1fr; }
-  .channel-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
+/* ── MOBILE (até 768px) ── */
 @media (max-width: 768px) {
-  .sidebar {
+
+  /* === BODY E APP === */
+  body { overflow: auto; }
+
+  /* === TOPBAR === */
+  .topbar {
+    padding: 0 10px;
+    height: 52px;
     position: fixed;
-    left: -100%;
-    top: var(--topbar-h);
-    height: calc(100vh - var(--topbar-h));
-    z-index: 300;
-    transition: left .25s ease;
-    width: 260px;
-    overflow-y: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
   }
-  .sidebar.open { left: 0; }
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    top: var(--topbar-h);
-    background: rgba(0,0,0,.5);
-    z-index: 299;
-  }
-  .sidebar-overlay.active { display: block; }
+
+  .tb-brand { flex: 1; min-width: 0; }
+  .tb-title { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+  .tb-sub   { display: none; }
+  .tb-right .ts-item { display: none; }
+  .tb-clock { display: none; }
+  .tb-right { gap: 6px; }
+  .tb-alert-badge { font-size: 9px; padding: 2px 7px; white-space: nowrap; }
+
+  /* === BOTÃO HAMBURGUER === */
   .btn-menu {
     display: flex !important;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 8px;
-    margin-right: 6px;
+    padding: 6px;
+    margin-right: 8px;
+    flex-shrink: 0;
   }
   .btn-menu span {
     display: block;
-    width: 20px;
+    width: 22px;
     height: 2px;
     background: #fff;
     border-radius: 2px;
+    transition: all .2s;
   }
-  .tb-sub { display: none; }
-  .ts-item { display: none; }
-  .tb-title { font-size: 12px; }
-  .topbar { padding: 0 10px; }
-  .app-wrap { position: relative; }
-  .content { width: 100%; }
-  .g2, .g3, .g4, .g5, .g-map { grid-template-columns: 1fr !important; }
+
+  /* === LAYOUT PRINCIPAL === */
+  .app-wrap {
+    flex-direction: row;
+    margin-top: 52px;
+    height: calc(100vh - 52px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* === SIDEBAR — GAVETA LATERAL === */
+  .sidebar {
+    position: fixed !important;
+    top: 52px;
+    left: -280px;
+    width: 280px !important;
+    height: calc(100vh - 52px);
+    z-index: 500;
+    transition: left .25s ease;
+    overflow-y: auto;
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+  }
+
+  .sidebar.open {
+    left: 0 !important;
+  }
+
+  /* === OVERLAY ESCURO === */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 499;
+  }
+  .sidebar-overlay.active { display: block; }
+
+  /* === CONTENT — OCUPA TELA TODA === */
+  .content {
+    width: 100% !important;
+    margin-left: 0 !important;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  /* === PÁGINAS === */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .page-title { font-size: 16px; }
+  .page-sub   { font-size: 11px; }
+  .page-actions { flex-wrap: wrap; gap: 6px; }
+  .page-body { padding: 12px; }
+
+  /* === GRIDS — COLUNA ÚNICA === */
+  .g2, .g3, .g4, .g5 { grid-template-columns: 1fr !important; }
+  .g-map { grid-template-columns: 1fr !important; }
+
+  /* === MÉTRICAS — 2 COLUNAS === */
+  .metric-grid { grid-template-columns: 1fr 1fr !important; }
   .metric-grid.cols-5,
   .metric-grid.cols-4,
-  .metric-grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
-  .page-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .page-actions { flex-wrap: wrap; }
-  .page-body { padding: 10px; }
-  .page-title { font-size: 14px; }
-  #leaflet-map { height: 280px !important; }
-  #mini-map { height: 200px !important; }
-  .flow-steps { flex-wrap: wrap; gap: 6px; }
-  .flow-step { min-width: 70px; flex: unset; }
-  .channel-grid { grid-template-columns: repeat(2, 1fr); }
-  .ar-meta { display: none; }
+  .metric-grid.cols-3 { grid-template-columns: 1fr 1fr !important; }
+
+  /* === MAPA === */
+  #leaflet-map { height: 300px !important; }
+  #mini-map    { height: 220px !important; }
+  .map-toolbar { flex-wrap: wrap; gap: 4px; padding: 6px 8px; }
+  .layer-btn   { font-size: 10px; padding: 3px 7px; }
+
+  /* === CARDS === */
+  .card { overflow-x: visible; }
+  .card-header { flex-wrap: wrap; gap: 6px; }
+
+  /* === ALERTAS === */
+  .alert-row { padding: 8px 10px; }
+  .ar-meta   { display: none; }
+
+  /* === TABELA MUNICÍPIOS === */
+  .data-table { font-size: 11px; }
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3) { display: none; }
+
+  /* === FLOW STEPS === */
+  .flow-steps { flex-wrap: wrap; gap: 6px; padding: 8px 4px; overflow-x: auto; }
+  .flow-step  { min-width: 65px; flex: 0 0 auto; }
+  .flow-label { font-size: 8px; }
+
+  /* === CHANNELS === */
+  .channel-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* === SENSOR CARDS === */
+  .sensor-card { padding: 8px 10px; }
+  .sc-value    { font-size: 16px; }
+
+  /* === INTEGRACOES === */
+  .int-card { padding: 10px; }
+
+  /* === BOTÕES === */
   .btn { font-size: 11px; padding: 5px 10px; }
-  .mc-value { font-size: 17px; }
-  .card { overflow-x: auto; }
-  body.sidebar-open { overflow: hidden; }
+
+  /* === ABAS === */
+  .tab-row { flex-wrap: wrap; gap: 4px; }
+  .tab-btn { font-size: 10px; padding: 4px 10px; }
+
+  /* === MÉTRICAS VALORES === */
+  .mc-value { font-size: 18px; }
+  .mc-label { font-size: 9px; }
+
+  /* === IA PRED === */
+  .ia-pred { padding: 8px 10px; }
+  .ia-pct  { font-size: 18px; min-width: 44px; }
+
+  /* === MUNICÍPIOS MINI === */
+  .muni-row { gap: 5px; }
+  .muni-bar-wrap { display: none; }
 }
 
+/* ── MOBILE PEQUENO (até 480px) ── */
 @media (max-width: 480px) {
-  .metric-grid.cols-5,
-  .metric-grid.cols-4,
-  .metric-grid.cols-3 { grid-template-columns: 1fr 1fr; }
-  .tb-clock { display: none; }
-  .tb-alert-badge { font-size: 9px; padding: 2px 7px; }
+
+  .metric-grid { grid-template-columns: 1fr 1fr !important; }
+  .mc { padding: 10px; }
+  .mc-value { font-size: 16px; }
+
   .page-body { padding: 8px; }
+  .page-title { font-size: 14px; }
+
+  .channel-grid { grid-template-columns: 1fr !important; }
+
+  /* Tabela — ocultar mais colunas */
   .data-table th:nth-child(4),
   .data-table td:nth-child(4),
   .data-table th:nth-child(5),
   .data-table td:nth-child(5) { display: none; }
+
+  /* Painel — IA preditiva compacta */
+  .ia-pct  { font-size: 16px; min-width: 38px; }
+  .ia-name { font-size: 11px; }
+
+  /* Mapa menor */
+  #leaflet-map { height: 240px !important; }
+  #mini-map    { height: 180px !important; }
+}
+
+/* ── TABLET (769px até 1024px) ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root { --sidebar-w: 200px; }
+
+  .metric-grid.cols-5 { grid-template-columns: repeat(3, 1fr); }
+  .metric-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .g4 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(2, 1fr); }
+  .g-map { grid-template-columns: 1fr; }
+  .channel-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .page-title { font-size: 15px; }
+  .page-body  { padding: 14px; }
 }
