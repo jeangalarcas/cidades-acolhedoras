@@ -197,3 +197,77 @@
 .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
 .g5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
 .g-map { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-bottom: 14px; }
+/* Adicao ao layout.css — fix mobile */
+
+/* Reset do app-wrap no mobile */
+@media (max-width: 768px) {
+  .app-wrap {
+    flex-direction: row !important;
+    margin-top: 0 !important;
+    padding-top: 52px;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px !important;
+    width: 260px !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    transition: left .25s ease !important;
+    overflow-y: auto !important;
+    padding-top: 52px !important;
+  }
+
+  .sidebar.open {
+    left: 0 !important;
+  }
+
+  .content {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    height: 100% !important;
+  }
+
+  .page {
+    display: none;
+    width: 100%;
+  }
+  .page.active {
+    display: block !important;
+  }
+
+  .page-body {
+    padding: 10px !important;
+  }
+
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .g2, .g3, .g4, .g5 {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  #mini-map, #leaflet-map {
+    height: 240px !important;
+  }
+
+  .flow-steps {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+}

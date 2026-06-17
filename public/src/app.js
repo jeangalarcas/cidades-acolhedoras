@@ -159,3 +159,54 @@ window.addEventListener('resize', checkMobile);
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(checkMobile, 800);
 });
+
+// -- MENU MOBILE FINAL --------------------------------------------
+window._sidebarOpen = false;
+
+function toggleSidebar() {
+  var sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+
+  window._sidebarOpen = !window._sidebarOpen;
+  sidebar.classList.toggle('open', window._sidebarOpen);
+
+  var overlay = document.getElementById('mob-overlay');
+  if (!overlay && window._sidebarOpen) {
+    overlay = document.createElement('div');
+    overlay.id = 'mob-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;';
+    overlay.onclick = function() { closeSidebar(); };
+    document.body.appendChild(overlay);
+  }
+  if (overlay) overlay.style.display = window._sidebarOpen ? 'block' : 'none';
+}
+
+function closeSidebar() {
+  window._sidebarOpen = false;
+  var sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.classList.remove('open');
+  var overlay = document.getElementById('mob-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function checkMobileBtn() {
+  var btn = document.getElementById('btn-menu');
+  if (!btn) return;
+  var isMobile = window.innerWidth <= 768;
+  btn.style.display = isMobile ? 'flex' : 'none';
+  if (!isMobile) closeSidebar();
+}
+
+// Override go() para fechar sidebar ao navegar
+var __go = window.go;
+window.go = function(id) {
+  closeSidebar();
+  if (__go) __go(id);
+};
+
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.addEventListener('resize', checkMobileBtn);
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(checkMobileBtn, 500);
+});
