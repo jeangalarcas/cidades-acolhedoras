@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../.env' });
+﻿require('dotenv').config({ path: '../.env' });
 const express = require('express');
 const cors    = require('cors');
 
@@ -6,6 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/canoas', require('./routes/canoas'));
 app.use('/api/municipios', require('./routes/municipios'));
 
 app.get('/health', (req, res) =>
