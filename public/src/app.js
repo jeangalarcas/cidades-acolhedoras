@@ -1,12 +1,12 @@
-/**
- * SGA v3 — Aplicação Principal
- * Vale do Rio Pardo → 497 Municípios do RS · Cidades Acolhedoras
+﻿/**
+ * SGA v3 â€” AplicaÃ§Ã£o Principal
+ * Vale do Rio Pardo â†’ 497 MunicÃ­pios do RS Â· Cidades Acolhedoras
  */
 
 const App = {
 
   async init() {
-    // 1. Detecta e ativa o município (URL, sessionStorage ou padrão)
+    // 1. Detecta e ativa o municÃ­pio (URL, sessionStorage ou padrÃ£o)
     if (window.MunicipioInit && window.MunicipioService) {
       await MunicipioInit.init('canoas');
     }
@@ -20,19 +20,19 @@ const App = {
     this.initSparklines();
     this.startDataRefresh();
 
-    // 4. Carrega tabela de municípios em background
+    // 4. Carrega tabela de municÃ­pios em background
     setTimeout(() => MunicipiosPage.iniciar(), 1000);
 
     // 5. Navega para o painel
     Router.go('painel');
 
-    // 6. Atualiza label do município na sidebar
+    // 6. Atualiza label do municÃ­pio na sidebar
     if (SGA.config.municipioAtivo) {
       const el = document.getElementById('sb-municipio-nome');
       if (el) el.textContent = SGA.config.municipioAtivo.nome;
     }
 
-    console.log('[SGA v3] Sistema inicializado · 497 municípios disponíveis');
+    console.log('[SGA v3] Sistema inicializado Â· 497 municÃ­pios disponÃ­veis');
   },
 
   renderShell() {
@@ -77,7 +77,7 @@ const App = {
 
   startDataRefresh() {
     setInterval(() => {
-      console.log('[SGA] Ciclo de atualização de dados...');
+      console.log('[SGA] Ciclo de atualizaÃ§Ã£o de dados...');
     }, SGA.config.dataRefreshMs);
   },
 };
@@ -141,7 +141,7 @@ function checkMobile() {
   }
 }
 
-// Fechar sidebar ao navegar para outra p�gina
+// Fechar sidebar ao navegar para outra página
 var _goOriginal = window.go;
 window.go = function(id) {
   if (window.innerWidth <= 768) {
@@ -210,3 +210,36 @@ window.addEventListener('resize', checkMobileBtn);
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(checkMobileBtn, 500);
 });
+
+// MENU MOBILE
+window._sbOpen = false;
+function toggleSidebar() {
+  window._sbOpen = !window._sbOpen;
+  var sb = document.querySelector('.sidebar');
+  if (sb) sb.classList.toggle('open', window._sbOpen);
+  var ov = document.getElementById('mob-overlay');
+  if (!ov && window._sbOpen) {
+    ov = document.createElement('div');
+    ov.id = 'mob-overlay';
+    ov.onclick = function(){ toggleSidebar(); };
+    document.body.appendChild(ov);
+  }
+  if (ov) ov.style.display = window._sbOpen ? 'block' : 'none';
+}
+function closeSidebar() {
+  window._sbOpen = false;
+  var sb = document.querySelector('.sidebar');
+  if (sb) sb.classList.remove('open');
+  var ov = document.getElementById('mob-overlay');
+  if (ov) ov.style.display = 'none';
+}
+var _go0 = window.go;
+window.go = function(id){ closeSidebar(); if(_go0) _go0(id); };
+window.toggleSidebar = toggleSidebar;
+function _checkBtn() {
+  var btn = document.getElementById('btn-menu');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+  if (window.innerWidth > 768) closeSidebar();
+}
+window.addEventListener('resize', _checkBtn);
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(_checkBtn, 600); });

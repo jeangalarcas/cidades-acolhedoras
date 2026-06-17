@@ -1,214 +1,160 @@
 /* ═══════════════════════════════════════════════════
-   SGA — Layout Mobile-First v2
+   SGA — Mobile Final CSS
    ═══════════════════════════════════════════════════ */
 
-/* ── MOBILE (até 768px) ── */
+/* ── MOBILE até 768px ── */
 @media (max-width: 768px) {
 
-  /* === BODY E APP === */
-  body { overflow: auto; }
+  /* Topbar fixa no topo */
+  .topbar { position: fixed !important; top: 0; left: 0; right: 0; z-index: 1000; height: 52px !important; }
 
-  /* === TOPBAR === */
-  .topbar {
-    padding: 0 10px;
-    height: 52px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-  }
+  /* Ocultar itens de status na topbar */
+  .tb-status .ts-item,
+  .tb-clock,
+  .tb-sub { display: none !important; }
 
-  .tb-brand { flex: 1; min-width: 0; }
-  .tb-title { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-  .tb-sub   { display: none; }
-  .tb-right .ts-item { display: none; }
-  .tb-clock { display: none; }
-  .tb-right { gap: 6px; }
-  .tb-alert-badge { font-size: 9px; padding: 2px 7px; white-space: nowrap; }
+  /* Mostrar botão hamburguer */
+  #btn-menu { display: flex !important; }
 
-  /* === BOTÃO HAMBURGUER === */
-  .btn-menu {
-    display: flex !important;
-    flex-direction: column;
-    gap: 5px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    margin-right: 8px;
-    flex-shrink: 0;
-  }
-  .btn-menu span {
-    display: block;
-    width: 22px;
-    height: 2px;
-    background: #fff;
-    border-radius: 2px;
-    transition: all .2s;
-  }
-
-  /* === LAYOUT PRINCIPAL === */
+  /* App wrap com padding para a topbar */
   .app-wrap {
-    flex-direction: row;
-    margin-top: 52px;
-    height: calc(100vh - 52px);
-    position: relative;
+    flex-direction: row !important;
+    padding-top: 52px;
+    height: 100vh;
     overflow: hidden;
+    position: relative;
   }
 
-  /* === SIDEBAR — GAVETA LATERAL === */
+  /* Sidebar — gaveta lateral */
   .sidebar {
     position: fixed !important;
-    top: 52px;
-    left: -280px;
-    width: 280px !important;
-    height: calc(100vh - 52px);
-    z-index: 500;
-    transition: left .25s ease;
-    overflow-y: auto;
-    box-shadow: 4px 0 20px rgba(0,0,0,.3);
+    top: 52px !important;
+    left: -100% !important;
+    width: 75vw !important;
+    max-width: 280px !important;
+    height: calc(100vh - 52px) !important;
+    z-index: 999 !important;
+    transition: left .3s ease !important;
+    overflow-y: auto !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,.4) !important;
   }
 
   .sidebar.open {
     left: 0 !important;
   }
 
-  /* === OVERLAY ESCURO === */
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
+  /* Overlay escuro atrás da sidebar */
+  #mob-overlay {
+    position: fixed !important;
     top: 52px;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,.5);
-    z-index: 499;
+    background: rgba(0,0,0,.55);
+    z-index: 998;
   }
-  .sidebar-overlay.active { display: block; }
 
-  /* === CONTENT — OCUPA TELA TODA === */
+  /* Content ocupa tudo */
   .content {
+    flex: 1 !important;
     width: 100% !important;
-    margin-left: 0 !important;
-    height: 100%;
-    overflow-y: auto;
+    height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* === PÁGINAS === */
+  /* Páginas */
+  .page { width: 100% !important; }
   .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px 14px;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 12px !important;
+    gap: 8px !important;
   }
-  .page-title { font-size: 16px; }
-  .page-sub   { font-size: 11px; }
-  .page-actions { flex-wrap: wrap; gap: 6px; }
-  .page-body { padding: 12px; }
+  .page-title { font-size: 16px !important; }
+  .page-actions { flex-wrap: wrap !important; gap: 6px !important; }
+  .page-body { padding: 10px !important; }
 
-  /* === GRIDS — COLUNA ÚNICA === */
-  .g2, .g3, .g4, .g5 { grid-template-columns: 1fr !important; }
-  .g-map { grid-template-columns: 1fr !important; }
+  /* Grids — coluna única */
+  .g2, .g3, .g4, .g5, .g-map {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
 
-  /* === MÉTRICAS — 2 COLUNAS === */
-  .metric-grid { grid-template-columns: 1fr 1fr !important; }
+  /* Métricas — 2 colunas */
+  .metric-grid,
   .metric-grid.cols-5,
   .metric-grid.cols-4,
-  .metric-grid.cols-3 { grid-template-columns: 1fr 1fr !important; }
+  .metric-grid.cols-3 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
 
-  /* === MAPA === */
-  #leaflet-map { height: 300px !important; }
-  #mini-map    { height: 220px !important; }
-  .map-toolbar { flex-wrap: wrap; gap: 4px; padding: 6px 8px; }
-  .layer-btn   { font-size: 10px; padding: 3px 7px; }
+  /* Cards */
+  .card { overflow: hidden !important; }
+  .card-header { flex-wrap: wrap !important; gap: 6px !important; }
 
-  /* === CARDS === */
-  .card { overflow-x: visible; }
-  .card-header { flex-wrap: wrap; gap: 6px; }
+  /* Mapa */
+  #leaflet-map { height: 260px !important; }
+  #mini-map    { height: 200px !important; }
+  .map-toolbar { flex-wrap: wrap !important; gap: 4px !important; }
+  .layer-btn   { font-size: 10px !important; padding: 3px 6px !important; }
+  .map-wrap    { height: auto !important; }
 
-  /* === ALERTAS === */
-  .alert-row { padding: 8px 10px; }
-  .ar-meta   { display: none; }
+  /* Alertas */
+  .alert-row { padding: 8px 10px !important; }
+  .ar-meta   { display: none !important; }
 
-  /* === TABELA MUNICÍPIOS === */
-  .data-table { font-size: 11px; }
-  .data-table th:nth-child(3),
-  .data-table td:nth-child(3) { display: none; }
+  /* Flow steps */
+  .flow-steps {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding-bottom: 8px !important;
+    gap: 6px !important;
+  }
+  .flow-step  { min-width: 64px !important; flex: 0 0 auto !important; }
+  .flow-label { font-size: 8px !important; }
+  .flow-circle { width: 32px !important; height: 32px !important; font-size: 12px !important; }
 
-  /* === FLOW STEPS === */
-  .flow-steps { flex-wrap: wrap; gap: 6px; padding: 8px 4px; overflow-x: auto; }
-  .flow-step  { min-width: 65px; flex: 0 0 auto; }
-  .flow-label { font-size: 8px; }
-
-  /* === CHANNELS === */
+  /* Canais */
   .channel-grid { grid-template-columns: 1fr 1fr !important; }
 
-  /* === SENSOR CARDS === */
-  .sensor-card { padding: 8px 10px; }
-  .sc-value    { font-size: 16px; }
-
-  /* === INTEGRACOES === */
-  .int-card { padding: 10px; }
-
-  /* === BOTÕES === */
-  .btn { font-size: 11px; padding: 5px 10px; }
-
-  /* === ABAS === */
-  .tab-row { flex-wrap: wrap; gap: 4px; }
-  .tab-btn { font-size: 10px; padding: 4px 10px; }
-
-  /* === MÉTRICAS VALORES === */
-  .mc-value { font-size: 18px; }
-  .mc-label { font-size: 9px; }
-
-  /* === IA PRED === */
-  .ia-pred { padding: 8px 10px; }
-  .ia-pct  { font-size: 18px; min-width: 44px; }
-
-  /* === MUNICÍPIOS MINI === */
-  .muni-row { gap: 5px; }
-  .muni-bar-wrap { display: none; }
-}
-
-/* ── MOBILE PEQUENO (até 480px) ── */
-@media (max-width: 480px) {
-
-  .metric-grid { grid-template-columns: 1fr 1fr !important; }
-  .mc { padding: 10px; }
-  .mc-value { font-size: 16px; }
-
-  .page-body { padding: 8px; }
-  .page-title { font-size: 14px; }
-
-  .channel-grid { grid-template-columns: 1fr !important; }
-
-  /* Tabela — ocultar mais colunas */
-  .data-table th:nth-child(4),
-  .data-table td:nth-child(4),
+  /* Tabela municípios */
+  .data-table { font-size: 11px !important; }
+  .data-table th:nth-child(3),
+  .data-table td:nth-child(3),
   .data-table th:nth-child(5),
-  .data-table td:nth-child(5) { display: none; }
+  .data-table td:nth-child(5) { display: none !important; }
 
-  /* Painel — IA preditiva compacta */
-  .ia-pct  { font-size: 16px; min-width: 38px; }
-  .ia-name { font-size: 11px; }
+  /* Botões */
+  .btn { font-size: 11px !important; padding: 6px 10px !important; }
+  .btn-primary { padding: 8px 14px !important; }
 
-  /* Mapa menor */
-  #leaflet-map { height: 240px !important; }
-  #mini-map    { height: 180px !important; }
+  /* Métricas */
+  .mc { padding: 10px !important; }
+  .mc-value { font-size: 18px !important; }
+  .mc-label { font-size: 9px !important; }
+
+  /* IA preditiva */
+  .ia-pred { padding: 8px 10px !important; }
+  .ia-pct  { font-size: 18px !important; min-width: 44px !important; }
+
+  /* Sensores */
+  .g3 { grid-template-columns: 1fr !important; }
+
+  /* Integracoes */
+  .int-card { padding: 10px !important; }
 }
 
-/* ── TABLET (769px até 1024px) ── */
-@media (min-width: 769px) and (max-width: 1024px) {
-  :root { --sidebar-w: 200px; }
+/* ── MOBILE PEQUENO até 480px ── */
+@media (max-width: 480px) {
+  .channel-grid { grid-template-columns: 1fr !important; }
+  .metric-grid  { grid-template-columns: 1fr 1fr !important; }
+  .mc-value { font-size: 16px !important; }
 
-  .metric-grid.cols-5 { grid-template-columns: repeat(3, 1fr); }
-  .metric-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
-  .g4 { grid-template-columns: repeat(2, 1fr); }
-  .g3 { grid-template-columns: repeat(2, 1fr); }
-  .g-map { grid-template-columns: 1fr; }
-  .channel-grid { grid-template-columns: repeat(2, 1fr); }
+  .data-table th:nth-child(4),
+  .data-table td:nth-child(4) { display: none !important; }
 
-  .page-title { font-size: 15px; }
-  .page-body  { padding: 14px; }
+  #leaflet-map { height: 220px !important; }
+  #mini-map    { height: 180px !important; }
 }
