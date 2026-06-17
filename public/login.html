@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGA — Cidades Acolhedoras · Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #1B3A2D;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .login-badge {
+      background: #4BAF82;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 6px;
+      letter-spacing: .6px;
+    }
+
+    .login-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1B3A2D;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1A1A18;
+      margin-bottom: 6px;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #DEDAD2;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #1A1A18;
+      transition: border-color .15s;
+      background: #F9F8F6;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #4BAF82;
+      background: #fff;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: #1B3A2D;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 24px;
+      font-family: inherit;
+      transition: background .15s;
+    }
+
+    .btn-login:hover { background: #2D7A5C; }
+    .btn-login:disabled { background: #aaa; cursor: not-allowed; }
+
+    .erro {
+      background: #FAECEB;
+      color: #B83A2E;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .login-footer {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #DEDAD2;
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="login-logo">
+    <span class="login-badge">SGA · v3</span>
+    <span class="login-title">Cidades Acolhedoras</span>
+  </div>
+
+  <h2>Acesso ao Sistema</h2>
+  <p class="login-sub">Sistema de Gestão e Alertas · Rio Grande do Sul</p>
+
+  <label for="email">E-mail</label>
+  <input type="email" id="email" placeholder="seu@email.com.br" autocomplete="email">
+
+  <label for="senha">Senha</label>
+  <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
+
+  <div class="erro" id="erro-msg">E-mail ou senha incorretos. Tente novamente.</div>
+
+  <button class="btn-login" id="btn-login" onclick="fazerLogin()">
+    Entrar no Sistema
+  </button>
+
+  <div class="login-footer">
+    Correa Eco Social · © 2026 · Todos os direitos reservados
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://rprlpowscrnkomzapivy.supabase.co';
+  const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwcmxwb3dzY3Jua29temFwaXZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTM5MDMsImV4cCI6MjA5NjY2OTkwM30.JYIGBeSysBhQpV8kz2FtAbMvZNx-jfXnznqrI5wYWw4';
+
+  // Verificar se já está logado
+  window.addEventListener('load', function() {
+    const session = localStorage.getItem('sga_session');
+    if (session) {
+      try {
+        const s = JSON.parse(session);
+        if (s.expires_at && new Date(s.expires_at * 1000) > new Date()) {
+          window.location.href = 'index.html';
+        }
+      } catch(e) {
+        localStorage.removeItem('sga_session');
+      }
+    }
+  });
+
+  async function fazerLogin() {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    const btn   = document.getElementById('btn-login');
+    const erro  = document.getElementById('erro-msg');
+
+    if (!email || !senha) {
+      erro.textContent = 'Preencha o e-mail e a senha.';
+      erro.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>Entrando...';
+    erro.style.display = 'none';
+
+    try {
+      const resp = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+        },
+        body: JSON.stringify({ email, password: senha })
+      });
+
+      const data = await resp.json();
+
+      if (data.access_token) {
+        // Salvar sessão
+        localStorage.setItem('sga_session', JSON.stringify({
+          access_token: data.access_token,
+          expires_at:   data.expires_at,
+          email:        data.user.email,
+          role:         data.user.email.startsWith('admin') ? 'admin' : 'demo'
+        }));
+        window.location.href = 'index.html';
+      } else {
+        throw new Error(data.error_description || 'Credenciais inválidas');
+      }
+    } catch(e) {
+      erro.textContent = 'E-mail ou senha incorretos. Tente novamente.';
+      erro.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = 'Entrar no Sistema';
+    }
+  }
+
+  // Enter para fazer login
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') fazerLogin();
+  });
+</script>
+
+</body>
+</html>

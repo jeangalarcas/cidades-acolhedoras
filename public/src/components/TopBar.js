@@ -1,14 +1,14 @@
-/**
- * SGA — TopBar Component
+﻿/**
+ * SGA â€” TopBar Component
  */
 const TopBar = {
   render() {
     return `
     <div class="topbar">
-      <div class="tb-brand">
-        <span class="tb-logo">SGA · v3</span>
-        <span class="tb-title">Sistema de Gestão e Alertas — Vale do Rio Pardo</span>
-        <span class="tb-sub">Cidades Acolhedoras · RS</span>
+      <button class="btn-menu" id="btn-menu" onclick="toggleSidebar()" style="display:none"><span></span><span></span><span></span></button><div class="tb-brand">
+        <span class="tb-logo">SGA Â· v3</span>
+        <span class="tb-title">Sistema de GestÃ£o e Alertas â€” Vale do Rio Pardo</span>
+        <span class="tb-sub">Cidades Acolhedoras Â· RS</span>
       </div>
       <div class="tb-right">
         <div class="ts-item"><span class="ts-dot g"></span>OSM / Leaflet</div>
@@ -18,7 +18,8 @@ const TopBar = {
         <div class="ts-item"><span class="ts-dot y"></span>IA LSTM-v3</div>
         <div class="ts-item"><span class="ts-dot r"></span>3 alertas</div>
         <span class="tb-clock" id="clock">--/--/---- --:--:--</span>
-        <span class="tb-alert-badge">⚠ 3 ALERTAS</span>
+        <button onclick="fazerLogout()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font)">âŽ‹ Sair</button>
+        <span class="tb-alert-badge">âš  3 ALERTAS</span>
       </div>
     </div>`;
   },
@@ -27,28 +28,28 @@ window.TopBar = TopBar;
 
 
 /**
- * SGA — Sidebar Component
+ * SGA â€” Sidebar Component
  */
 const Sidebar = {
   items: [
     { section: 'Monitoramento', items: [
-      { id:'painel',       icon:'◼', label:'Painel geral' },
-      { id:'mapa',         icon:'🗺', label:'Mapa OSM / CPRM' },
-      { id:'sensores',     icon:'📡', label:'Sensores & IoT',      badge:'11', badgeClass:'y' },
-      { id:'integracoes',  icon:'🔌', label:'Integrações',          badge:'16', badgeClass:'b' },
+      { id:'painel',       icon:'â—¼', label:'Painel geral' },
+      { id:'mapa',         icon:'ðŸ—º', label:'Mapa OSM / CPRM' },
+      { id:'sensores',     icon:'ðŸ“¡', label:'Sensores & IoT',      badge:'11', badgeClass:'y' },
+      { id:'integracoes',  icon:'ðŸ”Œ', label:'IntegraÃ§Ãµes',          badge:'16', badgeClass:'b' },
     ]},
     { section: 'Resposta', items: [
-      { id:'alertas',      icon:'🔔', label:'Central de alertas',  badge:'3' },
-      { id:'fluxo',        icon:'⚙',  label:'Fluxo de decisão' },
-      { id:'abrigos',      icon:'🏠', label:'Abrigos & rotas' },
-      { id:'canais',       icon:'📣', label:'Canais de emissão' },
+      { id:'alertas',      icon:'ðŸ””', label:'Central de alertas',  badge:'3' },
+      { id:'fluxo',        icon:'âš™',  label:'Fluxo de decisÃ£o' },
+      { id:'abrigos',      icon:'ðŸ ', label:'Abrigos & rotas' },
+      { id:'canais',       icon:'ðŸ“£', label:'Canais de emissÃ£o' },
     ]},
-    { section: 'Análise', items: [
-      { id:'ia',           icon:'🧠', label:'IA preditiva' },
-      { id:'municipios',   icon:'🏙', label:'Municípios' },
-      { id:'hidroweb',     icon:'💧', label:'ANA HidroWeb' },
-      { id:'geodados',     icon:'🗂', label:'Geodados & Sociais' },
-      { id:'relatorio',    icon:'📄', label:'Relatórios & Log' },
+    { section: 'AnÃ¡lise', items: [
+      { id:'ia',           icon:'ðŸ§ ', label:'IA preditiva' },
+      { id:'municipios',   icon:'ðŸ™', label:'MunicÃ­pios' },
+      { id:'hidroweb',     icon:'ðŸ’§', label:'ANA HidroWeb' },
+      { id:'geodados',     icon:'ðŸ—‚', label:'Geodados & Sociais' },
+      { id:'relatorio',    icon:'ðŸ“„', label:'RelatÃ³rios & Log' },
     ]},
   ],
 
@@ -71,10 +72,11 @@ const Sidebar = {
       ${sections}
       <div class="sb-footer">
         <div class="sb-region-name">Vale do Rio Pardo</div>
-        <div class="sb-region-sub">Rio Grande do Sul · Brasil</div>
-        <div class="sb-count"><span>23</span> municípios monitorados</div>
+        <div class="sb-region-sub">Rio Grande do Sul Â· Brasil</div>
+        <div class="sb-count"><span>23</span> municÃ­pios monitorados</div>
       </div>
     </aside>`;
   },
 };
 window.Sidebar = Sidebar;
+

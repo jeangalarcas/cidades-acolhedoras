@@ -83,3 +83,29 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+function fazerLogout(){localStorage.removeItem('sga_session');window.location.href='login.html';}window.fazerLogout=fazerLogout;
+
+function toggleSidebar() {
+  var sidebar = document.querySelector('.sidebar');
+  var wrap = document.querySelector('.app-wrap');
+  var overlay = document.getElementById('sidebar-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'sidebar-overlay';
+    overlay.className = 'sidebar-overlay';
+    overlay.onclick = toggleSidebar;
+    wrap.appendChild(overlay);
+  }
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+  document.body.classList.toggle('sidebar-open');
+}
+
+function checkMobile() {
+  var btn = document.getElementById('btn-menu');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+}
+window.addEventListener('resize', checkMobile);
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(checkMobile, 600); });
+window.toggleSidebar = toggleSidebar;
