@@ -1,9 +1,9 @@
-/**
- * SGA — Router
+﻿/**
+ * SGA â€” Router
  */
 const Router = {
   pages: ['painel','mapa','alertas','fluxo','sensores','integracoes',
-          'hidroweb','geodados','ia','municipios','abrigos','canais','relatorio'],
+          'hidroweb','geodados','ia','municipios','abrigos','canais','canoas','relatorio'],
 
   go(pageId) {
     if (!this.pages.includes(pageId)) return;
@@ -17,10 +17,11 @@ const Router = {
     const pageEl = document.getElementById('p-' + pageId);
     if (pageEl) pageEl.classList.add('active');
 
-    // Callbacks pós-navegação
+    // Callbacks pÃ³s-navegaÃ§Ã£o
     if (pageId === 'mapa'       && !SGA.ui.mapInited)     MapUtils.initMainMap();
     if (pageId === 'sensores')  SparklineUtils.renderAll();
     if (pageId === 'hidroweb')  SparklineUtils.renderHidroWeb();
+    if (pageId === 'canoas') { CanoasPage.atualizar(); }
     if (pageId === 'municipios' && MunicipiosPage._todos.length === 0) MunicipiosPage.iniciar();
   },
 };

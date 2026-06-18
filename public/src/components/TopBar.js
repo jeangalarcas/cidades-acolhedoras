@@ -1,13 +1,13 @@
-/**
- * SGA — TopBar + Sidebar
- * Versão com suporte mobile completo
+﻿/**
+ * SGA â€” TopBar + Sidebar
+ * VersÃ£o com suporte mobile completo
  */
 const TopBar = {
   render() {
     return `
     <div class="topbar" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:52px;background:#1B3A2D;color:#fff;position:fixed;top:0;left:0;right:0;z-index:1000;gap:8px">
 
-      <!-- BOTAO HAMBURGUER — visivel apenas no mobile -->
+      <!-- BOTAO HAMBURGUER â€” visivel apenas no mobile -->
       <button id="btn-menu" onclick="toggleSidebar()"
         style="display:none;flex-direction:column;justify-content:center;gap:5px;
                background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
@@ -28,7 +28,7 @@ const TopBar = {
         </span>
       </div>
 
-      <!-- STATUS ITEMS — ocultos no mobile -->
+      <!-- STATUS ITEMS â€” ocultos no mobile -->
       <div class="tb-status" style="display:flex;align-items:center;gap:8px;flex-shrink:0">
         <div class="ts-item" style="display:flex;align-items:center;gap:4px;font-size:10px"><span style="width:6px;height:6px;border-radius:50%;background:#4BAF82;display:inline-block"></span>OSM</div>
         <div class="ts-item" style="display:flex;align-items:center;gap:4px;font-size:10px"><span style="width:6px;height:6px;border-radius:50%;background:#4BAF82;display:inline-block"></span>ANA</div>
@@ -53,7 +53,7 @@ const TopBar = {
 window.TopBar = TopBar;
 
 /**
- * SGA — Sidebar
+ * SGA â€” Sidebar
  */
 const Sidebar = {
   items: [
@@ -74,6 +74,7 @@ const Sidebar = {
       { id:'municipios', icon:'Mu', label:'Municipios RS', badge:'497', badgeClass:'b' },
       { id:'hidroweb',   icon:'H',  label:'ANA HidroWeb' },
       { id:'geodados',   icon:'G',  label:'Geodados e Sociais' },
+      { id:'canoas', icon:'CA', label:'Canoas Tempo Real', badge:'LIVE', badgeClass:'r' },
       { id:'relatorio',  icon:'R',  label:'Relatorios e Log' },
     ]},
   ],
