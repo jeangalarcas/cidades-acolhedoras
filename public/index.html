@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <script>(function(){var s=localStorage.getItem("sga_session");if(!s){window.location.href="login.html";return;}try{var d=JSON.parse(s);if(!d.access_token||(d.expires_at&&new Date(d.expires_at*1000)<new Date())){localStorage.removeItem("sga_session");window.location.href="login.html";}}catch(e){window.location.href="login.html";}})();</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="SGA â€” Sistema de GestÃ£o e Alertas Â· Cidades Acolhedoras Â· RS">
+  <meta name="description" content="SGA Ã¢â‚¬â€ Sistema de GestÃƒÂ£o e Alertas Ã‚Â· Cidades Acolhedoras Ã‚Â· RS">
   <title>SGA - Cidades Acolhedoras RS</title>
 
   <!-- Leaflet CSS -->
@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/src/styles/components.css">
   <link rel="stylesheet" href="/src/styles/map.css">
 
-  <!-- Seletor de municÃ­pio (msel) -->
+  <!-- Seletor de municÃƒÂ­pio (msel) -->
   <style>
     .msel-select{padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--font);background:var(--white)}
     .msel-item{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
@@ -42,9 +42,9 @@
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       font-family:-apple-system,sans-serif;color:#fff;gap:16px;z-index:9999
     ">
-      <div style="font-size:13px;font-weight:700;background:#4BAF82;padding:4px 12px;border-radius:4px;letter-spacing:.6px">SGA Â· v3</div>
+      <div style="font-size:13px;font-weight:700;background:#4BAF82;padding:4px 12px;border-radius:4px;letter-spacing:.6px">SGA Ã‚Â· v3</div>
       <div style="font-size:18px;font-weight:600">Cidades Acolhedoras</div>
-      <div style="font-size:12px;color:rgba(255,255,255,.55)">Rio Grande do Sul Â· 497 MunicÃ­pios</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.55)">Rio Grande do Sul Ã‚Â· 497 MunicÃƒÂ­pios</div>
       <div style="width:200px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;margin-top:8px">
         <div id="load-bar" style="height:100%;background:#4BAF82;border-radius:2px;width:0%;transition:width .4s"></div>
       </div>
@@ -75,13 +75,13 @@
   <!-- Estado global -->
   <script src="/src/state.js"></script>
 
-  <!-- UtilitÃ¡rios -->
+  <!-- UtilitÃƒÂ¡rios -->
   <script src="/src/utils/formatters.js"></script>
   <script src="/src/utils/sparklineUtils.js"></script>
   <script src="/src/utils/mapUtils.js"></script>
   <script src="/src/utils/municipioInit.js"></script>
 
-  <!-- ServiÃ§os -->
+  <!-- ServiÃƒÂ§os -->
   <script src="/src/services/canoasService.js"></script>
   <script src="/src/services/municipioService.js"></script>
   <script src="/src/services/selectorUI.js"></script>
@@ -91,7 +91,7 @@
 
   <!-- Componentes de Layout -->
   <script src="/src/components/TopBar.js"></script>
-  <!-- PÃ¡ginas -->
+  <!-- PÃƒÂ¡ginas -->
   <script src="/src/pages/Painel.js"></script>
   <script src="/src/pages/Mapa.js"></script>
   <script src="/src/pages/Alertas.js"></script>
