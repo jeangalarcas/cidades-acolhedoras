@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <script>(function(){var s=localStorage.getItem("sga_session");if(!s){window.location.href="login.html";return;}try{var d=JSON.parse(s);if(!d.access_token||(d.expires_at&&new Date(d.expires_at*1000)<new Date())){localStorage.removeItem("sga_session");window.location.href="login.html";}}catch(e){window.location.href="login.html";}})();</script>
@@ -53,25 +53,20 @@
   </div>
 
   <script>
-    const bar = document.getElementById('load-bar');
-    const msg = document.getElementById('load-msg');
-    const steps = [
-      [20,'Carregando 497 municÃ­pios...'],
-      [45,'Inicializando mapa OSM...'],
-      [65,'Conectando ANA HidroWeb...'],
-      [80,'Carregando sensores IoT...'],
-      [95,'Preparando motor de alertas...'],
-      [100,'Pronto!']
-    ];
-    let i = 0;
-    const iv = setInterval(() => {
-      if (i < steps.length) { bar.style.width=steps[i][0]+'%'; msg.textContent=steps[i][1]; i++; }
-      else {
+    var bar = document.getElementById('load-bar');
+    var msg = document.getElementById('load-msg');
+    var steps = [[20,'Carregando...'],[45,'Mapa OSM...'],[65,'ANA HidroWeb...'],[80,'Sensores...'],[95,'Alertas...'],[100,'Pronto!']];
+    var i = 0;
+    var iv = setInterval(function() {
+      if (i < steps.length) {
+        if (bar) bar.style.width = steps[i][0] + '%';
+        if (msg) msg.textContent = steps[i][1];
+        i++;
+      } else {
         clearInterval(iv);
-        setTimeout(() => {
-          const ls = document.getElementById('loading-screen');
-          ls.style.opacity='0'; ls.style.transition='opacity .4s';
-          setTimeout(() => ls.remove(), 400);
+        setTimeout(function() {
+          var ls = document.getElementById('loading-screen');
+          if (ls) { ls.style.opacity='0'; ls.style.transition='opacity .4s'; setTimeout(function(){ if(ls.parentNode) ls.parentNode.removeChild(ls); }, 400); }
         }, 300);
       }
     }, 280);

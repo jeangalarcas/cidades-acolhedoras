@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SGA v3 â€” AplicaÃ§Ã£o Principal
  * Vale do Rio Pardo â†’ 497 MunicÃ­pios do RS Â· Cidades Acolhedoras
  */
@@ -53,7 +53,8 @@ const App = {
           ${MunicipiosPage.render()}
           ${AbrigosPage.render()}
           ${CanaisPage.render()}
-          ${RelatorioPage.render()}
+          ${CanoasPage.render()}
+              ${RelatorioPage.render()}
         </div>
       </div>
     `;
