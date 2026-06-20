@@ -18,7 +18,7 @@ const MunicipioInit = {
    * 2. sessionStorage (seleção na tela de escalamento)
    * 3. Município padrão (configurável)
    */
-  async init(defaultId = 'canoas') {
+  async init(defaultId = null) {
     // 1. URL
     const params = new URLSearchParams(window.location.search);
     const urlId  = params.get('municipio') || params.get('ibge');
@@ -43,13 +43,13 @@ const MunicipioInit = {
       } catch(e) {
         municipio = await MunicipioService.ativar(ssId || defaultId);
       }
-    } else {
+    } else if (defaultId) {
       municipio = await MunicipioService.ativar(defaultId);
     }
 
     if (!municipio) {
-      console.warn('[MunicipioInit] Municipio não encontrado, usando padrão:', defaultId);
-      municipio = await MunicipioService.ativar(defaultId);
+      console.warn('[MunicipioInit] Nenhum municipio ativo — aguardando selecao');
+      return null;
     }
 
     console.log(`[MunicipioInit] Sistema configurado para: ${municipio.nome}`);

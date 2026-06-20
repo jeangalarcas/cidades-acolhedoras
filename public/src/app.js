@@ -1,53 +1,79 @@
 /**
- * SGA v3 â€” AplicaÃ§Ã£o Principal
- * Vale do Rio Pardo â†’ 497 MunicÃ­pios do RS Â· Cidades Acolhedoras
+ * SGA v3 — Aplicacao Principal
+ * Sistema de Gestao e Alertas Climaticos
+ * Cidades Acolhedoras · Rio Grande do Sul · 497 Municipios
  */
 
 const App = {
 
   async init() {
-    // 1. Detecta e ativa o municÃ­pio (URL, sessionStorage ou padrÃ£o)
+    // 1. Detectar municipio/bacia selecionada (URL, sessionStorage)
     if (window.MunicipioInit && window.MunicipioService) {
-      await MunicipioInit.init('canoas');
+      await MunicipioInit.init(null); // sem default — exige seleção
     }
 
-    // 2. Renderiza a UI
+    // 2. Renderizar UI
     this.renderShell();
 
-    // 3. Inicializa funcionalidades
+    // 3. Funcionalidades
     this.startClock();
     this.initMiniMap();
     this.initSparklines();
     this.startDataRefresh();
 
-    // 4. Carrega tabela de municÃ­pios em background
-    setTimeout(() => MunicipiosPage.iniciar(), 1000);
+    // 4. Carregar tabela de municípios em background
+    setTimeout(function() { MunicipiosPage.iniciar(); }, 1200);
 
-    // 5. Navega para o painel
-    Router.go('painel');
+    // 5. Navegar para painel ou município conforme parâmetro URL
+    var params = new URLSearchParams(window.location.search);
+    var munId  = params.get('municipio');
+    var bacId  = params.get('bacia');
 
-    // 6. Atualiza label do municÃ­pio na sidebar
-    if (SGA.config.municipioAtivo) {
-      const el = document.getElementById('sb-municipio-nome');
-      if (el) el.textContent = SGA.config.municipioAtivo.nome;
+    if (munId) {
+      // Vindo do seletor com município específico
+      Router.go('municipio');
+      setTimeout(async function() {
+        var m = await MunicipioService.ativar(munId);
+        if (m) {
+          MunicipioPage.iniciar(m);
+          App._atualizarTopbar(m.nome, m.risco ? m.risco.nivel_str : '');
+        }
+      }, 800);
+    } else if (bacId) {
+      // Vindo do seletor com bacia hidrográfica
+      Router.go('mapa');
+      App._atualizarTopbar('Bacia — ' + bacId.replace(/-/g,' '), '');
+    } else if (SGA.config.municipioAtivo) {
+      Router.go('municipio');
+      setTimeout(function() {
+        MunicipioPage.iniciar(SGA.config.municipioAtivo);
+      }, 600);
+    } else {
+      Router.go('painel');
     }
 
-    console.log('[SGA v3] Sistema inicializado Â· 497 municÃ­pios disponÃ­veis');
+    // 6. Atualizar sidebar
+    App._atualizarSidebar();
 
-    // Handler para URL ?municipio=SLUG vindos do Escalador
-    (function() {
-      var params = new URLSearchParams(window.location.search);
-      var munId = params.get('municipio');
-      if (munId) {
-        setTimeout(async function() {
-          var m = await MunicipioService.ativar(munId);
-          if (m) {
-            Router.go('municipio');
-            MunicipioPage.iniciar(m);
-          }
-        }, 900);
-      }
-    })();  },
+    console.log('[SGA v3] Sistema inicializado · 497 municipios disponiveis');
+  },
+
+  _atualizarTopbar(nome, nivel) {
+    var titulo = document.getElementById('tb-title-text');
+    if (titulo) titulo.textContent = 'SGA — ' + nome;
+    var sub = document.querySelector('.tb-sub');
+    if (sub) sub.textContent = nome + (nivel ? ' · ' + nivel : '');
+  },
+
+  _atualizarSidebar() {
+    var m = SGA.config.municipioAtivo;
+    var el = document.getElementById('sb-municipio-nome');
+    var sub = document.querySelector('.sb-region-sub');
+    var cnt = document.getElementById('sb-muni-count');
+    if (el) el.textContent = m ? m.nome : 'Nenhum selecionado';
+    if (sub) sub.textContent = m ? (m.mesorregiao || 'Rio Grande do Sul') : 'Selecione um municipio';
+    if (cnt) cnt.textContent = m ? '1' : '0';
+  },
 
   renderShell() {
     document.getElementById('app').innerHTML = `
@@ -69,163 +95,38 @@ const App = {
           ${CanaisPage.render()}
           ${CanoasPage.render()}
           ${MunicipioPage.render()}
-              ${RelatorioPage.render()}
+          ${RelatorioPage.render()}
         </div>
       </div>
     `;
   },
 
   startClock() {
-    const pad = v => ('0'+v).slice(-2);
-    const update = () => {
-      const n = new Date();
-      const el = document.getElementById('clock');
+    var pad = function(v) { return ('0'+v).slice(-2); };
+    var update = function() {
+      var n = new Date();
+      var el = document.getElementById('clock');
       if (el) el.textContent =
-        `${pad(n.getDate())}/${pad(n.getMonth()+1)}/${n.getFullYear()} ` +
-        `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+        pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear()+' '+
+        pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
     };
     update();
     setInterval(update, 1000);
   },
 
-  initMiniMap()    { setTimeout(() => MapUtils.initMiniMap(), 400); },
-  initSparklines() { setTimeout(() => SparklineUtils.renderAll(), 500); },
+  initMiniMap()    { setTimeout(function() { MapUtils.initMiniMap(); }, 400); },
+  initSparklines() { setTimeout(function() { SparklineUtils.renderAll(); }, 500); },
 
   startDataRefresh() {
-    setInterval(() => {
-      console.log('[SGA] Ciclo de atualizaÃ§Ã£o de dados...');
+    setInterval(function() {
+      var m = SGA.config.municipioAtivo;
+      if (m && window.MunicipioPage && document.getElementById('p-municipio')
+          && document.getElementById('p-municipio').classList.contains('active')) {
+        MunicipioPage.atualizar();
+      }
     }, SGA.config.dataRefreshMs);
   },
 };
-
-document.addEventListener('DOMContentLoaded', () => App.init());
-
-function fazerLogout(){localStorage.removeItem('sga_session');window.location.href='login.html';}window.fazerLogout=fazerLogout;
-
-function toggleSidebar() {
-  var sidebar = document.querySelector('.sidebar');
-  var wrap = document.querySelector('.app-wrap');
-  var overlay = document.getElementById('sidebar-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'sidebar-overlay';
-    overlay.className = 'sidebar-overlay';
-    overlay.onclick = toggleSidebar;
-    wrap.appendChild(overlay);
-  }
-  sidebar.classList.toggle('open');
-  overlay.classList.toggle('active');
-  document.body.classList.toggle('sidebar-open');
-}
-
-function checkMobile() {
-  var btn = document.getElementById('btn-menu');
-  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
-}
-window.addEventListener('resize', checkMobile);
-document.addEventListener('DOMContentLoaded', function(){ setTimeout(checkMobile, 600); });
-window.toggleSidebar = toggleSidebar;
-
-// -- MENU MOBILE --------------------------------------------------
-function toggleSidebar() {
-  var sidebar = document.querySelector('.sidebar');
-  if (!sidebar) return;
-  var overlay = document.getElementById('sidebar-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'sidebar-overlay';
-    overlay.className = 'sidebar-overlay';
-    overlay.addEventListener('click', toggleSidebar);
-    document.querySelector('.app-wrap').appendChild(overlay);
-  }
-  var isOpen = sidebar.classList.toggle('open');
-  overlay.classList.toggle('active', isOpen);
-  document.body.style.overflow = isOpen ? 'hidden' : '';
-}
-
-function checkMobile() {
-  var btn = document.getElementById('btn-menu');
-  if (!btn) return;
-  btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
-  // Fechar sidebar se redimensionou para desktop
-  if (window.innerWidth > 768) {
-    var sidebar = document.querySelector('.sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-}
-
-// Fechar sidebar ao navegar para outra página
-var _goOriginal = window.go;
-window.go = function(id) {
-  if (window.innerWidth <= 768) {
-    var sidebar = document.querySelector('.sidebar');
-    var overlay = document.getElementById('sidebar-overlay');
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-  if (_goOriginal) _goOriginal(id);
-};
-
-window.toggleSidebar = toggleSidebar;
-window.addEventListener('resize', checkMobile);
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(checkMobile, 800);
-});
-
-// -- MENU MOBILE FINAL --------------------------------------------
-window._sidebarOpen = false;
-
-function toggleSidebar() {
-  var sidebar = document.querySelector('.sidebar');
-  if (!sidebar) return;
-
-  window._sidebarOpen = !window._sidebarOpen;
-  sidebar.classList.toggle('open', window._sidebarOpen);
-
-  var overlay = document.getElementById('mob-overlay');
-  if (!overlay && window._sidebarOpen) {
-    overlay = document.createElement('div');
-    overlay.id = 'mob-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;';
-    overlay.onclick = function() { closeSidebar(); };
-    document.body.appendChild(overlay);
-  }
-  if (overlay) overlay.style.display = window._sidebarOpen ? 'block' : 'none';
-}
-
-function closeSidebar() {
-  window._sidebarOpen = false;
-  var sidebar = document.querySelector('.sidebar');
-  if (sidebar) sidebar.classList.remove('open');
-  var overlay = document.getElementById('mob-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
-
-function checkMobileBtn() {
-  var btn = document.getElementById('btn-menu');
-  if (!btn) return;
-  var isMobile = window.innerWidth <= 768;
-  btn.style.display = isMobile ? 'flex' : 'none';
-  if (!isMobile) closeSidebar();
-}
-
-// Override go() para fechar sidebar ao navegar
-var __go = window.go;
-window.go = function(id) {
-  closeSidebar();
-  if (__go) __go(id);
-};
-
-window.toggleSidebar = toggleSidebar;
-window.closeSidebar = closeSidebar;
-window.addEventListener('resize', checkMobileBtn);
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(checkMobileBtn, 500);
-});
 
 // MENU MOBILE
 window._sbOpen = false;
@@ -237,7 +138,8 @@ function toggleSidebar() {
   if (!ov && window._sbOpen) {
     ov = document.createElement('div');
     ov.id = 'mob-overlay';
-    ov.onclick = function(){ toggleSidebar(); };
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;';
+    ov.onclick = function() { toggleSidebar(); };
     document.body.appendChild(ov);
   }
   if (ov) ov.style.display = window._sbOpen ? 'block' : 'none';
@@ -249,13 +151,23 @@ function closeSidebar() {
   var ov = document.getElementById('mob-overlay');
   if (ov) ov.style.display = 'none';
 }
-var _go0 = window.go;
-window.go = function(id){ closeSidebar(); if(_go0) _go0(id); };
-window.toggleSidebar = toggleSidebar;
-function _checkBtn() {
+function checkMobileBtn() {
   var btn = document.getElementById('btn-menu');
   if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
   if (window.innerWidth > 768) closeSidebar();
 }
-window.addEventListener('resize', _checkBtn);
-document.addEventListener('DOMContentLoaded', function(){ setTimeout(_checkBtn, 600); });
+function fazerLogout() {
+  localStorage.removeItem('sga_session');
+  sessionStorage.clear();
+  window.location.href = 'login.html';
+}
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar  = closeSidebar;
+window.fazerLogout   = fazerLogout;
+window.addEventListener('resize', checkMobileBtn);
+document.addEventListener('DOMContentLoaded', function() { setTimeout(checkMobileBtn, 600); });
+
+// Inicializar aplicação
+window.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { App.init(); }, 100);
+});

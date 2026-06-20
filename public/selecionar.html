@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SGA — Selecionar Município ou Bacia</title>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#1B3A2D;--green-mid:#2D7A5C;--green-light:#4BAF82;
+      --bg:#F2EFE9;--white:#fff;--border:#DEDAD2;
+      --text:#1A1A18;--text2:#555550;--text3:#888880;
+      --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+      --mono:'SF Mono',Consolas,monospace;
+    }
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+    /* TOPBAR */
+    .top{background:var(--green);color:#fff;padding:0 20px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0;position:sticky;top:0;z-index:100}
+    .top-logo{background:var(--green-light);font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:.6px}
+    .top-title{font-size:14px;font-weight:600}
+    .top-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+    .top-user{font-size:11px;color:rgba(255,255,255,.6)}
+    .btn-sair{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);padding:4px 12px;border-radius:5px;font-size:11px;cursor:pointer;font-family:var(--font)}
+
+    /* HERO */
+    .hero{background:var(--green);color:#fff;padding:32px 24px 28px;text-align:center}
+    .hero h1{font-size:22px;font-weight:800;margin-bottom:6px}
+    .hero p{font-size:13px;color:rgba(255,255,255,.65);max-width:500px;margin:0 auto}
+
+    /* ABAS */
+    .tabs{display:flex;background:var(--white);border-bottom:2px solid var(--border);padding:0 20px}
+    .tab{padding:12px 20px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--text3);transition:all .15s}
+    .tab.active{color:var(--green-mid);border-bottom-color:var(--green-mid)}
+
+    /* LAYOUT PRINCIPAL */
+    .main{display:flex;flex:1;overflow:hidden}
+    .panel-left{width:340px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+    .panel-right{flex:1;position:relative}
+    #sel-map{width:100%;height:100%}
+
+    /* BUSCA */
+    .search-box{padding:12px 14px;border-bottom:1px solid var(--border);background:#F9F8F6}
+    .search-input{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);background:var(--white)}
+    .search-input:focus{outline:none;border-color:var(--green-light)}
+
+    /* FILTROS */
+    .filters{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border);background:#F9F8F6;flex-wrap:wrap}
+    .filter-btn{font-size:10px;font-weight:700;padding:3px 10px;border-radius:12px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all .12s}
+    .filter-btn.active{background:var(--green-light);color:#fff;border-color:var(--green-light)}
+
+    /* LISTA */
+    .list{flex:1;overflow-y:auto}
+    .list::-webkit-scrollbar{width:4px}
+    .list::-webkit-scrollbar-thumb{background:var(--border)}
+    .list-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+    .list-item:hover{background:#F0F8F4}
+    .list-item.active{background:#E4F2EB;border-left:3px solid var(--green-light)}
+    .li-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .li-info{flex:1;min-width:0}
+    .li-nome{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .li-sub{font-size:10px;color:var(--text3);margin-top:1px}
+    .li-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+    .list-empty{padding:24px;text-align:center;color:var(--text3);font-size:12px}
+    .list-count{padding:6px 14px;font-size:10px;color:var(--text3);background:#F9F8F6;border-bottom:1px solid var(--border)}
+
+    /* FOOTER */
+    .footer{padding:12px 14px;border-top:2px solid var(--border);background:var(--white)}
+    .btn-entrar{width:100%;padding:12px;background:var(--green-mid);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .15s}
+    .btn-entrar:hover{background:var(--green)}
+    .btn-entrar:disabled{background:#ccc;cursor:not-allowed}
+    .sel-info{font-size:11px;color:var(--text3);text-align:center;margin-top:6px}
+
+    /* BACIAS */
+    .bacia-card{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+    .bacia-card:hover{background:#F0F8F4}
+    .bacia-card.active{background:#E4F2EB;border-left:3px solid var(--green-light)}
+    .bc-nome{font-size:12px;font-weight:700}
+    .bc-sub{font-size:10px;color:var(--text3);margin-top:2px}
+
+    /* MAP POPUP */
+    .leaflet-popup-content b{font-size:12px}
+    .leaflet-popup-content{font-size:11px;font-family:var(--font)}
+
+    /* MOBILE */
+    @media(max-width:768px){
+      .main{flex-direction:column}
+      .panel-left{width:100%;height:60vh;border-right:none;border-bottom:1px solid var(--border)}
+      .panel-right{height:40vh}
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="top">
+  <span class="top-logo">SGA v3</span>
+  <span class="top-title">Cidades Acolhedoras — Rio Grande do Sul</span>
+  <div class="top-right">
+    <span class="top-user" id="top-user">Carregando...</span>
+    <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Para qual localidade deseja monitorar?</h1>
+  <p>Selecione um municipio especifico ou uma bacia hidrografica completa. Os dados serao carregados em tempo real para a area escolhida.</p>
+</div>
+
+<!-- ABAS -->
+<div class="tabs">
+  <div class="tab active" id="tab-mun" onclick="setTab('municipio')">497 Municipios do RS</div>
+  <div class="tab" id="tab-bac" onclick="setTab('bacia')">9 Bacias Hidrograficas</div>
+</div>
+
+<!-- CONTEUDO PRINCIPAL -->
+<div class="main">
+  <div class="panel-left">
+    <!-- BUSCA -->
+    <div class="search-box" id="search-box">
+      <input type="text" class="search-input" id="search-input" placeholder="Buscar municipio..." oninput="filtrar()" autocomplete="off">
+    </div>
+    <!-- FILTROS DE RISCO -->
+    <div class="filters" id="filters-risco">
+      <button class="filter-btn active" onclick="setFiltro('todos',this)">Todos</button>
+      <button class="filter-btn" onclick="setFiltro('5',this)" style="color:#7B0000">Critico</button>
+      <button class="filter-btn" onclick="setFiltro('4',this)" style="color:#B83A2E">Alto</button>
+      <button class="filter-btn" onclick="setFiltro('3',this)" style="color:#E8A23A">Medio-Alto</button>
+      <button class="filter-btn" onclick="setFiltro('2',this)" style="color:#888">Medio/Baixo</button>
+    </div>
+    <div class="list-count" id="list-count">Carregando...</div>
+    <!-- LISTA -->
+    <div class="list" id="lista"></div>
+    <!-- FOOTER -->
+    <div class="footer">
+      <button class="btn-entrar" id="btn-entrar" onclick="entrar()" disabled>Selecione um municipio</button>
+      <div class="sel-info" id="sel-info">Os dados serao carregados em tempo real para a area selecionada</div>
+    </div>
+  </div>
+  <!-- MAPA -->
+  <div class="panel-right">
+    <div id="sel-map"></div>
+  </div>
+</div>
+
+<script>
+// ── ESTADO ──────────────────────────────────────────────────────
+var TAB = 'municipio';
+var MUNICIPIOS = [];
+var BACIAS = [
+  {id:'guaiba',        nome:'Bacia do Guaiba',        rios:'Jacui, Caí, Sinos, Gravataí', municipios_n:72,  lat:-30.05, lng:-51.30, zoom:8, cor:'#2A5A8C'},
+  {id:'gravataí',      nome:'Bacia do Gravataí',       rios:'Rio Gravataí',                 municipios_n:13,  lat:-29.95, lng:-51.20, zoom:9, cor:'#1B5E8C'},
+  {id:'taquari-antas', nome:'Bacia Taquari-Antas',     rios:'Taquari, Antas, Pelotas',     municipios_n:119, lat:-29.20, lng:-52.00, zoom:8, cor:'#2D7A5C'},
+  {id:'camaqua',       nome:'Bacia do Camaqua',        rios:'Rio Camaqua',                  municipios_n:22,  lat:-30.85, lng:-52.80, zoom:8, cor:'#5C7A2D'},
+  {id:'patos',         nome:'Lagoa dos Patos',         rios:'Laguna costeira',              municipios_n:18,  lat:-31.50, lng:-51.50, zoom:7, cor:'#1B6B8C'},
+  {id:'ibicui',        nome:'Bacia do Ibicui',         rios:'Ibicui, Santa Maria',         municipios_n:48,  lat:-29.40, lng:-54.80, zoom:8, cor:'#7A5C2D'},
+  {id:'vacacai',       nome:'Bacia do Vacacai',        rios:'Vacacai, Vacacai-Mirim',      municipios_n:26,  lat:-29.80, lng:-53.50, zoom:8, cor:'#5C2D7A'},
+  {id:'pelotas',       nome:'Bacia do Pelotas/Uruguai',rios:'Pelotas, Uruguai',            municipios_n:65,  lat:-28.00, lng:-52.50, zoom:7, cor:'#8C2A2A'},
+  {id:'jaguarao',      nome:'Bacia do Jaguarao',       rios:'Jaguarao, Ibiraiaras',        municipios_n:14,  lat:-31.80, lng:-52.80, zoom:8, cor:'#6B8C1B'},
+];
+var SEL_MUN = null;
+var SEL_BAC = null;
+var FILTRO_RISCO = 'todos';
+var FILTRO_TEXTO = '';
+var MAPA = null;
+var MARCADORES = {};
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('load', async function() {
+  // Verificar sessão
+  var sess = localStorage.getItem('sga_session');
+  if (!sess) { window.location.href = 'login.html'; return; }
+  try {
+    var s = JSON.parse(sess);
+    if (s.expires_at && new Date(s.expires_at*1000) < new Date()) {
+      localStorage.removeItem('sga_session'); window.location.href = 'login.html'; return;
+    }
+    document.getElementById('top-user').textContent = s.email || 'Usuario';
+  } catch(e) { window.location.href = 'login.html'; return; }
+
+  // Carregar municípios
+  try {
+    var r = await fetch('/src/assets/data/municipios_rs.json');
+    MUNICIPIOS = await r.json();
+  } catch(e) { console.error('Erro ao carregar municipios:', e); }
+
+  iniciarMapa();
+  renderLista();
+});
+
+// ── MAPA ─────────────────────────────────────────────────────────
+function iniciarMapa() {
+  MAPA = L.map('sel-map').setView([-29.5, -53.0], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '(c) OpenStreetMap | SGA v3 - Cidades Acolhedoras',
+    maxZoom: 18
+  }).addTo(MAPA);
+  renderMarcadores();
+}
+
+function renderMarcadores() {
+  // Limpar marcadores anteriores
+  Object.values(MARCADORES).forEach(function(m){ MAPA.removeLayer(m); });
+  MARCADORES = {};
+
+  if (TAB === 'municipio') {
+    var visiveis = getMunsFiltrados();
+    visiveis.forEach(function(m) {
+      var cor = m.risco.cor;
+      var icon = L.divIcon({
+        className: '',
+        html: '<div style="width:10px;height:10px;border-radius:50%;background:'+cor+';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>',
+        iconSize: [10,10], iconAnchor:[5,5]
+      });
+      var marker = L.marker([m.lat, m.lng], {icon:icon})
+        .bindTooltip('<b>'+m.nome+'</b><br>'+m.risco.nivel_str+'<br>Pop: '+m.populacao.toLocaleString('pt-BR'), {sticky:true})
+        .on('click', function(){ selecionarMun(m); })
+        .addTo(MAPA);
+      MARCADORES[m.id] = marker;
+    });
+  } else {
+    BACIAS.forEach(function(b) {
+      var icon = L.divIcon({
+        className: '',
+        html: '<div style="width:16px;height:16px;border-radius:3px;background:'+b.cor+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
+        iconSize: [16,16], iconAnchor:[8,8]
+      });
+      L.marker([b.lat, b.lng], {icon:icon})
+        .bindTooltip('<b>'+b.nome+'</b><br>'+b.municipios_n+' municipios<br>'+b.rios, {sticky:true})
+        .on('click', function(){ selecionarBacia(b); })
+        .addTo(MAPA);
+      MARCADORES[b.id] = L.marker([b.lat, b.lng], {icon:icon}).addTo(MAPA);
+    });
+  }
+}
+
+// ── ABAS ─────────────────────────────────────────────────────────
+function setTab(tab) {
+  TAB = tab;
+  SEL_MUN = null; SEL_BAC = null;
+  document.getElementById('tab-mun').className = 'tab'+(tab==='municipio'?' active':'');
+  document.getElementById('tab-bac').className = 'tab'+(tab==='bacia'?' active':'');
+  document.getElementById('search-box').style.display = tab==='municipio'?'':'none';
+  document.getElementById('filters-risco').style.display = tab==='municipio'?'':'none';
+  document.getElementById('btn-entrar').disabled = true;
+  document.getElementById('btn-entrar').textContent = tab==='municipio'?'Selecione um municipio':'Selecione uma bacia';
+  renderLista();
+  renderMarcadores();
+  if (tab==='bacia') MAPA.setView([-29.5,-53.0],7);
+}
+
+// ── LISTA MUNICÍPIOS ─────────────────────────────────────────────
+function getMunsFiltrados() {
+  return MUNICIPIOS.filter(function(m) {
+    var ok = true;
+    if (FILTRO_TEXTO) ok = ok && m.nome.toLowerCase().includes(FILTRO_TEXTO.toLowerCase());
+    if (FILTRO_RISCO !== 'todos') ok = ok && String(m.risco.nivel) === FILTRO_RISCO;
+    return ok;
+  });
+}
+
+function renderLista() {
+  var lista = document.getElementById('lista');
+  var count = document.getElementById('list-count');
+
+  if (TAB === 'municipio') {
+    var muns = getMunsFiltrados();
+    count.textContent = muns.length + ' municipios' + (FILTRO_TEXTO||FILTRO_RISCO!=='todos'?' (filtrado)':'');
+    if (!muns.length) { lista.innerHTML = '<div class="list-empty">Nenhum municipio encontrado</div>'; return; }
+    lista.innerHTML = muns.map(function(m) {
+      var cor = m.risco.cor;
+      var nivelCls = m.risco.nivel>=5?'pill-red':m.risco.nivel>=3?'pill-amber':'pill-green';
+      return '<div class="list-item'+(SEL_MUN&&SEL_MUN.id===m.id?' active':'')+'" onclick="selecionarMun('+JSON.stringify(m).replace(/"/g,'&quot;')+')">'
+        +'<span class="li-dot" style="background:'+cor+'"></span>'
+        +'<div class="li-info"><div class="li-nome">'+m.nome+'</div>'
+        +'<div class="li-sub">'+m.microrregiao+' · '+m.populacao.toLocaleString('pt-BR')+' hab.</div></div>'
+        +'<span class="li-badge '+nivelCls+'">'+m.risco.nivel_str+'</span></div>';
+    }).join('');
+  } else {
+    count.textContent = '9 bacias hidrograficas do RS';
+    lista.innerHTML = BACIAS.map(function(b){
+      return '<div class="bacia-card'+(SEL_BAC&&SEL_BAC.id===b.id?' active':'')+'" onclick="selecionarBacia('+JSON.stringify(b).replace(/"/g,'&quot;')+')">'
+        +'<div class="bc-nome">'+b.nome+'</div>'
+        +'<div class="bc-sub">'+b.municipios_n+' municipios · '+b.rios+'</div></div>';
+    }).join('');
+  }
+}
+
+function filtrar() {
+  FILTRO_TEXTO = document.getElementById('search-input').value;
+  renderLista();
+}
+
+function setFiltro(v, btn) {
+  FILTRO_RISCO = v;
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderLista();
+}
+
+// ── SELEÇÃO ──────────────────────────────────────────────────────
+function selecionarMun(m) {
+  if (typeof m === 'string') m = JSON.parse(m);
+  SEL_MUN = m; SEL_BAC = null;
+  // Atualizar botão
+  document.getElementById('btn-entrar').disabled = false;
+  document.getElementById('btn-entrar').textContent = 'Abrir SGA para ' + m.nome;
+  document.getElementById('sel-info').textContent = m.microrregiao + ' · ' + m.bacia_hidrografica + ' · ' + m.populacao.toLocaleString('pt-BR') + ' hab.';
+  // Centralizar mapa
+  MAPA.setView([m.lat, m.lng], 11);
+  // Atualizar lista
+  renderLista();
+}
+
+function selecionarBacia(b) {
+  if (typeof b === 'string') b = JSON.parse(b);
+  SEL_BAC = b; SEL_MUN = null;
+  document.getElementById('btn-entrar').disabled = false;
+  document.getElementById('btn-entrar').textContent = 'Monitorar ' + b.nome;
+  document.getElementById('sel-info').textContent = b.municipios_n + ' municipios · ' + b.rios;
+  MAPA.setView([b.lat, b.lng], b.zoom);
+  renderLista();
+}
+
+// ── ENTRAR ───────────────────────────────────────────────────────
+function entrar() {
+  if (SEL_MUN) {
+    sessionStorage.setItem('sga_municipio_id',   SEL_MUN.id);
+    sessionStorage.setItem('sga_municipio_ibge', SEL_MUN.cod_ibge);
+    sessionStorage.setItem('sga_municipio_nome', SEL_MUN.nome);
+    sessionStorage.setItem('sga_municipio_json', JSON.stringify(SEL_MUN));
+    sessionStorage.removeItem('sga_bacia');
+    window.location.href = 'index.html?municipio=' + SEL_MUN.id;
+  } else if (SEL_BAC) {
+    sessionStorage.setItem('sga_bacia', JSON.stringify(SEL_BAC));
+    sessionStorage.removeItem('sga_municipio_json');
+    window.location.href = 'index.html?bacia=' + SEL_BAC.id;
+  }
+}
+
+function fazerLogout() {
+  localStorage.removeItem('sga_session');
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>

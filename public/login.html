@@ -180,7 +180,7 @@
       try {
         const s = JSON.parse(session);
         if (s.expires_at && new Date(s.expires_at * 1000) > new Date()) {
-          window.location.href = 'index.html';
+          window.location.href = 'selecionar.html';
         }
       } catch(e) {
         localStorage.removeItem('sga_session');
@@ -224,7 +224,7 @@
           email:        data.user.email,
           role:         data.user.email.startsWith('admin') ? 'admin' : 'demo'
         }));
-        window.location.href = 'index.html';
+        window.location.href = 'selecionar.html';
       } else {
         throw new Error(data.error_description || 'Credenciais inválidas');
       }
