@@ -33,7 +33,21 @@ const App = {
     }
 
     console.log('[SGA v3] Sistema inicializado Â· 497 municÃ­pios disponÃ­veis');
-  },
+
+    // Handler para URL ?municipio=SLUG vindos do Escalador
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var munId = params.get('municipio');
+      if (munId) {
+        setTimeout(async function() {
+          var m = await MunicipioService.ativar(munId);
+          if (m) {
+            Router.go('municipio');
+            MunicipioPage.iniciar(m);
+          }
+        }, 900);
+      }
+    })();  },
 
   renderShell() {
     document.getElementById('app').innerHTML = `
@@ -54,6 +68,7 @@ const App = {
           ${AbrigosPage.render()}
           ${CanaisPage.render()}
           ${CanoasPage.render()}
+          ${MunicipioPage.render()}
               ${RelatorioPage.render()}
         </div>
       </div>

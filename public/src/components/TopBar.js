@@ -75,6 +75,7 @@ const Sidebar = {
       { id:'hidroweb',   icon:'H',  label:'ANA HidroWeb' },
       { id:'geodados',   icon:'G',  label:'Geodados e Sociais' },
       { id:'canoas', icon:'CA', label:'Canoas Tempo Real', badge:'LIVE', badgeClass:'r' },
+      { id:'municipio', icon:'MU', label:'Municipio Ativo', badge:'LIVE', badgeClass:'r' },
       { id:'relatorio',  icon:'R',  label:'Relatorios e Log' },
     ]},
   ],
