@@ -9,6 +9,9 @@
 
 const MunicipioInit = {
 
+  // Base do backend que fornece dados em tempo real (cota, social, etc.)
+  API_BASE: 'https://sga-api-1705.onrender.com',
+
   /**
    * Detecta qual município deve ser carregado e
    * configura o SGA antes da inicialização.
@@ -54,6 +57,11 @@ const MunicipioInit = {
 
     console.log(`[MunicipioInit] Sistema configurado para: ${municipio.nome}`);
     this.aplicarAoSGA(municipio);
+
+    // Busca dados sociais no backend (assíncrono, não bloqueia a renderização).
+    // Se falhar ou demorar, SGA.social permanece vazio e o painel mostra "—".
+    this.carregarSocial(municipio.cod_ibge);
+
     return municipio;
   },
 
@@ -85,6 +93,88 @@ const MunicipioInit = {
 
     // Município ativo
     SGA.config.municipioAtivo = m;
+
+    // ---- Dados sociais (CadÚnico · SUAS · SAMU) ----
+    // Inicializa com objetos vazios para garantir que SGA.social sempre exista.
+    // O preenchimento real vem de carregarSocial() (backend), de forma assíncrona.
+    // Se o município já trouxer m.social no cadastro, usa-o como valor inicial.
+    const s = m.social || {};
+    SGA.social = {
+      cadunico: s.cadunico || {},
+      suas:     s.suas     || {},
+      samu:     s.samu     || {},
+    };
+  },
+
+  /**
+   * Busca os dados sociais (CadÚnico, SUAS, SAMU) no backend e grava em SGA.social.
+   * Tolerante a falha: qualquer erro é registrado e o painel segue exibindo "—".
+   *
+   * Espera uma resposta JSON no formato:
+   * {
+   *   "cadunico": { "familias_risco": 0, "bolsa_familia": 0, "pcds_idosos": 0, "criancas": 0 },
+   *   "suas":     { "cras": 0, "creas": 0, "acolhimento": 0, "vagas": 0, "assistentes": 0 },
+   *   "samu":     { "viaturas": 0, "equipes_bombeiros": 0, "ocorrencias": 0, "tmr_min": 0, "resgates_24h": 0 }
+   * }
+   * Aceita também a resposta "achatada" (todos os campos no nível raiz) por robustez.
+   */
+  async carregarSocial(codIBGE) {
+    if (typeof SGA === 'undefined' || !codIBGE) return;
+    const url = `${this.API_BASE}/api/municipio/${codIBGE}/social`;
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        console.warn('[MunicipioInit] /social respondeu ' + resp.status + ' para ' + codIBGE);
+        return;
+      }
+      const data = await resp.json();
+
+      // Normaliza: aceita tanto {cadunico,suas,samu} quanto campos achatados.
+      const cadunico = data.cadunico || {
+        familias_risco: data.familias_risco,
+        bolsa_familia:  data.bolsa_familia,
+        pcds_idosos:    data.pcds_idosos,
+        criancas:       data.criancas,
+      };
+      const suas = data.suas || {
+        cras:        data.cras,
+        creas:       data.creas,
+        acolhimento: data.acolhimento,
+        vagas:       data.vagas,
+        assistentes: data.assistentes,
+      };
+      const samu = data.samu || {
+        viaturas:          data.viaturas,
+        equipes_bombeiros: data.equipes_bombeiros,
+        ocorrencias:       data.ocorrencias,
+        tmr_min:           data.tmr_min,
+        resgates_24h:      data.resgates_24h,
+      };
+
+      SGA.social = { cadunico, suas, samu };
+      console.log('[MunicipioInit] Dados sociais carregados para ' + codIBGE);
+
+      // Se a página de Geodados já estiver aberta, re-renderiza para refletir os dados.
+      this._refreshGeodados();
+    } catch (e) {
+      console.warn('[MunicipioInit] Falha ao buscar dados sociais:', e.message);
+      // SGA.social permanece com objetos vazios — GeodadosPage exibe "—".
+    }
+  },
+
+  /**
+   * Re-renderiza a página Geodados se ela estiver visível no momento em que
+   * os dados sociais chegarem do backend. Defensivo: só age se as peças existirem.
+   */
+  _refreshGeodados() {
+    try {
+      const ativo = document.querySelector('#p-geodados');
+      if (ativo && typeof GeodadosPage !== 'undefined' && ativo.parentElement) {
+        ativo.outerHTML = GeodadosPage.render();
+      }
+    } catch (e) {
+      // silencioso: refresh é um luxo, não pode quebrar nada
+    }
   },
 
   /**
@@ -96,6 +186,7 @@ const MunicipioInit = {
     if (!m) return;
 
     this.aplicarAoSGA(m);
+    this.carregarSocial(m.cod_ibge);
 
     // Atualiza URL
     const url = new URL(window.location.href);
