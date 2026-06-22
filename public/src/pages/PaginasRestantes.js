@@ -75,6 +75,11 @@ window.FluxoPage = FluxoPage;
  */
 const SensoresPage = {
   render() {
+    const hidro  = SGA.sensoresHidro  || [];
+    const pluvio = SGA.sensoresPluvio || [];
+    const solo   = SGA.sensoresSolo   || [];
+    const totalSensores = hidro.length + pluvio.length + solo.length;
+    const ativos = Math.max(totalSensores - 1, 0);
     return `
     <div class="page" id="p-sensores">
       <div class="page-header">
@@ -83,7 +88,7 @@ const SensoresPage = {
           <div class="page-sub">LoRaWAN + 4G · Atualização a cada 5 min</div>
         </div>
         <div class="page-actions">
-          <span class="pill pill-green">${SGA.sensoresHidro.length + SGA.sensoresPluvio.length + SGA.sensoresSolo.length - 1} ativos</span>
+          <span class="pill pill-green">${ativos} ativos</span>
           <span class="pill pill-gray">1 offline</span>
         </div>
       </div>
@@ -98,7 +103,7 @@ const SensoresPage = {
         <!-- RÉGUAS -->
         <div id="s-hidro">
           <div class="g3">
-            ${SGA.sensoresHidro.map(s => `
+            ${hidro.map(s => `
               <div class="sensor-card" style="border-left:3px solid ${s.col||'var(--border)'}">
                 <div class="sc-name">${s.id} — ${s.local}</div>
                 ${s.cota != null ? `
@@ -117,7 +122,7 @@ const SensoresPage = {
         <!-- PLUVIÔMETROS -->
         <div id="s-pluvio" style="display:none">
           <div class="g3">
-            ${SGA.sensoresPluvio.map(s => `
+            ${pluvio.map(s => `
               <div class="sensor-card" style="border-left:3px solid ${s.col}">
                 <div class="sc-name">${s.id} — ${s.local}</div>
                 <div><span class="sc-value" style="color:${s.col}">${s.mmh}</span><span class="sc-unit">mm/h</span></div>
@@ -134,7 +139,7 @@ const SensoresPage = {
         <!-- SOLO -->
         <div id="s-solo" style="display:none">
           <div class="g3">
-            ${SGA.sensoresSolo.map(s => `
+            ${solo.map(s => `
               <div class="sensor-card" style="border-left:3px solid ${s.status==='Crítico'?'var(--red)':s.status==='Alto'?'var(--amber)':'var(--green-light)'}">
                 <div class="sc-name">${s.id} — ${s.local}</div>
                 <div><span class="sc-value" style="color:${s.status==='Crítico'?'var(--red)':s.status==='Alto'?'var(--amber)':'var(--green-mid)'}">${s.valor}</span><span class="sc-unit">${s.unidade}</span></div>
@@ -229,6 +234,7 @@ window.IntegracoesPage = IntegracoesPage;
  */
 const HidroWebPage = {
   render() {
+    const estacoes = SGA.estacoesANA || [];
     return `
     <div class="page" id="p-hidroweb">
       <div class="page-header">
@@ -242,7 +248,7 @@ const HidroWebPage = {
       </div>
       <div class="page-body">
         <div class="g2">
-          ${SGA.estacoesANA.map((e,i) => `
+          ${estacoes.map((e,i) => `
             <div class="card">
               <div class="card-header">
                 <div class="card-title">💧 ${e.nome}</div>
@@ -256,7 +262,7 @@ const HidroWebPage = {
                   </div>
                   <div>
                     <div style="font-size:10px;color:var(--text-3)">VARIAÇÃO</div>
-                    <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:${e.variacao.startsWith('+')?'var(--red)':'var(--green-mid)'}">${e.variacao}</div>
+                    <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:${(e.variacao||'').startsWith('+')?'var(--red)':'var(--green-mid)'}">${e.variacao}</div>
                   </div>
                 </div>
                 <div class="metric-row"><span class="mr-label">Rio</span><span class="mr-value">${e.rio}</span></div>
@@ -281,7 +287,17 @@ window.HidroWebPage = HidroWebPage;
  */
 const GeodadosPage = {
   render() {
-    const { cadunico, suas, samu } = SGA.social;
+    // Blindagem: SGA.social e seus sub-objetos podem não vir populados
+    // para todos os municípios. Sem isto, o acesso direto a .toLocaleString()
+    // em valor undefined derruba toda a renderização (tela branca).
+    const social   = SGA.social || {};
+    const cadunico = social.cadunico || {};
+    const suas     = social.suas     || {};
+    const samu     = social.samu     || {};
+
+    const fmt = (v) => (v == null ? '—' : Number(v).toLocaleString('pt-BR'));
+    const val = (v) => (v == null ? '—' : v);
+
     return `
     <div class="page" id="p-geodados">
       <div class="page-header">
@@ -296,32 +312,32 @@ const GeodadosPage = {
           <div class="card">
             <div class="card-header"><div class="card-title"><span class="ds-badge ds-cad">CadÚnico</span> Famílias</div></div>
             <div class="card-body">
-              <div class="metric-row"><span class="mr-label">Em área de risco</span><span class="mr-value" style="color:var(--red)">${cadunico.familias_risco.toLocaleString('pt-BR')}</span></div>
-              <div class="metric-row"><span class="mr-label">Bolsa Família</span><span class="mr-value">${cadunico.bolsa_familia.toLocaleString('pt-BR')}</span></div>
-              <div class="metric-row"><span class="mr-label">PCDs e Idosos</span><span class="mr-value" style="color:var(--amber)">${cadunico.pcds_idosos}</span></div>
-              <div class="metric-row"><span class="mr-label">Crianças</span><span class="mr-value">${cadunico.criancas}</span></div>
+              <div class="metric-row"><span class="mr-label">Em área de risco</span><span class="mr-value" style="color:var(--red)">${fmt(cadunico.familias_risco)}</span></div>
+              <div class="metric-row"><span class="mr-label">Bolsa Família</span><span class="mr-value">${fmt(cadunico.bolsa_familia)}</span></div>
+              <div class="metric-row"><span class="mr-label">PCDs e Idosos</span><span class="mr-value" style="color:var(--amber)">${val(cadunico.pcds_idosos)}</span></div>
+              <div class="metric-row"><span class="mr-label">Crianças</span><span class="mr-value">${val(cadunico.criancas)}</span></div>
             </div>
           </div>
           <!-- SUAS -->
           <div class="card">
             <div class="card-header"><div class="card-title"><span class="ds-badge ds-suas">SUAS</span> Rede Socioass.</div></div>
             <div class="card-body">
-              <div class="metric-row"><span class="mr-label">CRAS</span><span class="mr-value">${suas.cras}</span></div>
-              <div class="metric-row"><span class="mr-label">CREAS</span><span class="mr-value">${suas.creas}</span></div>
-              <div class="metric-row"><span class="mr-label">Acolhimento</span><span class="mr-value">${suas.acolhimento}</span></div>
-              <div class="metric-row"><span class="mr-label">Vagas totais</span><span class="mr-value">${suas.vagas.toLocaleString('pt-BR')}</span></div>
-              <div class="metric-row"><span class="mr-label">Assistentes</span><span class="mr-value">${suas.assistentes}</span></div>
+              <div class="metric-row"><span class="mr-label">CRAS</span><span class="mr-value">${val(suas.cras)}</span></div>
+              <div class="metric-row"><span class="mr-label">CREAS</span><span class="mr-value">${val(suas.creas)}</span></div>
+              <div class="metric-row"><span class="mr-label">Acolhimento</span><span class="mr-value">${val(suas.acolhimento)}</span></div>
+              <div class="metric-row"><span class="mr-label">Vagas totais</span><span class="mr-value">${fmt(suas.vagas)}</span></div>
+              <div class="metric-row"><span class="mr-label">Assistentes</span><span class="mr-value">${val(suas.assistentes)}</span></div>
             </div>
           </div>
           <!-- SAMU -->
           <div class="card">
             <div class="card-header"><div class="card-title"><span class="ds-badge ds-samu">SAMU/CAD</span> Emergência</div></div>
             <div class="card-body">
-              <div class="metric-row"><span class="mr-label">Viaturas SAMU</span><span class="mr-value">${samu.viaturas}</span></div>
-              <div class="metric-row"><span class="mr-label">Equipes Bombeiros</span><span class="mr-value">${samu.equipes_bombeiros}</span></div>
-              <div class="metric-row"><span class="mr-label">Ocorrências 24h</span><span class="mr-value" style="color:var(--amber)">${samu.ocorrencias}</span></div>
-              <div class="metric-row"><span class="mr-label">TMR médio</span><span class="mr-value">${samu.tmr_min}min</span></div>
-              <div class="metric-row"><span class="mr-label">Resgates 24h</span><span class="mr-value">${samu.resgates_24h}</span></div>
+              <div class="metric-row"><span class="mr-label">Viaturas SAMU</span><span class="mr-value">${val(samu.viaturas)}</span></div>
+              <div class="metric-row"><span class="mr-label">Equipes Bombeiros</span><span class="mr-value">${val(samu.equipes_bombeiros)}</span></div>
+              <div class="metric-row"><span class="mr-label">Ocorrências 24h</span><span class="mr-value" style="color:var(--amber)">${val(samu.ocorrencias)}</span></div>
+              <div class="metric-row"><span class="mr-label">TMR médio</span><span class="mr-value">${val(samu.tmr_min)}min</span></div>
+              <div class="metric-row"><span class="mr-label">Resgates 24h</span><span class="mr-value">${val(samu.resgates_24h)}</span></div>
             </div>
           </div>
         </div>
@@ -337,6 +353,7 @@ window.GeodadosPage = GeodadosPage;
  */
 const IAPage = {
   render() {
+    const municipios = SGA.municipios || [];
     return `
     <div class="page" id="p-ia">
       <div class="page-header">
@@ -353,9 +370,9 @@ const IAPage = {
           <div class="card">
             <div class="card-header"><div class="card-title">📊 Previsão por Município — 24h</div></div>
             <div class="card-body">
-              ${SGA.municipios.slice(0,8).map(m => `
+              ${municipios.slice(0,8).map(m => `
                 <div class="ia-pred ${m.score>=0.85?'high':m.score>=0.65?'medium':m.score>=0.40?'low':'safe'}">
-                  <div class="ia-pct ${m.score>=0.85?'high':m.score>=0.65?'medium':m.score>=0.40?'low':'safe'}">${Math.round(m.score*100)}%</div>
+                  <div class="ia-pct ${m.score>=0.85?'high':m.score>=0.65?'medium':m.score>=0.40?'low':'safe'}">${Math.round((m.score||0)*100)}%</div>
                   <div><div class="ia-name">${m.name}</div><div class="ia-detail">${m.nota}</div></div>
                 </div>
               `).join('')}
@@ -391,7 +408,8 @@ window.IAPage = IAPage;
  */
 const AbrigosPage = {
   render() {
-    const vagasTotal = SGA.abrigos.reduce((s,a) => s + Math.round(a.cap*(1-a.ocup/100)), 0);
+    const abrigos = SGA.abrigos || [];
+    const vagasTotal = abrigos.reduce((s,a) => s + Math.round(a.cap*(1-a.ocup/100)), 0);
     return `
     <div class="page" id="p-abrigos">
       <div class="page-header">
@@ -405,7 +423,7 @@ const AbrigosPage = {
       </div>
       <div class="page-body">
         <div class="g2">
-          ${SGA.abrigos.map(a => {
+          ${abrigos.map(a => {
             const vagas = Math.round(a.cap*(1-a.ocup/100));
             const pct = a.ocup;
             return `
