@@ -1,4 +1,4 @@
-﻿require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: '../.env' });
 const express = require('express');
 const cors    = require('cors');
 
@@ -6,11 +6,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/canoas', require('./routes/canoas'));
+app.use('/api/municipio',  require('./routes/municipio'));
+app.use('/api/canoas',     require('./routes/canoas'));
 app.use('/api/municipios', require('./routes/municipios'));
 
 app.get('/health', (req, res) =>
-  res.json({ status: 'ok', ts: new Date(), version: 'SGA v3' })
+  res.json({ status: 'ok', ts: new Date(), version: 'SGA v3', municipios: 497 })
 );
 
 const PORT = process.env.PORT || 4000;

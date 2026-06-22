@@ -1,187 +1,250 @@
 /**
- * SGA — Map Utilities
- * Helpers para o Leaflet: inicialização, ícones, camadas, interações
+ * SGA v3 — Map Utilities
+ * Mapa OSM com TODOS os 497 municipios do RS
+ * Dados de risco, sensores e abrigos dinamicos
  */
-
 const MapUtils = {
 
-  /** Inicializa o mapa principal (página Mapa) */
   initMainMap() {
     if (SGA.ui.mapInited) return;
     SGA.ui.mapInited = true;
-
-    setTimeout(() => {
-      const m = L.map('leaflet-map', { zoomControl: true })
-        .setView(SGA.config.mapCenter, SGA.config.mapZoom);
+    setTimeout(async function() {
+      var center = SGA.config.mapCenter || [-29.5, -53.0];
+      var zoom   = SGA.config.mapZoom   || 7;
+      var m = L.map('leaflet-map', { zoomControl:true }).setView(center, zoom);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | CPRM · ANA HidroWeb · Cidades Acolhedoras',
+        attribution: '© OpenStreetMap | CPRM · ANA HidroWeb · Cidades Acolhedoras / Correa Eco Social',
         maxZoom: 18,
       }).addTo(m);
 
       SGA.maps.main = m;
-      this._buildAllLayers(m, 'main');
 
-      // Ativa camadas padrão
-      ['risco','hidro','pluvio','hidrov'].forEach(id => {
+      // Carregar TODOS os 497 municípios
+      var todos = await MapUtils._carregarTodosMunicipios();
+      MapUtils._buildAllLayers(m, todos);
+
+      ['risco','hidro','pluvio','hidrov'].forEach(function(id) {
         if (SGA.maps.layerGroups[id]) SGA.maps.layerGroups[id].addTo(m);
       });
     }, 150);
   },
 
-  /** Inicializa o mini-mapa do painel */
   initMiniMap() {
     if (SGA.ui.miniMapInited) return;
     SGA.ui.miniMapInited = true;
-
-    const el = document.getElementById('mini-map');
+    var el = document.getElementById('mini-map');
     if (!el) return;
 
-    const m = L.map('mini-map', {
-      zoomControl: false,
-      attributionControl: false,
-      dragging: true,
-      scrollWheelZoom: false,
-    }).setView(SGA.config.mapCenter, 8);
+    var center = SGA.config.mapCenter || [-29.5, -53.0];
+    var m = L.map('mini-map', {
+      zoomControl:false, attributionControl:false,
+      dragging:true, scrollWheelZoom:false,
+    }).setView(center, SGA.config.municipioAtivo ? 10 : 7);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(m);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:18}).addTo(m);
 
-    // Círculos de risco dos municípios
-    SGA.municipios.forEach(mu => this._addMuniCircle(m, mu));
+    // Carregar municípios para o mini-mapa
+    MapUtils._carregarTodosMunicipios().then(function(todos) {
+      // Se tem município ativo, mostrar apenas a região; senão, todo o RS
+      var lista = SGA.config.municipioAtivo
+        ? todos.filter(function(mu){ return mu.risco && mu.risco.nivel >= 3; })
+        : todos;
 
-    // Rio Pardo
-    L.polyline([[-29.50,-52.80],[-29.67,-52.54],[-29.79,-52.38],[-29.99,-52.37],[-30.04,-52.10],[-29.90,-51.80]],
-      { color:'#2A5A8C', weight:3, opacity:.6 }).addTo(m);
+      lista.forEach(function(mu) {
+        var cor = mu.risco ? mu.risco.cor : '#4BAF82';
+        L.circle([mu.lat, mu.lng], {
+          radius: 4000 + (mu.risco ? mu.risco.nivel * 1500 : 1000),
+          color: cor, fillColor: cor,
+          fillOpacity: 0.30, weight: 1,
+        })
+        .bindTooltip('<b>'+mu.nome+'</b><br>'+(mu.risco ? mu.risco.nivel_str : 'N/D'), {sticky:true})
+        .addTo(m);
+      });
+    });
 
     SGA.maps.mini = m;
   },
 
-  /** Constrói todos os layer groups */
-  _buildAllLayers(m, context) {
-    const lg = SGA.maps.layerGroups;
-
-    // Zonas de risco — municípios
-    lg.risco = L.layerGroup();
-    SGA.municipios.forEach(mu => this._addMuniCircle(lg.risco, mu));
-
-    // Hidrografia
-    lg.hidro = L.layerGroup();
-    L.polyline([[-29.50,-52.80],[-29.67,-52.54],[-29.79,-52.38],[-29.99,-52.37],[-30.04,-52.10],[-29.90,-51.80]],
-      { color:'#2A5A8C', weight:4, opacity:.65 })
-      .bindTooltip('Rio Pardo · ANA HidroWeb', { sticky:true }).addTo(lg.hidro);
-    L.polyline([[-29.40,-52.60],[-29.52,-52.50],[-29.62,-52.44],[-29.72,-52.43]],
-      { color:'#3B7FC4', weight:2.5, opacity:.55 })
-      .bindTooltip('Rio Pardinho', { sticky:true }).addTo(lg.hidro);
-
-    // Réguas ANA HidroWeb
-    lg.hidrov = L.layerGroup();
-    SGA.sensoresHidro.forEach(s => {
-      if (!s.cota) return;
-      L.marker([s.lat, s.lng], { icon: this._sensorIcon(s.col, 'H') })
-        .bindTooltip(`<strong>${s.id}</strong><br>${s.local}<br>Cota: <strong>${s.cota}m</strong> · ${s.status}<br><em>ANA HidroWeb</em>`, { sticky:true })
-        .addTo(lg.hidrov);
-    });
-
-    // Pluviômetros
-    lg.pluvio = L.layerGroup();
-    SGA.sensoresPluvio.forEach(s => {
-      L.marker([s.lat, s.lng], { icon: this._sensorIcon(s.col, 'P') })
-        .bindTooltip(`<strong>${s.id}</strong><br>${s.local}<br>${s.mmh}mm/h · ${s.status}<br><em>CEMADEN + IoT</em>`, { sticky:true })
-        .addTo(lg.pluvio);
-    });
-
-    // CPRM — suscetibilidade (overlay)
-    lg.cprm = L.layerGroup();
-    [
-      { lat:-29.99, lng:-52.37, r:4500, col:'#B83A2E', label:'CPRM — Suscetib. alta inundação' },
-      { lat:-29.67, lng:-52.54, r:3800, col:'#7F55CC', label:'CPRM — Suscetib. alta deslizamento' },
-      { lat:-29.72, lng:-52.43, r:4200, col:'#E85B50', label:'CPRM — Suscetib. alta inundação' },
-    ].forEach(z => {
-      L.circle([z.lat, z.lng], { radius:z.r, color:z.col, fillColor:z.col, fillOpacity:.22, weight:1.5, dashArray:'6 4' })
-        .bindTooltip(z.label + ' · <em>CPRM GeoSGB</em>', { sticky:true })
-        .addTo(lg.cprm);
-    });
-
-    // Abrigos
-    lg.abrigo = L.layerGroup();
-    SGA.abrigos.forEach(a => {
-      const vagas = Math.round(a.cap * (1 - a.ocup/100));
-      L.marker([a.lat, a.lng], { icon: this._abrigoIcon() })
-        .bindTooltip(`<strong>${a.nome}</strong><br>${vagas} vagas livres (${a.ocup}% ocup.) · Cota ${a.cota}m`, { sticky:true })
-        .addTo(lg.abrigo);
-    });
-
-    // Rotas de fuga (OSM-based)
-    lg.rota = L.layerGroup();
-    L.polyline([[-29.99,-52.37],[-29.90,-52.40],[-29.82,-52.41],[-29.72,-52.43]],
-      { color:'#2D7A5C', weight:3, opacity:.75, dashArray:'8 5' })
-      .bindTooltip('Rota de fuga: RS-471 → Santa Cruz do Sul · <em>OSM</em>', { sticky:true })
-      .addTo(lg.rota);
+  async _carregarTodosMunicipios() {
+    if (SGA._municipiosCache) return SGA._municipiosCache;
+    try {
+      var r = await fetch('/src/assets/data/municipios_rs.json');
+      SGA._municipiosCache = await r.json();
+      return SGA._municipiosCache;
+    } catch(e) {
+      return SGA.municipios || [];
+    }
   },
 
-  /** Toggle de camada no mapa principal */
+  _buildAllLayers(m, todos) {
+    var lg = SGA.maps.layerGroups;
+
+    // ZONAS DE RISCO — todos os 497 municípios
+    lg.risco = L.layerGroup();
+    todos.forEach(function(mu) {
+      var cor = mu.risco ? mu.risco.cor : '#4BAF82';
+      var nivel = mu.risco ? mu.risco.nivel : 1;
+      var score = mu.risco ? mu.risco.score_ia : 0.1;
+      L.circle([mu.lat, mu.lng], {
+        radius: 3000 + nivel * 2000,
+        color: cor, fillColor: cor,
+        fillOpacity: 0.15 + score * 0.35,
+        weight: 1.2,
+      })
+      .bindTooltip(
+        '<b>'+mu.nome+'</b><br>'
+        +'Risco: '+(mu.risco ? mu.risco.nivel_str : 'N/D')+'<br>'
+        +'Score IA: '+(mu.risco ? mu.risco.score_ia.toFixed(3) : 'N/D')+'<br>'
+        +'Pop: '+mu.populacao.toLocaleString('pt-BR')+'<br>'
+        +'Bacia: '+(mu.bacia_hidrografica||'N/D'),
+        {sticky:true}
+      ).addTo(lg.risco);
+
+      // Label do município (visível só no zoom > 10)
+      L.marker([mu.lat, mu.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="font-size:9px;font-weight:700;color:'+cor+';white-space:nowrap;text-shadow:0 0 3px #fff">'+mu.nome+'</div>',
+          iconSize: [0,0],
+        }),
+        pane: 'tooltipPane',
+      }).addTo(lg.risco);
+    });
+
+    // HIDROGRAFIA — principais rios do RS
+    lg.hidro = L.layerGroup();
+    var rios = [
+      {pts:[[-29.50,-52.80],[-29.67,-52.54],[-29.79,-52.38],[-29.99,-52.37],[-30.04,-52.10],[-29.90,-51.80]], nome:'Rio Pardo'},
+      {pts:[[-29.40,-52.60],[-29.52,-52.50],[-29.62,-52.44],[-29.72,-52.43]], nome:'Rio Pardinho'},
+      {pts:[[-29.20,-53.50],[-29.35,-53.20],[-29.47,-52.90],[-29.52,-52.65],[-29.67,-52.54]], nome:'Rio Jacui Superior'},
+      {pts:[[-30.04,-52.89],[-30.02,-52.40],[-29.90,-51.80],[-29.95,-51.50],[-30.00,-51.20]], nome:'Rio Jacui'},
+      {pts:[[-29.97,-51.22],[-30.02,-51.18],[-30.05,-51.15]], nome:'Guaiba'},
+      {pts:[[-29.95,-51.20],[-29.75,-51.15],[-29.62,-51.05],[-29.47,-50.98]], nome:'Rio dos Sinos'},
+      {pts:[[-30.85,-52.52],[-30.54,-52.52],[-30.28,-52.38],[-30.05,-52.10]], nome:'Rio Camaqua'},
+      {pts:[[-29.75,-57.08],[-29.60,-56.50],[-29.40,-55.80],[-29.20,-54.80]], nome:'Rio Uruguai'},
+      {pts:[[-29.95,-51.20],[-29.97,-51.18],[-29.92,-51.15],[-29.87,-51.12]], nome:'Rio Gravataí'},
+    ];
+    rios.forEach(function(r) {
+      L.polyline(r.pts, {color:'#2A5A8C', weight:2.5, opacity:.55})
+        .bindTooltip(r.nome+' · ANA HidroWeb', {sticky:true}).addTo(lg.hidro);
+    });
+
+    // RÉGUAS ANA — estações ativas
+    lg.hidrov = L.layerGroup();
+    var ESTACOES_ANA = [
+      {cod:'87480000',nome:'Rio Gravataí — Canoas',   lat:-29.923,lng:-51.187,cota:2.1,status:'Normal'},
+      {cod:'87110000',nome:'Rio dos Sinos — S.Leopoldo',lat:-29.767,lng:-51.148,cota:1.8,status:'Normal'},
+      {cod:'87150000',nome:'Rio Caí — Montenegro',     lat:-29.692,lng:-51.461,cota:1.5,status:'Normal'},
+      {cod:'86990000',nome:'Guaíba — Porto Alegre',    lat:-30.020,lng:-51.218,cota:0.8,status:'Normal'},
+      {cod:'87380000',nome:'Rio Jacuí — Cachoeira Sul',lat:-30.040,lng:-52.890,cota:5.8,status:'Normal'},
+      {cod:'87600000',nome:'Rio Pardinho — S.Cruz',    lat:-29.725,lng:-52.428,cota:2.1,status:'Normal'},
+    ];
+    ESTACOES_ANA.forEach(function(s) {
+      var cor = s.status==='Critico'?'#B83A2E':s.status==='Alerta'?'#E8A23A':'#2D7A5C';
+      L.marker([s.lat, s.lng], {
+        icon: L.divIcon({
+          className:'',
+          html:'<div style="width:14px;height:14px;border-radius:3px;background:'+cor+';border:2px solid #fff;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4)">H</div>',
+          iconSize:[14,14], iconAnchor:[7,7],
+        })
+      })
+      .bindTooltip('<b>'+s.nome+'</b><br>Cota: '+s.cota+'m · '+s.status+'<br><em>ANA HidroWeb</em>', {sticky:true})
+      .addTo(lg.hidrov);
+    });
+
+    // PLUVIÔMETROS
+    lg.pluvio = L.layerGroup();
+    (SGA.sensoresPluvio||[]).forEach(function(s) {
+      var cor = s.status==='Critico'?'#B83A2E':s.status==='Alto'?'#E8A23A':'#2D7A5C';
+      L.marker([s.lat, s.lng], {
+        icon: L.divIcon({
+          className:'',
+          html:'<div style="width:14px;height:14px;border-radius:50%;background:'+cor+';border:2px solid #fff;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4)">P</div>',
+          iconSize:[14,14], iconAnchor:[7,7],
+        })
+      })
+      .bindTooltip('<b>'+s.id+'</b><br>'+s.local+'<br>'+s.mmh+'mm/h · '+s.status, {sticky:true})
+      .addTo(lg.pluvio);
+    });
+
+    // CPRM — suscetibilidade (municípios com risco >= 4)
+    lg.cprm = L.layerGroup();
+    todos.filter(function(mu){ return mu.risco && mu.risco.nivel >= 4; }).forEach(function(mu) {
+      L.circle([mu.lat, mu.lng], {
+        radius: 8000,
+        color:'#7F55CC', fillColor:'#7F55CC', fillOpacity:.18, weight:1.5, dashArray:'6 4'
+      })
+      .bindTooltip('CPRM — Suscetibilidade alta · '+mu.nome, {sticky:true})
+      .addTo(lg.cprm);
+    });
+
+    // ABRIGOS
+    lg.abrigo = L.layerGroup();
+    (SGA.abrigos||[]).forEach(function(a) {
+      var vagas = typeof a.vagas_livres !== 'undefined' ? a.vagas_livres : Math.round((a.capacidade||a.cap||0) * 0.7);
+      L.marker([a.lat, a.lng], {
+        icon: L.divIcon({
+          className:'',
+          html:'<div style="width:18px;height:18px;border-radius:4px;background:#2D7A5C;border:2px solid #fff;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4)">A</div>',
+          iconSize:[18,18], iconAnchor:[9,9],
+        })
+      })
+      .bindTooltip('<b>'+(a.nome||a.nome)+'</b><br>'+vagas+' vagas livres', {sticky:true})
+      .addTo(lg.abrigo);
+    });
+
+    // ROTAS (OSM-based)
+    lg.rota = L.layerGroup();
+    [
+      {pts:[[-29.99,-52.37],[-29.90,-52.40],[-29.72,-52.43]], label:'RS-471 → Santa Cruz'},
+      {pts:[[-29.99,-52.37],[-30.04,-52.50],[-30.04,-52.89]], label:'RS-287 → Cachoeira do Sul'},
+      {pts:[[-29.99,-52.37],[-30.10,-52.20],[-30.20,-51.80],[-30.10,-51.50]], label:'BR-290 → Porto Alegre'},
+    ].forEach(function(r) {
+      L.polyline(r.pts, {color:'#2D7A5C', weight:2.5, opacity:.7, dashArray:'8 5'})
+        .bindTooltip('Rota de fuga: '+r.label+' · OSM', {sticky:true}).addTo(lg.rota);
+    });
+  },
+
   toggleLayer(id) {
     if (!SGA.maps.main) return;
-    const state = SGA.ui.mapLayers;
+    var state = SGA.ui.mapLayers;
     state[id] = !state[id];
-    const lg = SGA.maps.layerGroups[id];
+    var lg = SGA.maps.layerGroups[id];
     if (lg) {
       if (state[id]) lg.addTo(SGA.maps.main);
       else SGA.maps.main.removeLayer(lg);
     }
-    // Atualiza estilo do botão
-    const btn = document.getElementById('lb-' + id);
+    var btn = document.getElementById('lb-' + id);
     if (btn) {
-      btn.className = 'layer-btn' + (state[id] ?
-        { risco:' on', hidro:' on-blue', pluvio:' on-amber', hidrov:' on-blue', cprm:' on', abrigo:' on', rota:' on' }[id] || ' on'
-        : '');
+      var classes = {risco:' on',hidro:' on-blue',pluvio:' on-amber',hidrov:' on-blue',cprm:' on',abrigo:' on',rota:' on'};
+      btn.className = 'layer-btn' + (state[id] ? (classes[id]||' on') : '');
     }
   },
 
-  /** Adiciona círculo de município ao mapa */
   _addMuniCircle(target, mu) {
-    const radius = 4000 + mu.score * 5000;
+    var cor = mu.risco ? mu.risco.cor : '#4BAF82';
+    var score = mu.risco ? mu.risco.score_ia : 0.1;
     L.circle([mu.lat, mu.lng], {
-      radius,
-      color: mu.col,
-      fillColor: mu.col,
-      fillOpacity: 0.35 + mu.score * 0.4,
+      radius: 3000 + score * 6000,
+      color: cor, fillColor: cor,
+      fillOpacity: 0.20 + score * 0.40,
       weight: 1.5,
     })
-    .bindTooltip(
-      `<strong>${mu.name}</strong><br>Risco: ${mu.risco} · Score IA: ${mu.score}<br>Pop: ${mu.pop.toLocaleString('pt-BR')}<br>${mu.nota}`,
-      { sticky: true }
-    )
-    .addTo(target instanceof L.Map ? target : target);
-
-    L.marker([mu.lat, mu.lng], {
-      icon: L.divIcon({
-        className: '',
-        html: `<div class="map-icon-muni" style="color:${mu.col}">${mu.name}</div>`,
-        iconSize: [0, 0],
-      }),
-    }).addTo(target instanceof L.Map ? target : target);
+    .bindTooltip('<b>'+mu.nome+'</b><br>Risco: '+(mu.risco?mu.risco.nivel_str:'N/D'), {sticky:true})
+    .addTo(target);
   },
 
-  /** Ícone para sensores (réguas e pluviômetros) */
-  _sensorIcon(color, letter) {
-    return L.divIcon({
-      className: '',
-      html: `<div class="map-icon-sensor" style="background:${color}">${letter}</div>`,
-      iconSize: [14, 14],
-    });
-  },
-
-  /** Ícone para abrigos */
-  _abrigoIcon() {
-    return L.divIcon({
-      className: '',
-      html: `<div class="map-icon-abrigo">A</div>`,
-      iconSize: [18, 18],
-    });
+  // Centralizar mapa no município ativo
+  centralizarMunicipio(municipio) {
+    if (SGA.maps.main && municipio) {
+      SGA.maps.main.setView([municipio.lat, municipio.lng], 11);
+    }
+    if (SGA.maps.mini && municipio) {
+      SGA.maps.mini.setView([municipio.lat, municipio.lng], 10);
+    }
   },
 };
 
-window.MapUtils = MapUtils;
-// Expõe toggleLayer globalmente para uso inline no HTML
-window.toggleLayer = (id) => MapUtils.toggleLayer(id);
+window.MapUtils  = MapUtils;
+window.toggleLayer = function(id) { MapUtils.toggleLayer(id); };

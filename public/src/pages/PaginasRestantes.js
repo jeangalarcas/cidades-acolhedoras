@@ -6,7 +6,7 @@ const FluxoPage = {
     const etapas = [
       { n:1, titulo:'Detecção automática',   icone:'📡', status:'done',
         desc:'Sensores IoT + ANA HidroWeb ultrapassaram limiar às 11:42',
-        checklist:['Cota Rio Pardo: 4,8m (>3,5m ✓)','Pluviômetro PV-02: 138mm/h (>80mm/h ✓)','Solo T-04: 89% saturado (>85% ✓)'] },
+        checklist:['Cota do rio: acima do limite','Pluviometro: acima do limite','Solo: saturado'] },
       { n:2, titulo:'Validação IA',           icone:'🧠', status:'done',
         desc:'Modelo LSTM-v3 confirmou risco crítico com 94% de confiança',
         checklist:['Score Camada 2: 0.94 (>0.65 ✓)','IA LSTM: P(evento)=0.94','IC 90%: [0.89 — 0.97]'] },
@@ -14,7 +14,7 @@ const FluxoPage = {
         desc:'Alertas críticos emitidos para 3 municípios. Defesa Civil notificada.',
         checklist:['App push: 12.480 dispositivos ✓','WhatsApp: 3.820 CadÚnico ✓','Telegram DC: enviado ✓','SMS em processamento...'] },
       { n:4, titulo:'Notificação população',  icone:'📣', status:'active',
-        desc:'Sirenes ativadas em Rio Pardo. Rádio FM em transmissão de emergência.',
+        desc:'Sirenes ativadas no municipio. Radio FM em transmissao de emergencia.',
         checklist:['Sirenes IoT: 4/6 ativas','Rádio FM: ao ar ✓','SMS CadÚnico: 3.820 envios'] },
       { n:5, titulo:'Ação Defesa Civil',      icone:'🛡', status:'pending',
         desc:'Aguardando confirmação do secretário Vanderlei Marcos',
@@ -24,7 +24,7 @@ const FluxoPage = {
         checklist:['Rotas de fuga: RS-471 (Norte)','Ônibus municipais: a mobilizar','CRAS Guajuviras: a acionar'] },
       { n:7, titulo:'Ativação de abrigos',    icone:'🏠', status:'pending',
         desc:'4 abrigos disponíveis · 6.700 vagas livres',
-        checklist:['SENAI Santa Cruz: 2.500 vagas','Ginásio Rio Pardo: 2.000 vagas','Escola Venâncio: 1.200 vagas'] },
+        checklist:['Abrigo principal: vagas disponiveis','Abrigo secundario: vagas disponiveis','Abrigo terciario: vagas disponiveis'] },
     ];
 
     return `
@@ -180,7 +180,7 @@ const IntegracoesPage = {
     { nome:'CEMADEN',          tipo:'Meteo',         tag:'ds-cem',  status:'g', desc:'Pluviometria em tempo real · RS' },
     { nome:'IBGE SIDRA',       tipo:'Censo',         tag:'ds-ibge', status:'g', desc:'Malha municipal · Setores censitários · Pop.' },
     { nome:'MapBiomas',        tipo:'Uso do Solo',   tag:'ds-mb',   status:'g', desc:'CN da bacia · Uso do solo 1985–2024' },
-    { nome:'CadÚnico / Gov.br',tipo:'Social',        tag:'ds-cad',  status:'g', desc:'3.820 famílias vulneráveis georreferenciadas' },
+    { nome:'CadUnico / Gov.br',tipo:'Social',        tag:'ds-cad',  status:'g', desc:'Dados sociais do municipio ativo' },
     { nome:'SUAS / MDS',       tipo:'Social',        tag:'ds-ibge', status:'g', desc:'CRAS · CREAS · Unidades de acolhimento' },
     { nome:'SAMU/CAD',         tipo:'Emergência',    tag:'ds-samu', status:'g', desc:'Despacho de viaturas · WebSocket' },
     { nome:'Open-Meteo',       tipo:'NWP/Previsão',  tag:'ds-new',  status:'g', desc:'Ensemble ECMWF+GFS · 72h gratuito' },
@@ -240,7 +240,7 @@ const HidroWebPage = {
       <div class="page-header">
         <div>
           <div class="page-title">ANA HidroWeb</div>
-          <div class="page-sub">6 estações fluviométricas · Vale do Rio Pardo</div>
+          <div class="page-sub">6 estações fluviométricas · Municipio Ativo</div>
         </div>
         <div class="page-actions">
           <span class="ds-badge ds-ana">HidroWeb API</span>
@@ -461,7 +461,7 @@ const CanaisPage = {
       { nome:'Rádio FM Emergência',     icone:'📻', status:'ok',   desc:'Frequência 101.5 FM · Cobertura regional' },
       { nome:'Sirenes IoT',             icone:'🚨', status:'warn', desc:'6 sirenes · 4 ativas · 2 em manutenção' },
       { nome:'Telegram Técnico',        icone:'✈️', status:'ok',   desc:'Canal Defesa Civil RS · Gestores municipais' },
-      { nome:'TV Regional',             icone:'📺', status:'ok',   desc:'TV Rio Pardo + TV Peão · Crawl de emergência' },
+      { nome:'TV Regional',             icone:'📺', status:'ok',   desc:'Emissoras regionais RS · Crawl de emergência' },
       { nome:'E-mail institucional',    icone:'📧', status:'ok',   desc:'Prefeituras · Defesa Civil · Secretarias' },
       { nome:'Wearables',               icone:'⌚', status:'ok',   desc:'Samsung Health + Apple Health · Vibração' },
     ];
@@ -497,7 +497,7 @@ window.CanaisPage = CanaisPage;
 const RelatorioPage = {
   render() {
     const logs = [
-      { hora:'14:32', tipo:'r', msg:'Alerta Crítico emitido — Rio Pardo',              sub:'Cota 4,8m · 3 canais ativados' },
+      { hora:'14:32', tipo:'r', msg:'Alerta Critico emitido',              sub:'Nivel de alerta atingido' },
       { hora:'14:18', tipo:'r', msg:'LSTM-v3 confirmou risco crítico 94%',              sub:'Previsão: pico às 16h com IC90% [0.89–0.97]' },
       { hora:'12:55', tipo:'y', msg:'PV-02 Serra Botucaraí: 138mm/h',                  sub:'Limiar de 80mm/h ultrapassado' },
       { hora:'12:18', tipo:'y', msg:'Alerta Alto emitido — solo saturado',              sub:'T-04: 89% · I-02: 2,8mm/dia' },
