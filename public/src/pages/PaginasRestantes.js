@@ -314,8 +314,8 @@ const GeodadosPage = {
             <div class="card-body">
               <div class="metric-row"><span class="mr-label">Em área de risco</span><span class="mr-value" style="color:var(--red)">${fmt(cadunico.familias_risco)}</span></div>
               <div class="metric-row"><span class="mr-label">Bolsa Família</span><span class="mr-value">${fmt(cadunico.bolsa_familia)}</span></div>
-              <div class="metric-row"><span class="mr-label">PCDs e Idosos</span><span class="mr-value" style="color:var(--amber)">${val(cadunico.pcds_idosos)}</span></div>
-              <div class="metric-row"><span class="mr-label">Crianças</span><span class="mr-value">${val(cadunico.criancas)}</span></div>
+              <div class="metric-row"><span class="mr-label">PCDs e Idosos</span><span class="mr-value" style="color:var(--amber)">${fmt(cadunico.pcds_idosos)}</span></div>
+              <div class="metric-row"><span class="mr-label">Crianças</span><span class="mr-value">${fmt(cadunico.criancas)}</span></div>
             </div>
           </div>
           <!-- SUAS -->
