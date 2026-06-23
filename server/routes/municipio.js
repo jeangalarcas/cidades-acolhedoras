@@ -121,4 +121,58 @@ router.get('/:cod_ibge/previsao', async(req,res)=>{
   } catch(e){ res.status(500).json({erro:e.message}); }
 });
 
+router.get('/:cod_ibge/social', async (req, res) => {
+  try {
+    const ibge = parseInt(req.params.cod_ibge, 10);
+    if (Number.isNaN(ibge)) {
+      return res.status(400).json({ erro: 'cod_ibge inválido' });
+    }
+ 
+    const { rows } = await db.query(
+      `SELECT
+         cad_familias_risco, cad_bolsa_familia, cad_pcds_idosos, cad_criancas,
+         suas_cras, suas_creas, suas_acolhimento, suas_vagas, suas_assistentes,
+         samu_viaturas, samu_equipes_bombeiros, samu_ocorrencias,
+         samu_tmr_min, samu_resgates_24h,
+         social_atualizado_em
+       FROM municipios
+       WHERE cod_ibge = $1`,
+      [ibge]
+    );
+ 
+    if (!rows.length) {
+      return res.status(404).json({ erro: 'Município não encontrado' });
+    }
+ 
+    const m = rows[0];
+ 
+    res.json({
+      cadunico: {
+        familias_risco: m.cad_familias_risco,
+        bolsa_familia:  m.cad_bolsa_familia,
+        pcds_idosos:    m.cad_pcds_idosos,
+        criancas:       m.cad_criancas,
+      },
+      suas: {
+        cras:        m.suas_cras,
+        creas:       m.suas_creas,
+        acolhimento: m.suas_acolhimento,
+        vagas:       m.suas_vagas,
+        assistentes: m.suas_assistentes,
+      },
+      samu: {
+        viaturas:          m.samu_viaturas,
+        equipes_bombeiros: m.samu_equipes_bombeiros,
+        ocorrencias:       m.samu_ocorrencias,
+        tmr_min:           m.samu_tmr_min,
+        resgates_24h:      m.samu_resgates_24h,
+      },
+      atualizado_em: m.social_atualizado_em,
+      fonte: 'Supabase · municipios',
+    });
+  } catch (e) {
+    res.status(500).json({ erro: e.message });
+  }
+});
+
 module.exports=router;
