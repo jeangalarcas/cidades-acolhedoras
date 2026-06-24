@@ -326,7 +326,7 @@ const GeodadosPage = {
               <div class="metric-row"><span class="mr-label">CREAS</span><span class="mr-value">${val(suas.creas)}</span></div>
               <div class="metric-row"><span class="mr-label">Acolhimento</span><span class="mr-value">${val(suas.acolhimento)}</span></div>
               <div class="metric-row"><span class="mr-label">Vagas totais</span><span class="mr-value">${fmt(suas.vagas)}</span></div>
-              <div class="metric-row"><span class="mr-label">Assistentes</span><span class="mr-value">${val(suas.assistentes)}</span></div>
+              <div class="metric-row"><span class="mr-label">Profissionais SUAS</span><span class="mr-value">${fmt(suas.assistentes)}</span></div>
             </div>
           </div>
           <!-- SAMU -->
