@@ -1,0 +1,35 @@
+{
+  "updated": "2026-06-25T19:04:24.496Z",
+  "estacoes": [
+    {
+      "codigo": "87480000",
+      "timestamp": "2026-06-25T19:04:24.496Z",
+      "status": "mock"
+    },
+    {
+      "codigo": "87600000",
+      "timestamp": "2026-06-25T19:04:24.496Z",
+      "status": "mock"
+    },
+    {
+      "codigo": "87620000",
+      "timestamp": "2026-06-25T19:04:24.496Z",
+      "status": "mock"
+    },
+    {
+      "codigo": "87400000",
+      "timestamp": "2026-06-25T19:04:24.496Z",
+      "status": "mock"
+    },
+    {
+      "codigo": "87520000",
+      "timestamp": "2026-06-25T19:04:24.496Z",
+      "status": "mock"
+    },
+    {
+      "codigo": "87540000",
+      "timestamp": "2026-06-25T19:04:24.496Z",
+      "status": "mock"
+    }
+  ]
+}
