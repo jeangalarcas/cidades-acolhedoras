@@ -6,37 +6,33 @@ on:
     - cron: '0 9,21 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write          # ← ADIÇÃO: dá ao GITHUB_TOKEN permissão de push
+
 jobs:
   sync-data:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Sincronizar dados ANA HidroWeb
         run: node scripts/fetch-data.js --source ana
         env:
           ANA_API_KEY: ${{ secrets.ANA_API_KEY }}
-
       - name: Sincronizar dados CEMADEN
         run: node scripts/fetch-data.js --source cemaden
         env:
           CEMADEN_API_KEY: ${{ secrets.CEMADEN_API_KEY }}
-
       - name: Sincronizar dados INMET
         run: node scripts/fetch-data.js --source inmet
-
       - name: Verificar alertas críticos
         run: node scripts/fetch-data.js --check-alerts
-
       - name: Commit dados atualizados
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
