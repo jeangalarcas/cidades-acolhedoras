@@ -91,6 +91,8 @@ const PainelPage = {
     body.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-3)">Buscando dados para '+m.nome+'...</div>';
 
     var dados = await DataService.buscarTudo(m);
+    SGA.alertasAtivos = (dados && dados.alertas) || [];
+    if (window.TopBar && TopBar.atualizarAlertas) TopBar.atualizarAlertas();
     if (!dados) { body.innerHTML = PainelPage._renderSemMunicipio(); return; }
 
     var p  = dados.previsao;

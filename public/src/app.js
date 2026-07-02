@@ -93,7 +93,6 @@ const App = {
           ${MunicipiosPage.render()}
           ${AbrigosPage.render()}
           ${CanaisPage.render()}
-          ${CanoasPage.render()}
           ${MunicipioPage.render()}
           ${RelatorioPage.render()}
         </div>

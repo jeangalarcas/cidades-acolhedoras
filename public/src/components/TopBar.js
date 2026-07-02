@@ -38,13 +38,20 @@ const TopBar = {
                  font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0">
           Sair
         </button>
-        <span style="background:#B83A2E;color:#fff;font-size:10px;font-weight:700;
-                     padding:3px 8px;border-radius:12px;white-space:nowrap;flex-shrink:0">
-          3 ALERTAS
-        </span>
+        <span id="tb-alertas" style="background:#B83A2E;color:#fff;font-size:10px;font-weight:700;
+             padding:3px 8px;border-radius:12px;white-space:nowrap;flex-shrink:0;display:none">
+  0 ALERTAS
+</span>
       </div>
     </div>`;
   },
+ atualizarAlertas() {
+    const el = document.getElementById('tb-alertas');
+    if (!el) return;
+    const n = Array.isArray(SGA.alertasAtivos) ? SGA.alertasAtivos.length : 0;
+    el.textContent = n + (n === 1 ? ' ALERTA' : ' ALERTAS');
+    el.style.display = n > 0 ? 'inline-block' : 'none';
+  }, 
 };
 window.TopBar = TopBar;
 
@@ -53,11 +60,11 @@ const Sidebar = {
     { section: 'MONITORAMENTO', items: [
       { id:'painel',      icon:'P',  label:'Painel Geral' },
       { id:'mapa',        icon:'M',  label:'Mapa OSM / CPRM' },
-      { id:'sensores',    icon:'S',  label:'Sensores e IoT',    badge:'11', badgeClass:'y' },
-      { id:'integracoes', icon:'I',  label:'Integracoes',       badge:'16', badgeClass:'b' },
+      { id:'sensores',    icon:'S',  label:'Sensores e IoT'},
+      { id:'integracoes', icon:'I',  label:'Integracoes' },
     ]},
     { section: 'RESPOSTA', items: [
-      { id:'alertas',  icon:'A',  label:'Central de Alertas', badge:'3' },
+      { id:'alertas',  icon:'A',  label:'Central de Alertas' },
       { id:'fluxo',    icon:'F',  label:'Fluxo de Decisao' },
       { id:'abrigos',  icon:'Ab', label:'Abrigos e Rotas' },
       { id:'canais',   icon:'C',  label:'Canais de Emissao' },
@@ -68,7 +75,6 @@ const Sidebar = {
       { id:'hidroweb',   icon:'H',  label:'ANA HidroWeb' },
       { id:'geodados',   icon:'G',  label:'Geodados e Sociais' },
       { id:'municipio',  icon:'MU', label:'Municipio Ativo', badge:'LIVE', badgeClass:'r' },
-      { id:'canoas',     icon:'CA', label:'Canoas Tempo Real', badge:'LIVE', badgeClass:'r' },
       { id:'relatorio',  icon:'R',  label:'Relatorios e Log' },
     ]},
   ],

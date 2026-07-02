@@ -2,7 +2,7 @@ const Router = {
   pages: [
     'painel','mapa','alertas','fluxo','sensores','integracoes',
     'hidroweb','geodados','ia','municipios','abrigos','canais',
-    'canoas','municipio','relatorio'
+    'municipio','relatorio'
   ],
 
   go(pageId) {
@@ -29,7 +29,6 @@ const Router = {
     if (pageId === 'sensores') setTimeout(function(){ SparklineUtils.renderAll(); }, 100);
     if (pageId === 'hidroweb') setTimeout(function(){ SparklineUtils.renderHidroWeb(); }, 100);
     if (pageId === 'municipios' && MunicipiosPage._todos.length === 0) MunicipiosPage.iniciar();
-    if (pageId === 'canoas') setTimeout(function(){ CanoasPage.atualizar(); }, 200);
     if (pageId === 'municipio') setTimeout(function(){
       MunicipioPage.iniciar(MunicipioService.getAtivo() || SGA.config.municipioAtivo);
     }, 100);
