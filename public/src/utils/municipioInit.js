@@ -61,6 +61,7 @@ const MunicipioInit = {
     // Busca dados sociais no backend (assíncrono, não bloqueia a renderização).
     // Se falhar ou demorar, SGA.social permanece vazio e o painel mostra "—".
     this.carregarSocial(municipio.cod_ibge);
+    if (window.AnaSensores) AnaSensores.carregar(SGA.config.codIBGE);
 
     return municipio;
   },
@@ -187,6 +188,7 @@ const MunicipioInit = {
 
     this.aplicarAoSGA(m);
     this.carregarSocial(m.cod_ibge);
+    if (window.AnaSensores) AnaSensores.carregar(SGA.config.codIBGE);
 
     // Atualiza URL
     const url = new URL(window.location.href);
