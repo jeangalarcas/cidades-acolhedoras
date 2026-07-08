@@ -132,14 +132,9 @@ const MapUtils = {
 
     // RÉGUAS ANA — estações ativas
     lg.hidrov = L.layerGroup();
-    var ESTACOES_ANA = [
-      {cod:'87480000',nome:'Rio Gravataí — Canoas',   lat:-29.923,lng:-51.187,cota:2.1,status:'Normal'},
-      {cod:'87110000',nome:'Rio dos Sinos — S.Leopoldo',lat:-29.767,lng:-51.148,cota:1.8,status:'Normal'},
-      {cod:'87150000',nome:'Rio Caí — Montenegro',     lat:-29.692,lng:-51.461,cota:1.5,status:'Normal'},
-      {cod:'86990000',nome:'Guaíba — Porto Alegre',    lat:-30.020,lng:-51.218,cota:0.8,status:'Normal'},
-      {cod:'87380000',nome:'Rio Jacuí — Cachoeira Sul',lat:-30.040,lng:-52.890,cota:5.8,status:'Normal'},
-      {cod:'87600000',nome:'Rio Pardinho — S.Cruz',    lat:-29.725,lng:-52.428,cota:2.1,status:'Normal'},
-    ];
+    var ESTACOES_ANA = (SGA.sensoresHidro || []).filter(function(s){ return s.lat != null && s.lng != null; })
+      .map(function(s){ return { cod: s.id, nome: s.local, lat: s.lat, lng: s.lng,
+                                 cota: (s.cota != null ? s.cota : '—'), status: s.status }; });
     ESTACOES_ANA.forEach(function(s) {
       var cor = s.status==='Critico'?'#B83A2E':s.status==='Alerta'?'#E8A23A':'#2D7A5C';
       L.marker([s.lat, s.lng], {
@@ -155,7 +150,7 @@ const MapUtils = {
 
     // PLUVIÔMETROS
     lg.pluvio = L.layerGroup();
-    (SGA.sensoresPluvio||[]).forEach(function(s) {
+    (SGA.sensoresPluvio||[]).filter(function(s){ return s.lat != null && s.lng != null; }).forEach(function(s) {
       var cor = s.status==='Critico'?'#B83A2E':s.status==='Alto'?'#E8A23A':'#2D7A5C';
       L.marker([s.lat, s.lng], {
         icon: L.divIcon({

@@ -95,6 +95,7 @@ const AnaSensores = {
         }
         return {
           id: e.codigo, local: rotulo(e),
+          lat: e.latitude, lng: e.longitude,        // ← ADICIONE ESTA LINHA
           cota: cotaCm != null ? +(cotaCm / 100).toFixed(2) : null,  // cm → m
           normal: '—',           // nível de referência por estação: não publicado pela ANA
           taxa,
@@ -122,6 +123,7 @@ const AnaSensores = {
         const tem = leituras.length > 0;
         return {
           id: e.codigo, local: rotulo(e),
+          lat: e.latitude, lng: e.longitude,        // ← AQUI TAMBÉM
           mmh:    tem ? +soma(umaHora).toFixed(1) : '—',
           acum6h: tem ? +soma(leituras).toFixed(1) : '—',
           status: tem ? 'Ativo' : 'Offline',
