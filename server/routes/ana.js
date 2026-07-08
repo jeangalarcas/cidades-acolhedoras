@@ -209,5 +209,37 @@ router.get('/serie/:codigo', async (req, res) => {
     res.status(500).json({ erro: e.message });
   }
 });
+/* GET /api/ana/cota-municipio/:cod_ibge — estação FLU real mais próxima + cota ao vivo
+   (mesmo formato do antigo /api/municipio/:ibge/cota → zero mudança de UI) */
+router.get('/cota-municipio/:cod_ibge', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT e.codigo, e.nome, e.rio_nome,
+             round((extensions.ST_DistanceSphere(e.geom,
+               extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326))/1000)::numeric,1) AS dist_km
+        FROM municipios m
+        JOIN estacoes_ana e ON e.telemetrica AND e.tipo='Fluviometrica' AND e.geom IS NOT NULL
+       WHERE m.cod_ibge = $1
+       ORDER BY e.geom <-> extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)
+       LIMIT 1`, [parseInt(req.params.cod_ibge,10)]);
+    if (!rows.length) return res.status(404).json({ erro: 'município não encontrado' });
+    const est = rows[0];
+    const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
+      'Código da Estação': est.codigo, 'Tipo Filtro Data': 'DATA_LEITURA',
+      'Data de Busca (yyyy-MM-dd)': new Date().toISOString().slice(0,10),
+      'Range Intervalo de busca': 'HORA_24',
+    });
+    const ls = j.items || []; const ult = ls[ls.length-1];
+    const cota = ult ? parseFloat(ult.Cota_Adotada) : null;
+    res.json({
+      online: cota != null, cota_m: cota != null ? +(cota/100).toFixed(2) : null,
+      fonte: 'ANA HidroWebService', status: cota != null ? 'OK' : 'N/D',
+      nome: est.nome + (est.rio_nome ? ' · ' + est.rio_nome : ''),
+      cod_estacao: est.codigo, dist_km: +est.dist_km,
+      cota_alerta_m: 3.5, cota_emergencia_m: 4,
+      medido_em: ult ? ult.Data_Hora_Medicao : null,
+    });
+  } catch (e) { res.status(500).json({ erro: e.message }); }
+});
 
 module.exports = router;

@@ -102,6 +102,17 @@ const AnaSensores = {
           col: cotaCm != null ? 'var(--green-mid)' : 'var(--border)',
         };
       });
+// alimenta a página ANA HidroWeb com as mesmas réguas reais
+      SGA.estacoesANA = resFlu.map(({ e, leituras }) => {
+        const ult = leituras[leituras.length-1];
+        const c = ult ? parseFloat(ult.Cota_Adotada) : null;
+        return { nome: e.nome, rio: e.rio_nome || '—', cod: e.codigo,
+                 cota: c != null ? (c/100).toFixed(2) : '—', normal: '—',
+                 variacao: '', vazao: ult && ult.Vazao_Adotada != null ? ult.Vazao_Adotada : '—',
+                 status: c != null ? 'Ativo' : 'Offline' };
+      });
+      const hw = document.querySelector('#p-hidroweb');
+      if (hw && window.HidroWebPage) hw.outerHTML = HidroWebPage.render();
 
       // 5) Pluviômetros → SGA.sensoresPluvio (mm última hora + acumulado 6h)
       SGA.sensoresPluvio = resPlu.map(({ e, leituras }) => {
