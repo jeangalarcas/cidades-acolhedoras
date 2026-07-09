@@ -130,38 +130,32 @@ const MapUtils = {
         .bindTooltip(r.nome+' · ANA HidroWeb', {sticky:true}).addTo(lg.hidro);
     });
 
-    // RÉGUAS ANA — estações ativas
-    lg.hidrov = L.layerGroup();
-    var ESTACOES_ANA = (SGA.sensoresHidro || []).filter(function(s){ return s.lat != null && s.lng != null; })
-      .map(function(s){ return { cod: s.id, nome: s.local, lat: s.lat, lng: s.lng,
-                                 cota: (s.cota != null ? s.cota : '—'), status: s.status }; });
-    ESTACOES_ANA.forEach(function(s) {
-      var cor = s.status==='Critico'?'#B83A2E':s.status==='Alerta'?'#E8A23A':'#2D7A5C';
-      L.marker([s.lat, s.lng], {
-        icon: L.divIcon({
-          className:'',
-          html:'<div style="width:14px;height:14px;border-radius:3px;background:'+cor+';border:2px solid #fff;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4)">H</div>',
-          iconSize:[14,14], iconAnchor:[7,7],
-        })
+  // ── ESTAÇÕES ANA — estado inteiro (GeoJSON do backend, pontos reais) ──
+    // 🟢 ativa (12h) · 🟡 silenciosa · ⚫ convencional
+    lg.hidrov = L.layerGroup();   // botão "Réguas ANA"  → fluviométricas
+    lg.pluvio = L.layerGroup();   // botão "Pluviômetros" → pluviométricas
+    var API = (window.MunicipioInit && MunicipioInit.API_BASE) || 'https://sga-api-1705.onrender.com';
+    fetch(API + '/api/ana/estacoes-geojson')
+      .then(function(r){ return r.json(); })
+      .then(function(fc){
+        (fc.features || []).forEach(function(f){
+          var p = f.properties, c = f.geometry.coordinates; // GeoJSON = [lng, lat]
+          var alvo = (p.tipo === 'Pluviometrica') ? lg.pluvio : lg.hidrov;
+          var tip = '<b>' + p.codigo + '</b> — ' + p.nome +
+                    (p.rio ? '<br>' + p.rio : '') +
+                    '<br>' + (p.municipio || '') +
+                    '<br>Status: ' + p.categoria +
+                    (p.ultima_cota_cm  != null ? '<br>Cota: ' + (p.ultima_cota_cm/100).toFixed(2) + ' m' : '') +
+                    (p.ultima_chuva_mm != null ? '<br>Chuva: ' + p.ultima_chuva_mm + ' mm' : '') +
+                    (p.ultima_medicao_em ? '<br>Medição: ' + String(p.ultima_medicao_em).slice(0,16).replace('T',' ') : '');
+          L.circleMarker([c[1], c[0]], {
+            radius: p.categoria === 'ativa' ? 6 : 4,
+            color: '#fff', weight: 1,
+            fillColor: p.cor || '#8E8E8E', fillOpacity: 0.9
+          }).bindTooltip(tip, {sticky:true}).addTo(alvo);
+        });
       })
-      .bindTooltip('<b>'+s.nome+'</b><br>Cota: '+s.cota+'m · '+s.status+'<br><em>ANA HidroWeb</em>', {sticky:true})
-      .addTo(lg.hidrov);
-    });
-
-    // PLUVIÔMETROS
-    lg.pluvio = L.layerGroup();
-    (SGA.sensoresPluvio||[]).filter(function(s){ return s.lat != null && s.lng != null; }).forEach(function(s) {
-      var cor = s.status==='Critico'?'#B83A2E':s.status==='Alto'?'#E8A23A':'#2D7A5C';
-      L.marker([s.lat, s.lng], {
-        icon: L.divIcon({
-          className:'',
-          html:'<div style="width:14px;height:14px;border-radius:50%;background:'+cor+';border:2px solid #fff;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4)">P</div>',
-          iconSize:[14,14], iconAnchor:[7,7],
-        })
-      })
-      .bindTooltip('<b>'+s.id+'</b><br>'+s.local+'<br>'+s.mmh+'mm/h · '+s.status, {sticky:true})
-      .addTo(lg.pluvio);
-    });
+      .catch(function(e){ console.warn('[mapa] estacoes-geojson:', e.message); });
 
     // CPRM — suscetibilidade (municípios com risco >= 4)
     lg.cprm = L.layerGroup();
