@@ -8,6 +8,7 @@ app.use(express.json());
 
 app.use('/api/municipio',  require('./routes/municipio'));
 app.use('/api/ana', require('./routes/ana'));
+app.use('/api/cemaden',    require('./routes/cemaden'));
 app.use('/api/canoas',     require('./routes/canoas'));
 app.use('/api/municipios', require('./routes/municipios'));
 
@@ -17,3 +18,4 @@ app.get('/health', (req, res) =>
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`SGA API rodando na porta ${PORT}`));
+
