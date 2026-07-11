@@ -1,20 +1,19 @@
 /**
- * SGA — Integração CEMADEN / PED  (server/routes/cemaden.js)
+ * SGA — Integração CEMADEN / PED  (server/routes/cemaden.js)  — v2
  * ─────────────────────────────────────────────────────────────────────────────
- * Rotas baseadas no catálogo OFICIAL do Swagger da PED (sws.cemaden.gov.br),
- * extraído em 08/07/2026 — nomes de rotas/parâmetros conforme a fonte:
- *   /pcds-cadastro/estacoes        (token, codibge, formato)
- *   /pcds/pcds-dados-recentes      (token, codibge, uf, sensor, rede, ...)
- *   /pcds-acum/acumulados-recentes (token, codibge, codestacao, formato)
+ * TOKEN AUTOMÁTICO: a PED emite JWT com validade de 4h. Este módulo obtém e
+ * renova o token sozinho via SGAA (schema confirmado pelo validador oficial):
+ *   POST https://ped.cemaden.gov.br/SGAA/rest/controle-token/tokens
+ *   Body: { "email": "...", "password": "..." }
  *
- * FASE 1 (esta): conector fiel — devolve a resposta da PED como veio, para
- * validarmos os campos reais antes de mapear para os cards do sistema.
+ * VARIÁVEIS NO RENDER (substituem o CEMADEN_TOKEN, que pode ser removido):
+ *   CEMADEN_EMAIL = e-mail do cadastro na PED
+ *   CEMADEN_SENHA = senha do portal PED
  *
- * INSTALAÇÃO:
- *   1. Salvar como  server/routes/cemaden.js
- *   2. No server/index.js, junto dos outros app.use:
- *        app.use('/api/cemaden', require('./routes/cemaden'));
- *   3. Render → Environment:  CEMADEN_TOKEN = (o JWT recebido no cadastro)
+ * Rotas (catálogo oficial do Swagger da PED):
+ *   GET /api/cemaden/estacoes?ibge=4304606
+ *   GET /api/cemaden/dados-recentes?ibge=4304606  (ou ?uf=RS)
+ *   GET /api/cemaden/acumulados?ibge=4304606
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -22,25 +21,51 @@ const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch'); // v2, mesmo padrão do projeto
 
-const PED = 'https://sws.cemaden.gov.br/PED/rest';
+const PED  = 'https://sws.cemaden.gov.br/PED/rest';
+const SGAA = 'https://ped.cemaden.gov.br/SGAA/rest/controle-token/tokens';
 
-async function pedGet(path, params) {
-  if (!process.env.CEMADEN_TOKEN) {
-    const e = new Error('CEMADEN_TOKEN não configurado no ambiente');
+/* ── Token com cache (validade 4h → renovamos aos 3h30) ─────────────────── */
+let _tok = null, _tokExp = 0;
+
+async function tokenPED(forcar) {
+  if (!forcar && _tok && Date.now() < _tokExp) return _tok;
+  const email = (process.env.CEMADEN_EMAIL || '').trim();
+  const senha = (process.env.CEMADEN_SENHA || '').trim();
+  if (!email || !senha) {
+    const e = new Error('CEMADEN_EMAIL / CEMADEN_SENHA não configurados no ambiente');
     e.status = 503; throw e;
   }
+  const r = await fetch(SGAA, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ email, password: senha }),
+  });
+  const corpo = await r.json().catch(() => null);
+  // formatos possíveis de retorno: {token} | {items:{token}} | "eyJ..."
+  const t = (corpo && (corpo.token || (corpo.items && corpo.items.token))) ||
+            (typeof corpo === 'string' && corpo.startsWith('eyJ') ? corpo : null);
+  if (!r.ok || !t) {
+    const e = new Error('Autenticação PED falhou (HTTP ' + r.status + ')');
+    e.status = 502; e.corpo = corpo; throw e;
+  }
+  _tok = t; _tokExp = Date.now() + 3.5 * 3600e3;
+  return t;
+}
+
+async function pedGet(path, params, jaTentou) {
+  const tok = await tokenPED(false);
   const q = Object.entries(params || {})
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
   const r = await fetch(`${PED}${path}${q ? '?' + q : ''}`, {
-    headers: { accept: 'application/json', token: process.env.CEMADEN_TOKEN },
+    headers: { accept: 'application/json', token: tok },
   });
+  if ((r.status === 401 || r.status === 403) && !jaTentou) {
+    _tok = null;                       // token pode ter expirado → renova 1x
+    return pedGet(path, params, true);
+  }
   const texto = await r.text();
   let corpo; try { corpo = JSON.parse(texto); } catch { corpo = texto; }
-  if (r.status === 401 || r.status === 403) {
-    const e = new Error('Token CEMADEN recusado (HTTP ' + r.status + ') — renove o token na PED e atualize CEMADEN_TOKEN no Render');
-    e.status = 502; e.corpo = corpo; throw e;
-  }
   if (!r.ok) {
     const e = new Error(`PED ${path}: HTTP ${r.status}`);
     e.status = 502; e.corpo = corpo; throw e;
@@ -51,18 +76,15 @@ async function pedGet(path, params) {
 const trata = (res, fn) => fn().then(d => res.json(d)).catch(e =>
   res.status(e.status || 500).json({ erro: e.message, detalhe: e.corpo || null }));
 
-/* GET /api/cemaden/estacoes?ibge=4304606 — cadastro das estações CEMADEN do município */
 router.get('/estacoes', (req, res) => trata(res, () =>
   pedGet('/pcds-cadastro/estacoes', { codibge: req.query.ibge, formato: 'json' })));
 
-/* GET /api/cemaden/dados-recentes?ibge=4304606  (ou ?uf=RS) — últimas leituras */
 router.get('/dados-recentes', (req, res) => trata(res, () =>
   pedGet('/pcds/pcds-dados-recentes', {
     codibge: req.query.ibge, uf: req.query.uf,
     sensor: req.query.sensor, rede: req.query.rede, formato: 'json',
   })));
 
-/* GET /api/cemaden/acumulados?ibge=4304606 — chuva acumulada 1h/3h/6h/12h/24h... */
 router.get('/acumulados', (req, res) => trata(res, () =>
   pedGet('/pcds-acum/acumulados-recentes', {
     codibge: req.query.ibge, codestacao: req.query.estacao, formato: 'json',
