@@ -57,7 +57,7 @@ const AnaSensores = {
       }
 
       const flu = doMunicipio.filter(e => e.tipo === 'Fluviometrica').slice(0, this.MAX_POR_ABA);
-      const plu = doMunicipio.filter(e => e.tipo === 'Pluviometrica').slice(0, this.MAX_POR_ABA);
+      const plu = doMunicipio.filter(e => e.tipo === 'Pluviometrica' && e.operadora_sigla !== 'CEMADEN').slice(0, this.MAX_POR_ABA);
 
       // 3) Leituras ao vivo (paralelo, tolerante a falha individual)
       const buscarSerie = async (e) => {
@@ -114,6 +114,31 @@ const AnaSensores = {
       });
       const hw = document.querySelector('#p-hidroweb');
       if (hw && window.HidroWebPage) hw.outerHTML = HidroWebPage.render();
+
+// ── Pluviômetros CEMADEN (PED): acumulados oficiais por município ──
+      try {
+        const [rc, re] = await Promise.all([
+          fetch(`${api}/api/cemaden/acumulados?ibge=${codIBGE}`),
+          fetch(`${api}/api/cemaden/estacoes?ibge=${codIBGE}`),
+        ]);
+        if (rc.ok) {
+          const acum  = await rc.json();
+          const cad   = re.ok ? await re.json() : [];
+          const nomes = {};
+          (Array.isArray(cad) ? cad : []).forEach(c => { nomes[c.codestacao] = c.nome; });
+          (Array.isArray(acum) ? acum : []).forEach(a => {
+            const fresco = a.datahora && (Date.now() - new Date(a.datahora).getTime()) <= 6 * 3600e3;
+            SGA.sensoresPluvio.push({
+              id: a.codestacao,
+              local: (nomes[a.codestacao] || a.codestacao) + ' · CEMADEN',
+              mmh:    a.acc1hr != null ? a.acc1hr : '—',
+              acum6h: a.acc6hr != null ? a.acc6hr : '—',
+              status: fresco ? 'Ativo' : 'Offline',
+              col:    fresco ? 'var(--green-mid)' : 'var(--border)',
+            });
+          });
+        }
+      } catch (_) {}
 
       // 5) Pluviômetros → SGA.sensoresPluvio (mm última hora + acumulado 6h)
       SGA.sensoresPluvio = resPlu.map(({ e, leituras }) => {

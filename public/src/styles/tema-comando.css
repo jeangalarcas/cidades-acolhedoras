@@ -1,0 +1,53 @@
+/* ═══════════════════════════════════════════════════════════════
+   SGA — TEMA COMANDO (D1) · Sala de Situação
+   Sobreposição dos design tokens para modo escuro de centro de
+   controle (referência: salas de situação CENAD/Defesas Civis e
+   contraste AA do padrão digital gov.br).
+   INSTALAÇÃO: salvar como  public/src/styles/tema-comando.css  e,
+   no index.html, adicionar DEPOIS do variables.css:
+     <link rel="stylesheet" href="/src/styles/tema-comando.css">
+   REVERSÃO: remover essa <link>.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* Fundos — grafite-esverdeado profundo (fadiga visual baixa em plantão) */
+  --bg:        #0E1613;
+  --bg-2:      #16211B;
+  --white:     #1B2823;   /* superfícies de card no modo escuro */
+
+  /* Tipografia — contraste alto p/ leitura a distância (telão) */
+  --text:      #E9EFEA;
+  --text-2:    #ADBBB1;
+  --text-3:    #75837A;
+  --border:    #2A382F;
+
+  /* Identidade verde — acentos mais luminosos sobre fundo escuro */
+  --green-deep:  #0C1A13;
+  --green-mid:   #3FA97C;
+  --green-light: #5ECD9B;
+  --green-pale:  #14382A;
+
+  /* Alertas — saturação de sala de controle (visíveis de longe) */
+  --amber:       #E8A23A;
+  --amber-pale:  #3A2B10;
+  --red:         #E4574A;
+  --red-pale:    #3D1512;
+
+  /* Informativo */
+  --blue:        #5B9BD5;
+  --blue-pale:   #14283C;
+  --purple:      #9B7BE8;
+  --purple-pale: #241A40;
+
+  /* Sombras viram "brilho de borda" no escuro */
+  --shadow-sm: 0 0 0 1px rgba(255,255,255,.04);
+  --shadow-md: 0 0 0 1px rgba(255,255,255,.05), 0 6px 18px rgba(0,0,0,.45);
+}
+
+/* Ajustes pontuais que tokens não cobrem */
+img.leaflet-tile { filter: brightness(.85) contrast(1.05) saturate(.9); } /* mapa integrado ao escuro */
+.leaflet-container { background: var(--bg-2); }
+input, select, textarea {
+  background: var(--bg-2) !important; color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+::placeholder { color: var(--text-3); }
