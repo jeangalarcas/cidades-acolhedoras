@@ -115,6 +115,24 @@ const AnaSensores = {
       const hw = document.querySelector('#p-hidroweb');
       if (hw && window.HidroWebPage) hw.outerHTML = HidroWebPage.render();
 
+
+
+      // 5) Pluviômetros → SGA.sensoresPluvio (mm última hora + acumulado 6h)
+      SGA.sensoresPluvio = resPlu.map(({ e, leituras }) => {
+        const soma = arr => arr.reduce((s, l) => s + (num(l.Chuva_Adotada) || 0), 0);
+        const umaHora = leituras.filter(l =>
+          (Date.now() - new Date(l.Data_Hora_Medicao)) <= 70 * 60 * 1000);
+        const tem = leituras.length > 0;
+        return {
+          id: e.codigo, local: rotulo(e),
+          lat: e.latitude, lng: e.longitude,        // ← AQUI TAMBÉM
+          mmh:    tem ? +soma(umaHora).toFixed(1) : '—',
+          acum6h: tem ? +soma(leituras).toFixed(1) : '—',
+          status: tem ? 'Ativo' : 'Offline',
+          col:    tem ? 'var(--green-mid)' : 'var(--border)',
+        };
+      });
+
 // ── Pluviômetros CEMADEN (PED): acumulados oficiais por município ──
       try {
         const [rc, re] = await Promise.all([
@@ -139,22 +157,6 @@ const AnaSensores = {
           });
         }
       } catch (_) {}
-
-      // 5) Pluviômetros → SGA.sensoresPluvio (mm última hora + acumulado 6h)
-      SGA.sensoresPluvio = resPlu.map(({ e, leituras }) => {
-        const soma = arr => arr.reduce((s, l) => s + (num(l.Chuva_Adotada) || 0), 0);
-        const umaHora = leituras.filter(l =>
-          (Date.now() - new Date(l.Data_Hora_Medicao)) <= 70 * 60 * 1000);
-        const tem = leituras.length > 0;
-        return {
-          id: e.codigo, local: rotulo(e),
-          lat: e.latitude, lng: e.longitude,        // ← AQUI TAMBÉM
-          mmh:    tem ? +soma(umaHora).toFixed(1) : '—',
-          acum6h: tem ? +soma(leituras).toFixed(1) : '—',
-          status: tem ? 'Ativo' : 'Offline',
-          col:    tem ? 'var(--green-mid)' : 'var(--border)',
-        };
-      });
 
       // (Solo & Encostas: sem fonte ANA — permanece como está, sem inventar)
 
