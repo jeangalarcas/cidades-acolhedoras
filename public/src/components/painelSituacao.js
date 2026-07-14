@@ -2,15 +2,6 @@
  * SGA — D2 · PAINEL DE SITUAÇÃO  (src/components/painelSituacao.js)
  * Faixa de KPIs estaduais em tempo real (padrão sala de situação).
  * Fontes 100% reais: /api/ana/resumo (banco) + SGA.alertasAtivos (motor local).
- *
- * INSTALAÇÃO (3 toques):
- *  1. Salvar em  public/src/components/painelSituacao.js
- *  2. index.html: <script src="/src/components/painelSituacao.js"></script>
- *     (junto dos outros components, ANTES do app.js)
- *  3. app.js: dentro do template do #app, logo ANTES de ${PainelPage.render()}:
- *       <div id="painel-situacao"></div>
- *     e, no fim da inicialização (onde outras cargas são disparadas):
- *       if (window.PainelSituacao) PainelSituacao.iniciar();
  */
 const PainelSituacao = {
   _API: (window.MunicipioInit && MunicipioInit.API_BASE) || 'https://sga-api-1705.onrender.com',
@@ -21,20 +12,11 @@ const PainelSituacao = {
     setInterval(() => this.carregar(), 5 * 60 * 1000);   // atualiza a cada 5 min
   },
 
-  /* Mede a barra fixa do topo em tempo de execução (sem valores mágicos)
-     e prende o painel logo abaixo dela — os KPIs ficam sempre visíveis. */
+  /* Painel em fluxo normal: rola com o conteúdo e NÃO cobre os
+     cabeçalhos fixos das páginas (correção do texto oculto). */
   _fixarAbaixoDaBarra() {
     const el = document.getElementById('painel-situacao');
-    if (!el) return;
-    let h = 0;
-    const topo = document.elementFromPoint(Math.floor(innerWidth / 2), 6);
-    if (topo) {
-      const barra = topo.closest('header, .topbar, [class*="topbar"], [class*="header"]') || topo;
-      const r = barra.getBoundingClientRect();
-      if (r.top <= 1 && r.height > 20 && r.height < 140) h = Math.round(r.height);
-    }
-    el.style.cssText = 'position:sticky;top:' + h + 'px;z-index:60;background:var(--bg);' +
-                       'box-shadow:0 6px 14px rgba(0,0,0,.25)';
+    if (el) el.style.cssText = '';
   },
 
   async carregar() {
