@@ -16,8 +16,25 @@ const PainelSituacao = {
   _API: (window.MunicipioInit && MunicipioInit.API_BASE) || 'https://sga-api-1705.onrender.com',
 
   iniciar() {
+    this._fixarAbaixoDaBarra();
     this.carregar();
     setInterval(() => this.carregar(), 5 * 60 * 1000);   // atualiza a cada 5 min
+  },
+
+  /* Mede a barra fixa do topo em tempo de execução (sem valores mágicos)
+     e prende o painel logo abaixo dela — os KPIs ficam sempre visíveis. */
+  _fixarAbaixoDaBarra() {
+    const el = document.getElementById('painel-situacao');
+    if (!el) return;
+    let h = 0;
+    const topo = document.elementFromPoint(Math.floor(innerWidth / 2), 6);
+    if (topo) {
+      const barra = topo.closest('header, .topbar, [class*="topbar"], [class*="header"]') || topo;
+      const r = barra.getBoundingClientRect();
+      if (r.top <= 1 && r.height > 20 && r.height < 140) h = Math.round(r.height);
+    }
+    el.style.cssText = 'position:sticky;top:' + h + 'px;z-index:60;background:var(--bg);' +
+                       'box-shadow:0 6px 14px rgba(0,0,0,.25)';
   },
 
   async carregar() {
@@ -30,8 +47,7 @@ const PainelSituacao = {
       const alertas = Array.isArray(SGA.alertasAtivos) ? SGA.alertasAtivos.length : 0;
       const corAlerta = alertas > 0 ? 'var(--red)' : 'var(--green-light)';
       const kpi = (rotulo, valor, sub, cor) => `
-        <div style="flex:1;min-width:150px;background:var(--white);border:1px solid var(--border);
-                    border-radius:var(--border-r-sm);padding:10px 14px">
+        <div class="ps-kpi">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;color:var(--text-3);
                       text-transform:uppercase">${rotulo}</div>
           <div style="font-size:24px;font-weight:800;font-family:var(--mono);
@@ -39,7 +55,7 @@ const PainelSituacao = {
           <div style="font-size:10px;color:var(--text-2)">${sub || ''}</div>
         </div>`;
       el.innerHTML = `
-        <div style="display:flex;gap:10px;flex-wrap:wrap;padding:10px 14px 0">
+        <div class="ps-linha">
           ${kpi('Alertas ativos', alertas, alertas ? 'município ativo' : 'nenhum alerta em curso', corAlerta)}
           ${kpi('Estações ativas', d.estacoes_ativas + '<span style="font-size:12px;color:var(--text-3)">/' + d.telemetricas + '</span>', 'transmitindo · últimas 12h', 'var(--green-light)')}
           ${kpi('Municípios monitorados', d.municipios_monitorados, 'com estação ativa agora')}
