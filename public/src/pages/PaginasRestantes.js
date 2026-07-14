@@ -174,22 +174,15 @@ window.SensoresPage = SensoresPage;
  */
 const IntegracoesPage = {
   _integracoes: [
-    { nome:'OpenStreetMap',    tipo:'Cartografia',   tag:'ds-osm',  status:'g', desc:'Mapa base + infraestrutura via Overpass API' },
-    { nome:'CPRM GeoSGB',      tipo:'Geologia',      tag:'ds-cprm', status:'g', desc:'Cartas de suscetibilidade WMS/WFS' },
-    { nome:'ANA HidroWeb',     tipo:'Hidrologia',    tag:'ds-ana',  status:'g', desc:'6 estações · Cotas e vazões em tempo real' },
-    { nome:'CEMADEN',          tipo:'Meteo',         tag:'ds-cem',  status:'g', desc:'Pluviometria em tempo real · RS' },
-    { nome:'IBGE SIDRA',       tipo:'Censo',         tag:'ds-ibge', status:'g', desc:'Malha municipal · Setores censitários · Pop.' },
-    { nome:'MapBiomas',        tipo:'Uso do Solo',   tag:'ds-mb',   status:'g', desc:'CN da bacia · Uso do solo 1985–2024' },
-    { nome:'CadUnico / Gov.br',tipo:'Social',        tag:'ds-cad',  status:'g', desc:'Dados sociais do municipio ativo' },
-    { nome:'SUAS / MDS',       tipo:'Social',        tag:'ds-ibge', status:'g', desc:'CRAS · CREAS · Unidades de acolhimento' },
-    { nome:'SAMU/CAD',         tipo:'Emergência',    tag:'ds-samu', status:'g', desc:'Despacho de viaturas · WebSocket' },
-    { nome:'Open-Meteo',       tipo:'NWP/Previsão',  tag:'ds-new',  status:'g', desc:'Ensemble ECMWF+GFS · 72h gratuito' },
-    { nome:'INMET',            tipo:'Meteo',         tag:'ds-inmet',status:'g', desc:'Estações automáticas · RS' },
-    { nome:'GOES-16',          tipo:'Satélite',      tag:'ds-new',  status:'g', desc:'Imagens satélite NOAA · América do Sul' },
-    { nome:'Sentinel-2 GEE',   tipo:'Sensoriamento', tag:'ds-mb',   status:'y', desc:'ESA via Google Earth Engine · NDWI' },
-    { nome:'Sensores IoT',     tipo:'Sensores',      tag:'ds-ai',   status:'g', desc:'124 sensores LoRaWAN + 4G backup' },
-    { nome:'App Cidades Acolhedoras',tipo:'Canais',  tag:'ds-new',  status:'g', desc:'Push notifications · 12.480 dispositivos' },
-    { nome:'Sirenes IoT MQTT', tipo:'Alertas',       tag:'ds-samu', status:'y', desc:'6 sirenes · 4 ativas · 2 em manutenção' },
+    { nome:'ANA HidroWebService', tipo:'Hidrologia',  tag:'ds-ana',  status:'g', desc:'2.994 estações RS · cota/chuva/vazão ao vivo · token automático (60min)' },
+    { nome:'CEMADEN — PED',       tipo:'Pluviometria',tag:'ds-cem',  status:'g', desc:'Pluviômetros oficiais · acumulados 1h–120h por município · token automático (4h)' },
+    { nome:'Open-Meteo',          tipo:'Previsão',    tag:'ds-new',  status:'g', desc:'Previsão horária por coordenada do município · ECMWF+GFS' },
+    { nome:'INMET',               tipo:'Meteorologia',tag:'ds-inmet',status:'g', desc:'Estações meteorológicas automáticas · condição atual do município' },
+    { nome:'MI Social / SAGI',    tipo:'Social',      tag:'ds-cad',  status:'g', desc:'CadÚnico, Bolsa Família e BPC · 497 municípios' },
+    { nome:'CadSUAS',             tipo:'Social',      tag:'ds-ibge', status:'g', desc:'CRAS · CREAS · unidades de acolhimento (rede socioassistencial)' },
+    { nome:'IBGE',                tipo:'Territorial', tag:'ds-ibge', status:'g', desc:'Malha municipal e centroides oficiais dos 497 municípios' },
+    { nome:'OpenStreetMap',       tipo:'Cartografia', tag:'ds-osm',  status:'g', desc:'Mapa base do sistema (tiles OSM)' },
+    { nome:'CPRM GeoSGB',         tipo:'Geologia',    tag:'ds-cprm', status:'g', desc:'Setorização de risco geológico (camada do mapa)' },
   ],
 
   render() {

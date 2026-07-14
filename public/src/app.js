@@ -23,6 +23,7 @@ const App = {
 
     // 4. Carregar tabela de municípios em background
     setTimeout(function() { MunicipiosPage.iniciar(); }, 1200);
+    if (window.PainelSituacao) setTimeout(function() { PainelSituacao.iniciar(); }, 900);
 
     // 5. Navegar para painel ou município conforme parâmetro URL
     var params = new URLSearchParams(window.location.search);
@@ -81,6 +82,7 @@ const App = {
       <div class="app-wrap">
         ${Sidebar.render()}
         <div class="content" id="content">
+          <div id="painel-situacao"></div>
           ${PainelPage.render()}
           ${MapaPage.render()}
           ${AlertasPage.render()}

@@ -332,4 +332,50 @@ router.post('/enriquecer-status', async (req, res) => {
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
+/* GET /api/ana/resumo — KPIs estaduais p/ o Painel de Situação (leitura instantânea) */
+router.get('/resumo', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT
+        count(*) FILTER (WHERE categoria='ativa')::int      AS estacoes_ativas,
+        count(*) FILTER (WHERE categoria='silenciosa')::int AS silenciosas,
+        count(*) FILTER (WHERE telemetrica)::int            AS telemetricas,
+        (SELECT count(DISTINCT cod_ibge) FROM estacoes_ana
+          WHERE categoria='ativa' AND cod_ibge IS NOT NULL)::int AS municipios_monitorados,
+        (SELECT json_build_object('mm', max(ultima_chuva_mm))
+           FROM estacoes_ana WHERE categoria='ativa')            AS chuva_max,
+        (SELECT json_build_object('cota_m', round((ultima_cota_cm/100.0)::numeric,2),
+                                  'nome', nome, 'rio', rio_nome)
+           FROM estacoes_ana
+          WHERE categoria='ativa' AND ultima_cota_cm IS NOT NULL
+            AND nome !~* 'UHE|CGH|PCH|BARRAMENTO'   -- réguas de rio, não reservatórios
+          ORDER BY ultima_cota_cm DESC LIMIT 1)                  AS cota_max
+      FROM estacoes_ana`);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
+/* GET /api/ana/resumo — KPIs estaduais p/ o Painel de Situação (leitura instantânea) */
+router.get('/resumo', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT
+        count(*) FILTER (WHERE categoria='ativa')::int      AS estacoes_ativas,
+        count(*) FILTER (WHERE categoria='silenciosa')::int AS silenciosas,
+        count(*) FILTER (WHERE telemetrica)::int            AS telemetricas,
+        (SELECT count(DISTINCT cod_ibge) FROM estacoes_ana
+          WHERE categoria='ativa' AND cod_ibge IS NOT NULL)::int AS municipios_monitorados,
+        (SELECT json_build_object('mm', max(ultima_chuva_mm))
+           FROM estacoes_ana WHERE categoria='ativa')            AS chuva_max,
+        (SELECT json_build_object('cota_m', round((ultima_cota_cm/100.0)::numeric,2),
+                                  'nome', nome, 'rio', rio_nome)
+           FROM estacoes_ana
+          WHERE categoria='ativa' AND ultima_cota_cm IS NOT NULL
+            AND nome !~* 'UHE|CGH|PCH|BARRAMENTO'   -- réguas de rio, não reservatórios
+          ORDER BY ultima_cota_cm DESC LIMIT 1)                  AS cota_max
+      FROM estacoes_ana`);
+    res.json(rows[0]);
+  } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

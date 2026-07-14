@@ -52,12 +52,12 @@ const AlertasPage = {
             </div>
             <div class="card-body">
               ${[
-                { n:'Camada 1', label:'Limiares Fixos', tempo:'< 5s', status:'Ativo', col:'green',
-                  desc:'Cota ANA > 3,5m · Chuva > 80mm/h · Solo > 85%' },
-                { n:'Camada 2', label:'Modelo Combinado', tempo:'< 15min', status:'Ativo', col:'green',
-                  desc:'Score 0–1 · Fusão sensores IoT + satélite + NWP' },
-                { n:'Camada 3', label:'IA LSTM-v3', tempo:'24–48h', status:'Online', col:'green',
-                  desc:'F1=0.891 · Acurácia 84% · Retreino mensal' },
+                { n:'Camada 1', label:'Limiares Imediatos', tempo:'tempo real', status:'Ativo', col:'green',
+                  desc:'Chuva (Open-Meteo), cota ANA, CAPE e umidade do solo vs limiares do município' },
+                { n:'Camada 2', label:'Acumulados CEMADEN', tempo:'1h–24h', status:'Ativo', col:'green',
+                  desc:'Chuva acumulada oficial (PED) por município · confirmação de evento em curso' },
+                { n:'Camada 3', label:'Tendência 24–48h', tempo:'24–48h', status:'Ativo', col:'green',
+                  desc:'Previsão horária Open-Meteo · sem modelos de IA em produção nesta versão' },
               ].map(c => `
                 <div style="background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:8px">
                   <div style="display:flex;justify-content:space-between;margin-bottom:4px">
