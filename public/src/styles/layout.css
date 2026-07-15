@@ -197,34 +197,47 @@
 .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
 .g5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
 .g-map { display: grid; grid-template-columns: 1fr 320px; gap: 14px; margin-bottom: 14px; }
-/* Adicao ao layout.css � fix mobile */
 
-/* Reset do app-wrap no mobile */
+/* ═══════════════════════════════════════════════════
+   MOBILE (≤768px) — D4 · Sidebar em gaveta + coluna única
+   ═══════════════════════════════════════════════════ */
 @media (max-width: 768px) {
+
+  /* Botão ☰ sempre visível no celular (reforço do JS) */
+  #btn-menu { display: flex !important; }
+
+  /* Barra superior compacta: esconde o que não cabe */
+  .topbar { padding: 0 10px; }
+  .tb-sub, .ts-item { display: none !important; }
+  .tb-clock { font-size: 10px; padding-left: 8px; }
+  .tb-title { font-size: 12px; white-space: nowrap; overflow: hidden;
+              text-overflow: ellipsis; max-width: 44vw; }
+
+  /* Estrutura: coluna única, altura da barra pela variável (sem 52px mágico) */
   .app-wrap {
-    flex-direction: row !important;
-    margin-top: 0 !important;
-    padding-top: 52px;
-    height: 100vh;
+    height: calc(100vh - var(--topbar-h));
     overflow: hidden;
   }
 
+  /* Sidebar vira gaveta fora da tela */
   .sidebar {
     position: fixed !important;
-    top: 0 !important;
-    left: -280px !important;
-    width: 260px !important;
-    height: 100vh !important;
+    top: var(--topbar-h) !important;
+    left: -290px !important;
+    width: 268px !important;
+    height: calc(100vh - var(--topbar-h)) !important;
     z-index: 9999 !important;
     transition: left .25s ease !important;
     overflow-y: auto !important;
-    padding-top: 52px !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,.45);
   }
+  .sidebar.open { left: 0 !important; }
 
-  .sidebar.open {
-    left: 0 !important;
-  }
+  /* Itens da gaveta em tamanho de dedo */
+  .nav-item  { padding: 13px 12px; font-size: 14px; }
+  .nav-icon  { font-size: 17px; width: 22px; }
 
+  /* Conteúdo ocupa 100% */
   .content {
     width: 100% !important;
     min-width: 0 !important;
@@ -233,17 +246,10 @@
     height: 100% !important;
   }
 
-  .page {
-    display: none;
-    width: 100%;
-  }
-  .page.active {
-    display: block !important;
-  }
+  /* Páginas mantêm flex (block quebrava o layout interno) */
+  .page.active { display: flex !important; }
 
-  .page-body {
-    padding: 10px !important;
-  }
+  .page-body { padding: 10px !important; }
 
   .page-header {
     flex-direction: column !important;
@@ -251,23 +257,20 @@
     gap: 8px !important;
     padding: 10px 12px !important;
   }
+  .page-title { font-size: 16px; }
 
-  .g2, .g3, .g4, .g5 {
+  /* Grades empilham em coluna única */
+  .g2, .g3, .g4, .g5, .g-map {
     grid-template-columns: 1fr !important;
     gap: 10px !important;
   }
-
   .metric-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 8px !important;
   }
 
-  #mini-map, #leaflet-map {
-    height: 240px !important;
-  }
+  /* Mapas em altura de bolso */
+  #mini-map, #leaflet-map { height: 260px !important; }
 
-  .flow-steps {
-    overflow-x: auto !important;
-    flex-wrap: nowrap !important;
-  }
+  .flow-steps { overflow-x: auto !important; flex-wrap: nowrap !important; }
 }
