@@ -59,6 +59,32 @@
       padding: 4px 12px;
       border-radius: 20px;
     }
+
+    /* ── CTA flutuante "Abrir SGA" — centralizado na linha das abas ── */
+    #cta-sga {
+      display: none;
+      position: fixed;
+      top: 56px;                      /* logo abaixo da barra superior (48px) = altura das abas */
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1200;
+      background: var(--green-mid);
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 22px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: var(--font);
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(27,58,45,.45);
+      max-width: 92vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #cta-sga:hover { background: var(--green-deep); }
+
     .body { display: flex; flex: 1; overflow: hidden; }
     .painel-left {
       width: 380px;
@@ -69,6 +95,12 @@
       background: var(--white);
       overflow: hidden;
     }
+    /* Blindagem: rolagem da lista SEMPRE independente do mapa,
+       inclusive para o conteúdo injetado pelo SelectorUI */
+    #selector-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+    #selector-container .msel-wrap { height: 100%; }
+    #selector-container .msel-results { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+
     .msel-wrap { display: flex; flex-direction: column; height: 100%; }
     .msel-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
     .msel-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
@@ -169,15 +201,35 @@
     .risco-bar { height: 5px; border-radius: 3px; margin-top: 4px; background: var(--border); overflow: hidden; }
     .risco-fill { height: 5px; border-radius: 3px; }
 
-    /* Mobile */
+    /* ── Mobile ── */
     @media (max-width: 768px) {
       .body { flex-direction: column; }
-      .painel-left { width: 100%; height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
-      .painel-right { height: 50vh; }
+      .painel-left { width: 100%; height: 46vh; border-right: none; border-bottom: 1px solid var(--border); }
+      .painel-right { flex: 1; min-height: 0; }
       .metrics-col { display: none; }
       .map-col { flex: 1; }
       #detalhe-map { height: 100% !important; }
       .top-sub { display: none; }
+
+      /* toque confortável na lista */
+      .msel-item  { padding: 12px 14px; }
+      .msel-nome  { font-size: 14px; }
+      .msel-sub   { font-size: 11px; }
+      .msel-input { font-size: 16px; padding: 10px 12px; }  /* 16px evita zoom automático do iOS */
+
+      /* CTA vira barra fixa no rodapé — alcance do polegar */
+      #cta-sga {
+        top: auto;
+        bottom: 12px;
+        width: calc(100vw - 24px);
+        max-width: none;
+        padding: 14px;
+        font-size: 15px;
+        border-radius: 12px;
+        text-align: center;
+      }
+      /* o botão do cabeçalho fica redundante no celular */
+      .detalhe-header .dh-btn { display: none; }
     }
   </style>
 </head>
@@ -189,6 +241,9 @@
   <span class="top-sub">- Sistema de Gestao e Alertas</span>
   <span class="top-badge">497 municipios disponiveis</span>
 </div>
+
+<!-- CTA flutuante: aparece assim que um município/bacia é selecionado -->
+<button id="cta-sga" onclick="abrirSGA()">Abrir SGA</button>
 
 <div class="body">
 
@@ -227,9 +282,17 @@ window.addEventListener('DOMContentLoaded', async function() {
   await SelectorUI.montar('#selector-container');
   SelectorUI.aoSelecionar(async function(m) {
     municipioAtivo = m;
+    mostrarCTA(m);
     await renderDetalhe(m);
   });
 });
+
+/* CTA centralizado (desktop) / rodapé (celular) com o nome escolhido */
+function mostrarCTA(m) {
+  var b = document.getElementById('cta-sga');
+  b.textContent = '\u25B6 Abrir SGA para ' + m.nome;
+  b.style.display = 'block';
+}
 
 async function renderDetalhe(m) {
   document.getElementById('dh-header').style.display = 'flex';
@@ -240,8 +303,8 @@ async function renderDetalhe(m) {
   badge.textContent = m.risco.nivel_str;
   badge.style.background = m.risco.cor;
 
-  var integrações = ['ANA HidroWeb','CEMADEN','CPRM GeoSGB','IBGE','MapBiomas','OSM','Open-Meteo','CadUnico','SUAS','SAMU/CAD'];
-  var intRows = integrações.map(function(i) {
+  var integracoes = ['ANA HidroWeb','CEMADEN (PED)','CPRM GeoSGB','IBGE','Open-Meteo','INMET','CadUnico / MI Social','CadSUAS','OpenStreetMap'];
+  var intRows = integracoes.map(function(i) {
     return '<div class="metric-row"><span class="mr-label">' + i + '</span><span class="mr-value" style="color:#2D7A5C">Disponivel</span></div>';
   }).join('');
 
@@ -260,7 +323,7 @@ async function renderDetalhe(m) {
         '<div class="mg-title">Risco Climatico</div>' +
         '<div class="metric-row"><span class="mr-label">Tipo</span><span class="mr-value" style="color:' + m.risco.cor + '">' + m.risco.tipo + '</span></div>' +
         '<div class="metric-row"><span class="mr-label">Nivel</span><span class="mr-value" style="color:' + m.risco.cor + '">' + m.risco.nivel_str + ' (' + m.risco.nivel + '/5)</span></div>' +
-        '<div class="metric-row"><span class="mr-label">Score IA</span><span class="mr-value">' + m.risco.score_ia + '</span></div>' +
+        '<div class="metric-row"><span class="mr-label">Score de risco</span><span class="mr-value">' + m.risco.score_ia + '</span></div>' +
         '<div class="risco-bar"><div class="risco-fill" style="width:' + (m.risco.score_ia*100) + '%;background:' + m.risco.cor + '"></div></div>' +
       '</div>' +
       '<div class="metric-group"><div class="mg-title">Integracoes</div>' + intRows + '</div>' +
