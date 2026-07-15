@@ -1,0 +1,26 @@
+name: ANA — Atualizar status das estações
+
+# Mantém as cores do mapa vivas (verde = ativa 12h / amarelo = silenciosa)
+# percorrendo as 1.192 telemétricas em 8 blocos, no ritmo gentil do backend.
+on:
+  schedule:
+    - cron: '20 */3 * * *'   # a cada 3 horas, no minuto 20
+  workflow_dispatch:          # permite rodar manualmente na aba Actions
+
+permissions: {}               # não precisa de nenhuma permissão no repositório
+
+jobs:
+  enriquecer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Percorrer blocos de estações
+        run: |
+          set -e
+          for o in 0 150 300 450 600 750 900 1050; do
+            echo "── bloco offset=$o ──"
+            curl -s --max-time 300 -X POST \
+              "https://sga-api-1705.onrender.com/api/ana/enriquecer-status?chave=${{ secrets.ANA_SYNC_TOKEN }}&limite=150&offset=$o" \
+              || echo "(bloco $o falhou — segue o próximo)"
+            echo ""
+            sleep 5
+          done
