@@ -13,8 +13,10 @@
  *   GET  /api/ana/estacoes-geojson           → FeatureCollection p/ o mapa
  *   GET  /api/ana/resumo                     → KPIs do Painel de Situação
  *
- * PLANO B (15/07/2026): quando a API nova responde 5xx, a última leitura vem
- * do serviço público antigo (telemetriaws1) — o campo `fonte` sempre informa.
+ * PLANO B (15/07/2026): quando a API nova responde 5xx/demora, a última leitura
+ * vem do serviço público antigo (telemetriaws1) — o campo `fonte` sempre informa.
+ * FAIL-FAST (15/07/2026): chamadas à API nova têm teto de 6s (token: 8s) para
+ * o plano B assumir em segundos quando a ANA agoniza (504 lento).
  *
  * SEGURANÇA: credenciais só via variáveis de ambiente (ANA_IDENTIFICADOR,
  * ANA_SENHA, ANA_SYNC_TOKEN). Token da ANA vale 60 min e é reaproveitado.
@@ -43,6 +45,7 @@ async function tokenANA() {
       Identificador: process.env.ANA_IDENTIFICADOR,
       Senha: process.env.ANA_SENHA,
     },
+    signal: AbortSignal.timeout(8000),   // fail-fast: auth não pode pendurar
   });
   if (!r.ok) throw new Error(`Autenticação ANA falhou: HTTP ${r.status}`);
   const j = await r.json();
@@ -61,6 +64,7 @@ async function anaGet(path, params) {
     .map(([k, v]) => `${enc(k)}=${enc(v)}`).join('&');
   const r = await fetch(`${BASE}${path}${q ? '?' + q : ''}`, {
     headers: { accept: '*/*', Authorization: 'Bearer ' + t },
+    signal: AbortSignal.timeout(6000),   // fail-fast: 6s e o plano B assume
   });
   const j = await r.json().catch(() => null);
   if (!r.ok) throw new Error(`ANA ${path}: HTTP ${r.status}`);
@@ -87,7 +91,7 @@ async function ultimaLeituraPublica(codigo) {
   const ini = f(ontem.getDate()) + '/' + f(ontem.getMonth() + 1) + '/' + ontem.getFullYear();
   const url = 'http://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos'
             + '?codEstacao=' + codigo + '&dataInicio=' + ini + '&dataFim=' + hoje;
-  const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
   if (!r.ok) throw new Error('telemetriaws HTTP ' + r.status);
   const xml = await r.text();
   const blocos = xml.match(/<DadosHidrometereologicos[\s\S]*?<\/DadosHidrometereologicos>/g) || [];
@@ -338,7 +342,7 @@ router.get('/estacoes-geojson', async (req, res) => {
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-/* ── GET /api/ana/resumo (única versão) ───────────────────────────────────── */
+/* ── GET /api/ana/resumo ──────────────────────────────────────────────────── */
 router.get('/resumo', async (req, res) => {
   try {
     const { rows } = await db.query(`

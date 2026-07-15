@@ -97,7 +97,7 @@ const DataService = {
     const key=`cota_${cod_ibge}`;
     if(this._cache[key]&&Date.now()-this._cache[key].ts<this._CACHE_TTL) return this._cache[key].data;
     try {
-      const r=await fetch(`${this._API}/api/ana/cota-municipio/${cod_ibge}`,{signal:AbortSignal.timeout(6000)});
+      const r=await fetch(`${this._API}/api/ana/cota-municipio/${cod_ibge}`,{signal:AbortSignal.timeout(15000)});
       if(!r.ok) throw new Error('HTTP '+r.status);
       const data=await r.json();
       this._cache[key]={ts:Date.now(),data};
