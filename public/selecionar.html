@@ -30,10 +30,22 @@
     .hero h1{font-size:22px;font-weight:800;margin-bottom:6px}
     .hero p{font-size:13px;color:rgba(255,255,255,.65);max-width:500px;margin:0 auto}
 
-    /* ABAS */
-    .tabs{display:flex;background:var(--white);border-bottom:2px solid var(--border);padding:0 20px}
+    /* ABAS + CTA central */
+    .tabs{display:flex;background:var(--white);border-bottom:2px solid var(--border);padding:0 20px;position:relative}
     .tab{padding:12px 20px;font-size:12px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--text3);transition:all .15s}
     .tab.active{color:var(--green-mid);border-bottom-color:var(--green-mid)}
+
+    /* Botão "Abrir SGA" centralizado na LINHA DAS ABAS (aparece ao selecionar) */
+    #cta-topo{
+      display:none;
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      z-index:150;
+      background:var(--green-mid);color:#fff;border:none;border-radius:20px;
+      padding:8px 20px;font-size:12px;font-weight:800;font-family:var(--font);
+      cursor:pointer;box-shadow:0 4px 14px rgba(27,58,45,.35);
+      max-width:46vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    #cta-topo:hover{background:var(--green)}
 
     /* LAYOUT PRINCIPAL */
     .main{display:flex;flex:1;overflow:hidden}
@@ -52,7 +64,7 @@
     .filter-btn.active{background:var(--green-light);color:#fff;border-color:var(--green-light)}
 
     /* LISTA */
-    .list{flex:1;overflow-y:auto}
+    .list{flex:1;overflow-y:auto;overscroll-behavior:contain}
     .list::-webkit-scrollbar{width:4px}
     .list::-webkit-scrollbar-thumb{background:var(--border)}
     .list-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
@@ -89,6 +101,19 @@
       .main{flex-direction:column}
       .panel-left{width:100%;height:60vh;border-right:none;border-bottom:1px solid var(--border)}
       .panel-right{height:40vh}
+
+      /* toque confortável */
+      .list-item{padding:12px 14px}
+      .li-nome{font-size:14px}
+      .li-sub{font-size:11px}
+      .search-input{font-size:16px;padding:10px 12px}  /* 16px evita zoom automático do iOS */
+
+      /* CTA vira barra fixa no rodapé — alcance do polegar */
+      #cta-topo{
+        position:fixed;left:12px;right:12px;top:auto;bottom:12px;transform:none;
+        max-width:none;width:auto;padding:14px;font-size:15px;border-radius:12px;
+        text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);
+      }
     }
   </style>
 </head>
@@ -110,10 +135,11 @@
   <p>Selecione um municipio especifico ou uma bacia hidrografica completa. Os dados serao carregados em tempo real para a area escolhida.</p>
 </div>
 
-<!-- ABAS -->
+<!-- ABAS (com CTA central) -->
 <div class="tabs">
   <div class="tab active" id="tab-mun" onclick="setTab('municipio')">497 Municipios do RS</div>
   <div class="tab" id="tab-bac" onclick="setTab('bacia')">9 Bacias Hidrograficas</div>
+  <button id="cta-topo" onclick="entrar()">Abrir SGA</button>
 </div>
 
 <!-- CONTEUDO PRINCIPAL -->
@@ -191,6 +217,14 @@ window.addEventListener('load', async function() {
   renderLista();
 });
 
+// ── CTA central (linha das abas / rodapé no celular) ─────────────
+function atualizarCTA(texto) {
+  var b = document.getElementById('cta-topo');
+  if (!b) return;
+  if (texto) { b.textContent = '\u25B6 ' + texto; b.style.display = 'block'; }
+  else       { b.style.display = 'none'; }
+}
+
 // ── MAPA ─────────────────────────────────────────────────────────
 function iniciarMapa() {
   MAPA = L.map('sel-map').setView([-29.5, -53.0], 7);
@@ -228,11 +262,11 @@ function renderMarcadores() {
         html: '<div style="width:16px;height:16px;border-radius:3px;background:'+b.cor+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
         iconSize: [16,16], iconAnchor:[8,8]
       });
-      L.marker([b.lat, b.lng], {icon:icon})
+      // CORRIGIDO: um único marcador, com tooltip e clique funcionando
+      MARCADORES[b.id] = L.marker([b.lat, b.lng], {icon:icon})
         .bindTooltip('<b>'+b.nome+'</b><br>'+b.municipios_n+' municipios<br>'+b.rios, {sticky:true})
         .on('click', function(){ selecionarBacia(b); })
         .addTo(MAPA);
-      MARCADORES[b.id] = L.marker([b.lat, b.lng], {icon:icon}).addTo(MAPA);
     });
   }
 }
@@ -241,6 +275,7 @@ function renderMarcadores() {
 function setTab(tab) {
   TAB = tab;
   SEL_MUN = null; SEL_BAC = null;
+  atualizarCTA(null);
   document.getElementById('tab-mun').className = 'tab'+(tab==='municipio'?' active':'');
   document.getElementById('tab-bac').className = 'tab'+(tab==='bacia'?' active':'');
   document.getElementById('search-box').style.display = tab==='municipio'?'':'none';
@@ -305,10 +340,11 @@ function setFiltro(v, btn) {
 function selecionarMun(m) {
   if (typeof m === 'string') m = JSON.parse(m);
   SEL_MUN = m; SEL_BAC = null;
-  // Atualizar botão
+  // Atualizar botões (rodapé + CTA central)
   document.getElementById('btn-entrar').disabled = false;
   document.getElementById('btn-entrar').textContent = 'Abrir SGA para ' + m.nome;
   document.getElementById('sel-info').textContent = m.microrregiao + ' · ' + m.bacia_hidrografica + ' · ' + m.populacao.toLocaleString('pt-BR') + ' hab.';
+  atualizarCTA('Abrir SGA para ' + m.nome);
   // Centralizar mapa
   MAPA.setView([m.lat, m.lng], 11);
   // Atualizar lista
@@ -321,6 +357,7 @@ function selecionarBacia(b) {
   document.getElementById('btn-entrar').disabled = false;
   document.getElementById('btn-entrar').textContent = 'Monitorar ' + b.nome;
   document.getElementById('sel-info').textContent = b.municipios_n + ' municipios · ' + b.rios;
+  atualizarCTA('Monitorar ' + b.nome);
   MAPA.setView([b.lat, b.lng], b.zoom);
   renderLista();
 }
