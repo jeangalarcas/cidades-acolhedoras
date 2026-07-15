@@ -7,30 +7,23 @@
  * ROTAS:
  *   POST /api/ana/sync-inventario?chave=...  → ANA (UF=RS) → upsert em estacoes_ana
  *   GET  /api/ana/estacoes[?telemetrica=1]   → lê as estações do Supabase
- *   GET  /api/ana/serie/:codigo[?range=HORA_24&data=yyyy-MM-dd]
- *                                            → leituras ao vivo (cota/chuva/vazão)
+ *   GET  /api/ana/serie/:codigo[?range=...]  → leituras ao vivo (cota/chuva/vazão)
+ *   GET  /api/ana/cota-municipio/:cod_ibge   → estação FLU mais próxima + cota (c/ plano B)
+ *   POST /api/ana/enriquecer-status?chave=.. → atualiza categoria 12h (c/ plano B)
+ *   GET  /api/ana/estacoes-geojson           → FeatureCollection p/ o mapa
+ *   GET  /api/ana/resumo                     → KPIs do Painel de Situação
  *
- * COMO INSTALAR:
- *   1. Salve este arquivo como  server/routes/ana.js
- *   2. Ajuste a linha `const db = require('../db')` abaixo para o MESMO require
- *      que está no topo de server/routes/municipio.js (copie e cole de lá).
- *   3. No server/index.js, junto dos outros app.use, adicione:
- *        app.use('/api/ana', require('./routes/ana'));
- *   4. No Render → Environment, cadastre:
- *        ANA_IDENTIFICADOR = (seu CPF, só números)
- *        ANA_SENHA         = (sua senha da ANA)
- *        ANA_SYNC_TOKEN    = (uma frase secreta qualquer — protege o sync)
- *   5. Deploy. Depois rode a carga UMA vez (PowerShell):
- *        Invoke-RestMethod -Method Post "https://sga-api-1705.onrender.com/api/ana/sync-inventario?chave=SUA_FRASE"
+ * PLANO B (15/07/2026): quando a API nova responde 5xx, a última leitura vem
+ * do serviço público antigo (telemetriaws1) — o campo `fonte` sempre informa.
  *
- * SEGURANÇA: credenciais só via variáveis de ambiente. O token da ANA vale 60
- * min e é reaproveitado (cache) — a ANA bloqueia IP que autentica em excesso.
+ * SEGURANÇA: credenciais só via variáveis de ambiente (ANA_IDENTIFICADOR,
+ * ANA_SENHA, ANA_SYNC_TOKEN). Token da ANA vale 60 min e é reaproveitado.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); // ⚠ AJUSTE: use o mesmo require do topo de routes/municipio.js
+const db = require('../db');
 
 const BASE = 'https://www.ana.gov.br/hidrowebservice';
 const enc = encodeURIComponent;
@@ -60,7 +53,7 @@ async function tokenANA() {
   return t;
 }
 
-/* GET autenticado na ANA (params já com nomes oficiais; encode cuida de espaços/acentos) */
+/* GET autenticado na ANA (params já com nomes oficiais) */
 async function anaGet(path, params) {
   const t = await tokenANA();
   const q = Object.entries(params || {})
@@ -74,18 +67,65 @@ async function anaGet(path, params) {
   return j || {};
 }
 
-/* Helpers defensivos (formato numérico pode vir com vírgula) */
+/* Helpers defensivos */
 const num = (v) => {
   if (v === null || v === undefined || v === '') return null;
   const n = parseFloat(String(v).replace(',', '.'));
   return Number.isFinite(n) ? n : null;
 };
 const bool01 = (v) => v === 1 || v === '1' || v === true;
-// cod_ibge só se o Municipio_Codigo da ANA for um IBGE de 7 dígitos do RS
 const ibgeRS = (v) => {
   const n = parseInt(v, 10);
   return Number.isInteger(n) && n >= 4300000 && n <= 4399999 ? n : null;
 };
+
+/* ── Fallback: última leitura pelo serviço PÚBLICO antigo (telemetriaws1) ── */
+async function ultimaLeituraPublica(codigo) {
+  const d = new Date(); const f = x => ('0' + x).slice(-2);
+  const hoje = f(d.getDate()) + '/' + f(d.getMonth() + 1) + '/' + d.getFullYear();
+  const ontem = new Date(d.getTime() - 86400e3);
+  const ini = f(ontem.getDate()) + '/' + f(ontem.getMonth() + 1) + '/' + ontem.getFullYear();
+  const url = 'http://telemetriaws1.ana.gov.br/ServiceANA.asmx/DadosHidrometeorologicos'
+            + '?codEstacao=' + codigo + '&dataInicio=' + ini + '&dataFim=' + hoje;
+  const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  if (!r.ok) throw new Error('telemetriaws HTTP ' + r.status);
+  const xml = await r.text();
+  const blocos = xml.match(/<DadosHidrometereologicos[\s\S]*?<\/DadosHidrometereologicos>/g) || [];
+  let ult = null;
+  for (const b of blocos) {
+    const g = t => { const m = b.match(new RegExp('<' + t + '>([^<]*)</' + t + '>')); return m ? m[1].trim() : null; };
+    const dh = g('DataHora');
+    if (dh && (!ult || dh > ult.dh)) ult = { dh, nivel: g('Nivel'), chuva: g('Chuva') };
+  }
+  if (!ult) return null;
+  return {
+    medEm: ult.dh.replace(' ', 'T'),
+    cotaCm: ult.nivel != null && ult.nivel !== '' ? num(ult.nivel) : null,
+    chuvaMm: ult.chuva != null && ult.chuva !== '' ? num(ult.chuva) : null,
+  };
+}
+
+/* Última leitura: tenta a API nova; em falha, plano B público (fonte informada) */
+async function ultimaLeitura(codigo) {
+  try {
+    const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
+      'Código da Estação': codigo, 'Tipo Filtro Data': 'DATA_LEITURA',
+      'Data de Busca (yyyy-MM-dd)': new Date().toISOString().slice(0, 10),
+      'Range Intervalo de busca': 'HORA_24',
+    });
+    const ls = j.items || []; const u = ls[ls.length - 1];
+    if (!u) return null;
+    return {
+      medEm: u.Data_Hora_Medicao,
+      cotaCm: u.Cota_Adotada != null ? num(u.Cota_Adotada) : null,
+      chuvaMm: u.Chuva_Adotada != null ? num(u.Chuva_Adotada) : null,
+      fonte: 'ANA HidroWebService',
+    };
+  } catch (e) {
+    const p = await ultimaLeituraPublica(codigo);          // plano B
+    return p ? Object.assign(p, { fonte: 'ANA telemetria (público)' }) : null;
+  }
+}
 
 /* ── POST /api/ana/sync-inventario ────────────────────────────────────────── */
 router.post('/sync-inventario', async (req, res) => {
@@ -94,13 +134,11 @@ router.post('/sync-inventario', async (req, res) => {
       return res.status(403).json({ erro: 'chave de sincronização inválida' });
     }
 
-    // Parâmetro oficial: "Unidade Federativa" (com espaço — o encode resolve)
     const j = await anaGet('/EstacoesTelemetricas/HidroInventarioEstacoes/v1',
                            { 'Unidade Federativa': 'RS' });
     const itens = Array.isArray(j.items) ? j.items : [];
     if (!itens.length) return res.status(502).json({ erro: 'ANA retornou 0 estações' });
 
-    // Mapeamento campo-a-campo (nomes confirmados na resposta real da ANA)
     const rows = itens.map(e => ({
       codigo:            String(e.codigoestacao || '').trim(),
       nome:              e.Estacao_Nome || null,
@@ -119,7 +157,6 @@ router.post('/sync-inventario', async (req, res) => {
       cod_ibge:          ibgeRS(e.Municipio_Codigo),
     })).filter(r => r.codigo);
 
-    // Upsert em lotes (16 colunas → lotes de 200 = 3.200 params, seguro p/ pg)
     const LOTE = 200;
     let gravadas = 0;
     for (let i = 0; i < rows.length; i += LOTE) {
@@ -130,7 +167,6 @@ router.post('/sync-inventario', async (req, res) => {
       const values = lote.map((_, k) => {
         const b = k * cols.length;
         const p = cols.map((_, c) => `$${b + c + 1}`);
-        // geom derivado de lng/lat ($5=lng? não — lat=$4, lng=$5 dentro do grupo)
         return `(${p.join(',')})`;
       }).join(',');
       const params = lote.flatMap(r => cols.map(c => r[c]));
@@ -154,7 +190,6 @@ router.post('/sync-inventario', async (req, res) => {
       gravadas += r.rowCount;
     }
 
-    // geom a partir de lat/lng (uma vez, para todas com coordenada)
     await db.query(`
       UPDATE estacoes_ana
          SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
@@ -191,7 +226,6 @@ router.get('/estacoes', async (req, res) => {
 });
 
 /* ── GET /api/ana/serie/:codigo ───────────────────────────────────────────── */
-// Enums oficiais — Range: MINUTO_5..MINUTO_30, HORA_1..HORA_24, DIAS_2..DIAS_30
 router.get('/serie/:codigo', async (req, res) => {
   try {
     const range = req.query.range || 'HORA_24';
@@ -209,8 +243,8 @@ router.get('/serie/:codigo', async (req, res) => {
     res.status(500).json({ erro: e.message });
   }
 });
-/* GET /api/ana/cota-municipio/:cod_ibge — estação FLU real mais próxima + cota ao vivo
-   (mesmo formato do antigo /api/municipio/:ibge/cota → zero mudança de UI) */
+
+/* ── GET /api/ana/cota-municipio/:cod_ibge ────────────────────────────────── */
 router.get('/cota-municipio/:cod_ibge', async (req, res) => {
   try {
     const { rows } = await db.query(`
@@ -221,41 +255,65 @@ router.get('/cota-municipio/:cod_ibge', async (req, res) => {
         JOIN estacoes_ana e ON e.telemetrica AND e.tipo='Fluviometrica' AND e.geom IS NOT NULL
        WHERE m.cod_ibge = $1
        ORDER BY e.geom <-> extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)
-       LIMIT 1`, [parseInt(req.params.cod_ibge,10)]);
+       LIMIT 1`, [parseInt(req.params.cod_ibge, 10)]);
     if (!rows.length) return res.status(404).json({ erro: 'município não encontrado' });
     const est = rows[0];
-    const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
-      'Código da Estação': est.codigo, 'Tipo Filtro Data': 'DATA_LEITURA',
-      'Data de Busca (yyyy-MM-dd)': new Date().toISOString().slice(0,10),
-      'Range Intervalo de busca': 'HORA_24',
-    });
-    const ls = j.items || []; const ult = ls[ls.length-1];
-    const cota = ult ? parseFloat(ult.Cota_Adotada) : null;
+    const u = await ultimaLeitura(est.codigo);
+    const cota = u ? u.cotaCm : null;
     res.json({
-      online: cota != null, cota_m: cota != null ? +(cota/100).toFixed(2) : null,
-      fonte: 'ANA HidroWebService', status: cota != null ? 'OK' : 'N/D',
+      online: cota != null, cota_m: cota != null ? +(cota / 100).toFixed(2) : null,
+      fonte: u ? u.fonte : 'ANA', status: cota != null ? 'OK' : 'N/D',
       nome: est.nome + (est.rio_nome ? ' · ' + est.rio_nome : ''),
       cod_estacao: est.codigo, dist_km: +est.dist_km,
       cota_alerta_m: 3.5, cota_emergencia_m: 4,
-      medido_em: ult ? ult.Data_Hora_Medicao : null,
+      medido_em: u ? u.medEm : null,
     });
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
-/**
- * SGA — ANA: enriquecimento de status + GeoJSON do mapa
- * ─────────────────────────────────────────────────────────────────────────────
- * Adiciona a  server/routes/ana.js  (cole ANTES de `module.exports = router;`).
- * Usa o mesmo `db`, `anaGet`, `BASE`, `fetch` já definidos no arquivo.
- *
- * Categorias (definidas por você): limiar 12h
- *   verde  #2D7A5C  'ativa'        → telemétrica c/ leitura nas últimas 12h
- *   amarelo #E8A23A 'silenciosa'   → telemétrica sem leitura recente
- *   cinza  #8E8E8E  'convencional' → não-telemétrica
- * ─────────────────────────────────────────────────────────────────────────────
- */
 
-/* GET /api/ana/estacoes-geojson  → FeatureCollection (todas as 2.994, com cor/categoria)
-   Leitura instantânea do banco; o campo categoria é mantido pelo /enriquecer-status. */
+/* ── POST /api/ana/enriquecer-status (única versão — com plano B) ─────────── */
+router.post('/enriquecer-status', async (req, res) => {
+  try {
+    if (process.env.ANA_SYNC_TOKEN && req.query.chave !== process.env.ANA_SYNC_TOKEN)
+      return res.status(403).json({ erro: 'chave inválida' });
+
+    const limite = Math.min(parseInt(req.query.limite || '150', 10), 300);
+    const offset = parseInt(req.query.offset || '0', 10);
+    const LIMIAR_H = 12;
+
+    const { rows: alvos } = await db.query(
+      `SELECT codigo FROM estacoes_ana WHERE telemetrica
+        ORDER BY codigo LIMIT $1 OFFSET $2`, [limite, offset]);
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let ativas = 0, silenciosas = 0, erros = 0;
+
+    for (const { codigo } of alvos) {
+      try {
+        const u = await ultimaLeitura(codigo);
+        const medEm = u ? u.medEm : null;
+        const ativa = medEm && (Date.now() - new Date(medEm).getTime()) <= LIMIAR_H * 3600e3;
+        if (ativa) ativas++; else silenciosas++;
+        await db.query(
+          `UPDATE estacoes_ana SET
+             ultima_medicao_em = $2, ultima_cota_cm = $3, ultima_chuva_mm = $4,
+             categoria = $5, cor = $6, enriquecido_em = now()
+           WHERE codigo = $1`,
+          [codigo, medEm, u ? u.cotaCm : null, u ? u.chuvaMm : null,
+           ativa ? 'ativa' : 'silenciosa',
+           ativa ? '#2D7A5C' : '#E8A23A']);
+        await sleep(120); // ritmo gentil com a ANA
+      } catch (_) { erros++; await sleep(200); }
+    }
+
+    const total = (await db.query('SELECT count(*)::int n FROM estacoes_ana WHERE telemetrica')).rows[0].n;
+    res.json({ ok: true, processadas: alvos.length, ativas, silenciosas, erros,
+               proximo_offset: offset + alvos.length,
+               concluido: offset + alvos.length >= total, total_telemetricas: total });
+  } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
+/* ── GET /api/ana/estacoes-geojson ────────────────────────────────────────── */
 router.get('/estacoes-geojson', async (req, res) => {
   try {
     const { rows } = await db.query(`
@@ -280,82 +338,7 @@ router.get('/estacoes-geojson', async (req, res) => {
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
-/* POST /api/ana/enriquecer-status?chave=ANA_SYNC_TOKEN[&limite=200&offset=0]
-   Percorre as telemétricas em blocos (com pausa) e grava ultima_medicao_em + categoria.
-   Rodar por partes (paginado) mantém o ritmo seguro para a ANA (sem bloqueio de IP). */
-router.post('/enriquecer-status', async (req, res) => {
-  try {
-    if (process.env.ANA_SYNC_TOKEN && req.query.chave !== process.env.ANA_SYNC_TOKEN)
-      return res.status(403).json({ erro: 'chave inválida' });
-
-    const limite = Math.min(parseInt(req.query.limite || '150', 10), 300);
-    const offset = parseInt(req.query.offset || '0', 10);
-    const LIMIAR_H = 12;
-
-    const { rows: alvos } = await db.query(
-      `SELECT codigo FROM estacoes_ana WHERE telemetrica
-        ORDER BY codigo LIMIT $1 OFFSET $2`, [limite, offset]);
-
-    const hoje = new Date().toISOString().slice(0, 10);
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    let ativas = 0, silenciosas = 0, erros = 0;
-
-    for (const { codigo } of alvos) {
-      try {
-        const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
-          'Código da Estação': codigo, 'Tipo Filtro Data': 'DATA_LEITURA',
-          'Data de Busca (yyyy-MM-dd)': hoje, 'Range Intervalo de busca': 'HORA_24',
-        });
-        const ls = j.items || [];
-        const ult = ls[ls.length - 1];
-        const medEm = ult ? ult.Data_Hora_Medicao : null;
-        const cota  = ult && ult.Cota_Adotada  != null ? parseFloat(ult.Cota_Adotada)  : null;
-        const chuva = ult && ult.Chuva_Adotada != null ? parseFloat(ult.Chuva_Adotada) : null;
-        const ativa = medEm && (Date.now() - new Date(medEm).getTime()) <= LIMIAR_H * 3600e3;
-        if (ativa) ativas++; else silenciosas++;
-        await db.query(
-          `UPDATE estacoes_ana SET
-             ultima_medicao_em = $2, ultima_cota_cm = $3, ultima_chuva_mm = $4,
-             categoria = $5, cor = $6, enriquecido_em = now()
-           WHERE codigo = $1`,
-          [codigo, medEm, cota, chuva,
-           ativa ? 'ativa' : 'silenciosa',
-           ativa ? '#2D7A5C' : '#E8A23A']);
-        await sleep(120); // ritmo gentil com a ANA
-      } catch (_) { erros++; await sleep(200); }
-    }
-
-    const total = (await db.query('SELECT count(*)::int n FROM estacoes_ana WHERE telemetrica')).rows[0].n;
-    res.json({ ok: true, processadas: alvos.length, ativas, silenciosas, erros,
-               proximo_offset: offset + alvos.length,
-               concluido: offset + alvos.length >= total, total_telemetricas: total });
-  } catch (e) { res.status(500).json({ erro: e.message }); }
-});
-
-/* GET /api/ana/resumo — KPIs estaduais p/ o Painel de Situação (leitura instantânea) */
-router.get('/resumo', async (req, res) => {
-  try {
-    const { rows } = await db.query(`
-      SELECT
-        count(*) FILTER (WHERE categoria='ativa')::int      AS estacoes_ativas,
-        count(*) FILTER (WHERE categoria='silenciosa')::int AS silenciosas,
-        count(*) FILTER (WHERE telemetrica)::int            AS telemetricas,
-        (SELECT count(DISTINCT cod_ibge) FROM estacoes_ana
-          WHERE categoria='ativa' AND cod_ibge IS NOT NULL)::int AS municipios_monitorados,
-        (SELECT json_build_object('mm', max(ultima_chuva_mm))
-           FROM estacoes_ana WHERE categoria='ativa')            AS chuva_max,
-        (SELECT json_build_object('cota_m', round((ultima_cota_cm/100.0)::numeric,2),
-                                  'nome', nome, 'rio', rio_nome)
-           FROM estacoes_ana
-          WHERE categoria='ativa' AND ultima_cota_cm IS NOT NULL
-            AND nome !~* 'UHE|CGH|PCH|BARRAMENTO'   -- réguas de rio, não reservatórios
-          ORDER BY ultima_cota_cm DESC LIMIT 1)                  AS cota_max
-      FROM estacoes_ana`);
-    res.json(rows[0]);
-  } catch (e) { res.status(500).json({ erro: e.message }); }
-});
-
-/* GET /api/ana/resumo — KPIs estaduais p/ o Painel de Situação (leitura instantânea) */
+/* ── GET /api/ana/resumo (única versão) ───────────────────────────────────── */
 router.get('/resumo', async (req, res) => {
   try {
     const { rows } = await db.query(`
