@@ -92,6 +92,7 @@ const PainelPage = {
 
     var dados = await DataService.buscarTudo(m);
     SGA.alertasAtivos = (dados && dados.alertas) || [];
+    if (window.RegistroAlertas) RegistroAlertas.sincronizar(SGA.alertasAtivos, SGA.municipioAtivo || {});
     if (window.TopBar && TopBar.atualizarAlertas) TopBar.atualizarAlertas();
     if (!dados) { body.innerHTML = PainelPage._renderSemMunicipio(); return; }
 

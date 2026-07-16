@@ -11,6 +11,8 @@ app.use('/api/ana', require('./routes/ana'));
 app.use('/api/cemaden',    require('./routes/cemaden'));
 app.use('/api/canoas',     require('./routes/canoas'));
 app.use('/api/municipios', require('./routes/municipios'));
+app.use('/api/registro',   require('./routes/registro'));
+app.use('/api/inmet',      require('./routes/inmet'));
 
 app.get('/health', (req, res) =>
   res.json({ status: 'ok', ts: new Date(), version: 'SGA v3', municipios: 497 })

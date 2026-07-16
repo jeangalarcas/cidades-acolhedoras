@@ -248,15 +248,17 @@ router.get('/serie/:codigo', async (req, res) => {
   }
 });
 
-/* ── GET /api/ana/cota-municipio/:cod_ibge ────────────────────────────────── */
+/* ── GET /api/ana/cota-municipio/:cod_ibge — cota + COTAS DE REFERÊNCIA por estação ── */
 router.get('/cota-municipio/:cod_ibge', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT e.codigo, e.nome, e.rio_nome,
              round((extensions.ST_DistanceSphere(e.geom,
-               extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326))/1000)::numeric,1) AS dist_km
+               extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326))/1000)::numeric,1) AS dist_km,
+             cr.cota_atencao_cm, cr.cota_alerta_cm, cr.cota_inundacao_cm, cr.fonte AS ref_fonte
         FROM municipios m
         JOIN estacoes_ana e ON e.telemetrica AND e.tipo='Fluviometrica' AND e.geom IS NOT NULL
+        LEFT JOIN cotas_referencia cr ON cr.codigo_estacao = e.codigo
        WHERE m.cod_ibge = $1
        ORDER BY e.geom <-> extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)
        LIMIT 1`, [parseInt(req.params.cod_ibge, 10)]);
@@ -264,12 +266,33 @@ router.get('/cota-municipio/:cod_ibge', async (req, res) => {
     const est = rows[0];
     const u = await ultimaLeitura(est.codigo);
     const cota = u ? u.cotaCm : null;
+
+    // Classificação pelo limiar OFICIAL da própria estação (quando cadastrado)
+    let nivel = null, cor = null;
+    const temRef = est.cota_atencao_cm != null || est.cota_alerta_cm != null || est.cota_inundacao_cm != null;
+    if (cota != null && temRef) {
+      if      (est.cota_inundacao_cm != null && cota >= +est.cota_inundacao_cm) { nivel = 'inundacao';   cor = '#C0392B'; }
+      else if (est.cota_alerta_cm    != null && cota >= +est.cota_alerta_cm)    { nivel = 'alerta';      cor = '#E8842C'; }
+      else if (est.cota_atencao_cm   != null && cota >= +est.cota_atencao_cm)   { nivel = 'atencao';     cor = '#E6C229'; }
+      else                                                                      { nivel = 'normalidade'; cor = '#2D7A5C'; }
+    }
+
     res.json({
       online: cota != null, cota_m: cota != null ? +(cota / 100).toFixed(2) : null,
       fonte: u ? u.fonte : 'ANA', status: cota != null ? 'OK' : 'N/D',
       nome: est.nome + (est.rio_nome ? ' · ' + est.rio_nome : ''),
       cod_estacao: est.codigo, dist_km: +est.dist_km,
-      cota_alerta_m: 3.5, cota_emergencia_m: 4,
+      // limiares oficiais desta estação (null = sem referência cadastrada — nunca inventado)
+      referencia: temRef ? {
+        atencao_m:   est.cota_atencao_cm   != null ? +(est.cota_atencao_cm/100).toFixed(2)   : null,
+        alerta_m:    est.cota_alerta_cm    != null ? +(est.cota_alerta_cm/100).toFixed(2)    : null,
+        inundacao_m: est.cota_inundacao_cm != null ? +(est.cota_inundacao_cm/100).toFixed(2) : null,
+        fonte: est.ref_fonte,
+      } : null,
+      nivel_referencia: nivel, cor_nivel: cor,
+      // compatibilidade com o front atual (será aposentado quando o front ler `referencia`)
+      cota_alerta_m: est.cota_alerta_cm != null ? +(est.cota_alerta_cm/100).toFixed(2) : 3.5,
+      cota_emergencia_m: est.cota_inundacao_cm != null ? +(est.cota_inundacao_cm/100).toFixed(2) : 4,
       medido_em: u ? u.medEm : null,
     });
   } catch (e) { res.status(500).json({ erro: e.message }); }

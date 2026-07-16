@@ -57,6 +57,7 @@ const MunicipioPage = {
     body.innerHTML=`<div style="padding:20px;text-align:center;font-size:12px;color:var(--text-3)">Buscando dados para <strong>${this._municipio.nome}</strong>...</div>`;
     const dados=await DataService.buscarTudo(this._municipio);
     SGA.alertasAtivos = (dados && dados.alertas) || [];
+    if (window.RegistroAlertas) RegistroAlertas.sincronizar(SGA.alertasAtivos, SGA.municipioAtivo || {});
     if (window.TopBar && TopBar.atualizarAlertas) TopBar.atualizarAlertas();
     if(!dados) return;
     this._dados=dados;
