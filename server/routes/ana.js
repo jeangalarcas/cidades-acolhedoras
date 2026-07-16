@@ -109,7 +109,7 @@ async function ultimaLeituraPublica(codigo) {
   };
 }
 
-/* Última leitura: tenta a API nova; em falha, plano B público (fonte informada) */
+/* Última leitura: tenta a API nova; em FALHA ou resposta VAZIA, plano B público */
 async function ultimaLeitura(codigo) {
   try {
     const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
@@ -118,17 +118,18 @@ async function ultimaLeitura(codigo) {
       'Range Intervalo de busca': 'HORA_24',
     });
     const ls = j.items || []; const u = ls[ls.length - 1];
-    if (!u) return null;
-    return {
-      medEm: u.Data_Hora_Medicao,
-      cotaCm: u.Cota_Adotada != null ? num(u.Cota_Adotada) : null,
-      chuvaMm: u.Chuva_Adotada != null ? num(u.Chuva_Adotada) : null,
-      fonte: 'ANA HidroWebService',
-    };
-  } catch (e) {
-    const p = await ultimaLeituraPublica(codigo);          // plano B
-    return p ? Object.assign(p, { fonte: 'ANA telemetria (público)' }) : null;
-  }
+    if (u) {
+      return {
+        medEm: u.Data_Hora_Medicao,
+        cotaCm: u.Cota_Adotada != null ? num(u.Cota_Adotada) : null,
+        chuvaMm: u.Chuva_Adotada != null ? num(u.Chuva_Adotada) : null,
+        fonte: 'ANA HidroWebService',
+      };
+    }
+    // respondeu 200 mas VAZIO → não desiste: cai para o público (fix 16/07/2026)
+  } catch (e) { /* segue para o plano B */ }
+  const p = await ultimaLeituraPublica(codigo).catch(() => null);
+  return p ? Object.assign(p, { fonte: 'ANA telemetria (público)' }) : null;
 }
 
 /* ── POST /api/ana/sync-inventario ────────────────────────────────────────── */
