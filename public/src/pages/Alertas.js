@@ -22,6 +22,15 @@ const AlertasPage = {
       </div>
       <div class="page-body">
 
+        <!-- AVISOS OFICIAIS INMET -->
+        <div class="card" id="card-inmet" style="margin-bottom:14px">
+          <div class="card-header">
+            <div class="card-title">📡 Avisos Oficiais — INMET</div>
+            <span class="pill" id="inmet-pill">carregando…</span>
+          </div>
+          <div id="inmet-lista" style="font-size:12px;color:var(--text-2)">Consultando avisos vigentes para o RS…</div>
+        </div>
+
         <div class="g2">
           <!-- ALERTAS ATIVOS -->
           <div class="card">
@@ -165,5 +174,37 @@ const AlertasPage = {
       ? `⚠ ALERTA CAMADA 1 DISPARADO — ${l.cota > t.cota ? 'Cota: '+l.cota+'m ' : ''}${l.chuva > t.chuva ? 'Chuva: '+l.chuva+'mm/h ' : ''}${l.solo > t.solo ? 'Solo: '+l.solo+'%' : ''}`
       : '✅ Dentro dos limiares — nenhum alerta Camada 1';
   },
+
+  async carregarINMET() {
+    const lista = document.getElementById('inmet-lista');
+    const pill  = document.getElementById('inmet-pill');
+    if (!lista || !pill) return;
+    try {
+      const api = (window.MunicipioInit && MunicipioInit.API_BASE) || 'https://sga-api-1705.onrender.com';
+      const d = await (await fetch(api + '/api/inmet/avisos')).json();
+      if (!d.disponivel) {
+        pill.textContent = 'indisponível';
+        lista.textContent = 'INMET fora do ar no momento — o card volta sozinho quando o serviço retornar.';
+        return;
+      }
+      pill.textContent = d.total_rs + ' vigente(s) no RS';
+      pill.className = 'pill ' + (d.total_rs ? 'pill-amber' : 'pill-green');
+      if (!d.total_rs) { lista.textContent = 'Nenhum aviso meteorológico vigente para o RS.'; return; }
+      lista.innerHTML = d.avisos.map(a => `
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="width:12px;height:12px;border-radius:3px;background:${a.aviso_cor || '#E6C229'};margin-top:2px;flex-shrink:0"></span>
+          <div>
+            <b>${a.descricao}</b> · ${a.severidade}
+            <div style="font-size:11px;color:var(--text-3)">${a.inicio} → ${a.fim}</div>
+            ${a.riscos && a.riscos[0] ? `<div style="font-size:11px;margin-top:2px">${a.riscos[0]}</div>` : ''}
+            ${a.instrucoes && a.instrucoes[0] ? `<div style="font-size:11px;color:var(--text-3);margin-top:2px">→ ${String(a.instrucoes[0]).slice(0,160)}</div>` : ''}
+          </div>
+        </div>`).join('');
+    } catch (e) {
+      pill.textContent = 'erro';
+      lista.textContent = 'Falha ao consultar o INMET.';
+    }
+  },
 };
 window.AlertasPage = AlertasPage;
+setTimeout(() => AlertasPage.carregarINMET && AlertasPage.carregarINMET(), 1200);
