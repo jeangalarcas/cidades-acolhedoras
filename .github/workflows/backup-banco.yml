@@ -20,6 +20,7 @@ jobs:
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
+          /usr/lib/postgresql/17/bin/pg_dump --version
 
       - name: Gerar dump
         env:
@@ -27,7 +28,9 @@ jobs:
         run: |
           set -e
           DATA=$(date -u +%F)
-          pg_dump "$SUPABASE_DB_URL" \
+          # caminho completo do binário 17 (o "pg_dump" do sistema é o 16 e
+          # recusa servidor 17 — causa da falha de 16/07/2026)
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
             --no-owner --no-privileges \
             --schema=public \
             --file="sga-backup-$DATA.sql"
