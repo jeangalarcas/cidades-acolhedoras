@@ -342,8 +342,10 @@ router.post('/enriquecer-status', async (req, res) => {
 });
 
 /* ── GET /api/ana/estacoes-geojson ────────────────────────────────────────── */
+let _gjCache = null, _gjAte = 0;
 router.get('/estacoes-geojson', async (req, res) => {
   try {
+    if (_gjCache && Date.now() < _gjAte) return res.json(_gjCache);
     const { rows } = await db.query(`
       SELECT json_build_object(
         'type','FeatureCollection',
@@ -362,13 +364,16 @@ router.get('/estacoes-geojson', async (req, res) => {
         ) FILTER (WHERE geom IS NOT NULL), '[]'::json)
       ) AS fc
       FROM estacoes_ana`);
-    res.json(rows[0].fc);
+    _gjCache = rows[0].fc; _gjAte = Date.now() + 5 * 60 * 1000;
+    res.json(_gjCache);
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
 /* ── GET /api/ana/resumo ──────────────────────────────────────────────────── */
+let _resCache = null, _resAte = 0;
 router.get('/resumo', async (req, res) => {
   try {
+    if (_resCache && Date.now() < _resAte) return res.json(_resCache);
     const { rows } = await db.query(`
       SELECT
         count(*) FILTER (WHERE categoria='ativa')::int      AS estacoes_ativas,
@@ -385,7 +390,8 @@ router.get('/resumo', async (req, res) => {
             AND nome !~* 'UHE|CGH|PCH|BARRAMENTO'   -- réguas de rio, não reservatórios
           ORDER BY ultima_cota_cm DESC LIMIT 1)                  AS cota_max
       FROM estacoes_ana`);
-    res.json(rows[0]);
+    _resCache = rows[0]; _resAte = Date.now() + 60 * 1000;
+    res.json(_resCache);
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
