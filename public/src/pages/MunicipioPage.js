@@ -68,7 +68,12 @@ const MunicipioPage = {
     const m=d.municipio,p=d.previsao,c=d.cota,al=d.alertas,sc=d.score,ri=d.risco,est=d.estacao_inmet;
     const agora=p?.agora||{},prox6=p?.proximas6h||{},prox24=p?.proximas24h||{},dias=p?.previsao_dias||[],serie=p?.serie_horaria||[];
     const corScore=ri?.cor||'#4BAF82';
-    const corCota=c?.status==='Emergencia'?'var(--red)':c?.status==='Alerta'?'var(--amber)':'var(--green-mid)';
+    const corCota=c?.cor_nivel||(c?.status==='Emergencia'?'var(--red)':c?.status==='Alerta'?'var(--amber)':'var(--green-mid)');
+    const REFC=c?.referencia||null;
+    const NIVROT={normalidade:'NORMALIDADE',atencao:'ATEN\u00c7\u00c3O',alerta:'ALERTA',inundacao:'INUNDA\u00c7\u00c3O'};
+    const seloCota=(c&&c.nivel_referencia&&NIVROT[c.nivel_referencia])
+      ?`<span style="background:${c.cor_nivel};color:#fff;font-weight:800;font-size:9px;padding:2px 7px;border-radius:9px;letter-spacing:.4px" title="Fonte: ${REFC&&REFC.fonte?REFC.fonte:'SGB/SACE'}">${NIVROT[c.nivel_referencia]}</span> <span style="opacity:.75">${REFC&&REFC.alerta_m!=null?`alerta ${REFC.alerta_m}m \u00b7 `:''}inund. ${REFC&&REFC.inundacao_m!=null?REFC.inundacao_m+'m':'\u2014'}</span>`
+      :null;
     const maxMmh=Math.max(...serie.map(h=>h.precip_mmh),1);
     const pts=serie.slice(0,12).map((h,i)=>`${i*(100/11)},${100-(h.precip_mmh/maxMmh*85)}`).join(' ');
 
@@ -97,7 +102,7 @@ const MunicipioPage = {
         <div class="mc">
           <div class="mc-label">Rio / Cota</div>
           <div class="mc-value" style="color:${corCota}">${c?.cota_m??'N/D'}</div>
-          <div class="mc-sub">${c?.status||'N/D'}</div>
+          <div class="mc-sub">${seloCota||c?.status||'N/D'}</div>
         </div>
       </div>
       <div class="g2" style="margin-bottom:14px">

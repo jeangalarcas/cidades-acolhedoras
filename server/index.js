@@ -13,6 +13,7 @@ app.use('/api/canoas',     require('./routes/canoas'));
 app.use('/api/municipios', require('./routes/municipios'));
 app.use('/api/registro',   require('./routes/registro'));
 app.use('/api/inmet',      require('./routes/inmet'));
+app.use('/api/sace', require('./routes/sace'));
 
 app.get('/health', (req, res) =>
   res.json({ status: 'ok', ts: new Date(), version: 'SGA v3', municipios: 497 })
