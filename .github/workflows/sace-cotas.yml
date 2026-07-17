@@ -27,14 +27,16 @@ jobs:
           d = json.load(open('resultado.json'))
           if 'erro' in d:
               print('ERRO na verificação:', d['erro']); sys.exit(1)
-          n = d.get('total_possivel_mudanca', 0)
+          problemas = d.get('total_possivel_mudanca', 0)
           for b in d.get('bacias', []):
               print(f"[{b['bacia']}] {b['confirmadas']}/{b['estacoes']} confirmadas"
                     + (f" | ERRO: {b['erro']}" if b.get('erro') else ''))
               for m in b.get('possivel_mudanca', []):
                   print('   ⚠ possível mudança:', m['estacao'], m['campos'])
-          if n > 0:
-              print(f"\n⚠ {n} limiar(es) não confirmados — revisar boletins oficiais!")
+              if b.get('erro') or b['confirmadas'] < b['estacoes']:
+                  problemas += 1
+          if problemas > 0:
+              print(f"\n⚠ Verificação incompleta ou com divergências — revisar!")
               sys.exit(1)          # falha proposital → GitHub notifica por e-mail
           print('\n✅ Todos os limiares confirmados nos boletins vigentes.')
           PY

@@ -23,7 +23,12 @@ const router = express.Router();
 const db = require('../db');
 
 let pdfParse = null;
-try { pdfParse = require('pdf-parse'); } catch (_) { /* tratado na rota */ }
+try {
+  const _pp = require('pdf-parse');
+  pdfParse = (typeof _pp === 'function') ? _pp
+           : (typeof _pp.default === 'function') ? _pp.default
+           : (typeof _pp.pdf === 'function') ? _pp.pdf : null;
+} catch (_) { /* tratado na rota */ }
 
 const BACIAS = {
   'Caí':     'https://www.sgb.gov.br/sace/cai/ultimo_boletim.php',
