@@ -45,12 +45,24 @@ const norm = (t) => String(t || '')
    a até 300 caracteres de uma ocorrência do nome da estação (linha de tabela) */
 function valorConfere(txtNorm, nomeNorm, valor) {
   const v = String(Math.round(valor));
+  // 1) rótulo de gráfico: "(900 cm)" / "(900cm)"
   if (new RegExp('\\(\\s*' + v + '\\s*CM\\s*\\)').test(txtNorm)) return true;
-  let i = txtNorm.indexOf(nomeNorm);
-  while (i !== -1) {
-    const janela = txtNorm.slice(i, i + nomeNorm.length + 300);
-    if (new RegExp('\\b' + v + '\\b').test(janela)) return true;
-    i = txtNorm.indexOf(nomeNorm, i + 1);
+  // 2) linha de tabela: o pdf-parse CONCATENA as células numéricas num bloco
+  //    único (ex.: Itaqui vira "0,0751830710" = chuva+cota+inundação+previsão),
+  //    então a busca é por substring simples numa janela em torno do nome.
+  //    Nomes com sufixo local (ex.: "BOM RETIRO DO SUL - MONTANTE") também são
+  //    tentados pela forma base usada no boletim. Calibrado em 17/07/2026
+  //    contra os 3 boletins vigentes: 42/42 limiares confirmados.
+  const candidatos = [nomeNorm];
+  const base = nomeNorm.split(' - ')[0].trim();
+  if (base && base !== nomeNorm) candidatos.push(base);
+  for (const nm of candidatos) {
+    let i = txtNorm.indexOf(nm);
+    while (i !== -1) {
+      const janela = txtNorm.slice(Math.max(0, i - 120), i + nm.length + 320);
+      if (janela.indexOf(v) !== -1) return true;
+      i = txtNorm.indexOf(nm, i + 1);
+    }
   }
   return false;
 }
