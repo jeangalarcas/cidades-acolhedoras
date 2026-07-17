@@ -261,7 +261,9 @@ router.get('/cota-municipio/:cod_ibge', async (req, res) => {
         JOIN estacoes_ana e ON e.telemetrica AND e.tipo='Fluviometrica' AND e.geom IS NOT NULL
         LEFT JOIN cotas_referencia cr ON cr.codigo_estacao = e.codigo
        WHERE m.cod_ibge = $1
-       ORDER BY e.geom <-> extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)
+       ORDER BY (e.categoria = 'ativa') DESC,
+                (cr.codigo_estacao IS NOT NULL) DESC,
+                e.geom <-> extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)
        LIMIT 1`, [parseInt(req.params.cod_ibge, 10)]);
     if (!rows.length) return res.status(404).json({ erro: 'município não encontrado' });
     const est = rows[0];
