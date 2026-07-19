@@ -138,7 +138,7 @@
 <!-- ABAS (com CTA central) -->
 <div class="tabs">
   <div class="tab active" id="tab-mun" onclick="setTab('municipio')">497 Municipios do RS</div>
-  <div class="tab" id="tab-bac" onclick="setTab('bacia')">9 Bacias Hidrograficas</div>
+  <div class="tab" id="tab-bac" onclick="setTab('bacia')">25 Bacias Hidrograficas</div>
   <button id="cta-topo" onclick="entrar()">Abrir SGA</button>
 </div>
 
@@ -176,17 +176,36 @@
 // ── ESTADO ──────────────────────────────────────────────────────
 var TAB = 'municipio';
 var MUNICIPIOS = [];
-var BACIAS = [
-  {id:'guaiba',        nome:'Bacia do Guaiba',        rios:'Jacui, Caí, Sinos, Gravataí', municipios_n:72,  lat:-30.05, lng:-51.30, zoom:8, cor:'#2A5A8C'},
-  {id:'gravataí',      nome:'Bacia do Gravataí',       rios:'Rio Gravataí',                 municipios_n:13,  lat:-29.95, lng:-51.20, zoom:9, cor:'#1B5E8C'},
-  {id:'taquari-antas', nome:'Bacia Taquari-Antas',     rios:'Taquari, Antas, Pelotas',     municipios_n:119, lat:-29.20, lng:-52.00, zoom:8, cor:'#2D7A5C'},
-  {id:'camaqua',       nome:'Bacia do Camaqua',        rios:'Rio Camaqua',                  municipios_n:22,  lat:-30.85, lng:-52.80, zoom:8, cor:'#5C7A2D'},
-  {id:'patos',         nome:'Lagoa dos Patos',         rios:'Laguna costeira',              municipios_n:18,  lat:-31.50, lng:-51.50, zoom:7, cor:'#1B6B8C'},
-  {id:'ibicui',        nome:'Bacia do Ibicui',         rios:'Ibicui, Santa Maria',         municipios_n:48,  lat:-29.40, lng:-54.80, zoom:8, cor:'#7A5C2D'},
-  {id:'vacacai',       nome:'Bacia do Vacacai',        rios:'Vacacai, Vacacai-Mirim',      municipios_n:26,  lat:-29.80, lng:-53.50, zoom:8, cor:'#5C2D7A'},
-  {id:'pelotas',       nome:'Bacia do Pelotas/Uruguai',rios:'Pelotas, Uruguai',            municipios_n:65,  lat:-28.00, lng:-52.50, zoom:7, cor:'#8C2A2A'},
-  {id:'jaguarao',      nome:'Bacia do Jaguarao',       rios:'Jaguarao, Ibiraiaras',        municipios_n:14,  lat:-31.80, lng:-52.80, zoom:8, cor:'#6B8C1B'},
-];
+var BACIAS = [];          // carregado da API oficial (SEMA/DRHS)
+var BACIAS_GEO = null;     // camada Leaflet dos polígonos
+async function carregarBacias() {
+  try {
+    var API = 'https://sga-api-1705.onrender.com';
+    var r = await fetch(API + '/api/bacias'); var d = await r.json();
+    var g = await (await fetch(API + '/api/bacias/geojson')).json();
+    var feats = {}; g.features.forEach(function(f){ feats[f.properties.codigo] = f; });
+    var CORES = { 'Guaíba':'#2A5A8C', 'Uruguai':'#7A5C2D', 'Litoral':'#1B6B8C' };
+    BACIAS = d.bacias.map(function(b){
+      return { id: b.codigo, nome: b.nome_curto, regiao: b.regiao,
+               municipios_n: b.municipios,
+               rios: b.regiao + ' · ' + b.estacoes_ativas + ' estações ativas',
+               cor: CORES[b.regiao] || '#2D7A5C', feature: feats[b.codigo] || null };
+    });
+    BACIAS_GEO = L.geoJSON(g, {
+      style: function(f){ return { color: CORES[f.properties.regiao]||'#2D7A5C',
+        weight: 2, fillOpacity: 0.08 }; },
+      onEachFeature: function(f, ly) {
+        ly.bindTooltip(f.properties.codigo + ' — ' + f.properties.nome, {sticky:true});
+        ly.on('click', function(){
+          var b = BACIAS.find(function(x){ return x.id === f.properties.codigo; });
+          if (b) selecionarBacia(b);
+        });
+      }
+    });
+    if (TAB === 'bacia') renderLista();
+  } catch(e) { console.warn('bacias oficiais indisponíveis:', e); }
+}
+carregarBacias();
 var SEL_MUN = null;
 var SEL_BAC = null;
 var FILTRO_RISCO = 'todos';
@@ -284,7 +303,10 @@ function setTab(tab) {
   document.getElementById('btn-entrar').textContent = tab==='municipio'?'Selecione um municipio':'Selecione uma bacia';
   renderLista();
   renderMarcadores();
-  if (tab==='bacia') MAPA.setView([-29.5,-53.0],7);
+  if (tab==='bacia') {
+    MAPA.setView([-29.5,-53.0],7);
+    if (BACIAS_GEO && !MAPA.hasLayer(BACIAS_GEO)) BACIAS_GEO.addTo(MAPA);
+  } else if (BACIAS_GEO && MAPA.hasLayer(BACIAS_GEO)) { MAPA.removeLayer(BACIAS_GEO); }
 }
 
 // ── LISTA MUNICÍPIOS ─────────────────────────────────────────────
@@ -315,7 +337,7 @@ function renderLista() {
         +'<span class="li-badge '+nivelCls+'">'+m.risco.nivel_str+'</span></div>';
     }).join('');
   } else {
-    count.textContent = '9 bacias hidrograficas do RS';
+    count.textContent = BACIAS.length ? (BACIAS.length + ' bacias oficiais (Decreto 53.885/2018)') : 'carregando bacias oficiais…';
     lista.innerHTML = BACIAS.map(function(b){
       return '<div class="bacia-card'+(SEL_BAC&&SEL_BAC.id===b.id?' active':'')+'" onclick="selecionarBacia('+JSON.stringify(b).replace(/"/g,'&quot;')+')">'
         +'<div class="bc-nome">'+b.nome+'</div>'
@@ -358,7 +380,10 @@ function selecionarBacia(b) {
   document.getElementById('btn-entrar').textContent = 'Monitorar ' + b.nome;
   document.getElementById('sel-info').textContent = b.municipios_n + ' municipios · ' + b.rios;
   atualizarCTA('Monitorar ' + b.nome);
-  MAPA.setView([b.lat, b.lng], b.zoom);
+  if (b.feature) {
+    var ly = L.geoJSON(b.feature);
+    MAPA.fitBounds(ly.getBounds(), { padding: [24,24] });
+  }
   renderLista();
 }
 

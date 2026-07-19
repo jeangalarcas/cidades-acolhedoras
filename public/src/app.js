@@ -41,9 +41,10 @@ const App = {
         }
       }, 800);
     } else if (bacId) {
-      // Vindo do seletor com bacia hidrográfica
+      // Vindo do seletor com bacia hidrográfica oficial (modo bacia)
       Router.go('mapa');
-      App._atualizarTopbar('Bacia — ' + bacId.replace(/-/g,' '), '');
+      if (window.BaciaMode) BaciaMode.iniciar(bacId);
+      else App._atualizarTopbar('Bacia — ' + bacId, '');
     } else if (SGA.config.municipioAtivo) {
       Router.go('municipio');
       setTimeout(function() {
