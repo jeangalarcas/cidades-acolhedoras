@@ -51,3 +51,15 @@ input, select, textarea {
   border-color: var(--border) !important;
 }
 ::placeholder { color: var(--text-3); }
+
+/* ── Legenda do mapa legível no tema escuro (fix 19/07/2026) ── */
+.map-legend{background:rgba(10,22,17,.95)!important;border:1px solid #2a4238!important}
+.map-legend,.map-legend span{color:#dfe9e4!important}
+.map-legend-title{color:#8fb8a5!important}
+
+/* rótulos das bacias sobre o mapa escuro do SGA */
+.bacia-label-dark{background:transparent!important;border:none!important;box-shadow:none!important;
+  font-weight:800;font-size:11px;line-height:1.15;color:#eaf4ee;text-align:center;
+  text-shadow:0 0 3px #000,0 0 6px #000,0 1px 2px #000;
+  white-space:normal;max-width:130px;pointer-events:none}
+.bacia-label-dark:before{display:none}

@@ -115,7 +115,13 @@
         text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);
       }
     }
-  </style>
+  
+    .bacia-label{background:transparent!important;border:none!important;box-shadow:none!important;
+      font-weight:800;font-size:11px;line-height:1.15;color:#14352b;text-align:center;
+      text-shadow:0 1px 0 #fff,0 -1px 0 #fff,1px 0 0 #fff,-1px 0 0 #fff,0 0 6px #fff;
+      white-space:normal;max-width:130px;pointer-events:none}
+    .bacia-label:before{display:none}
+</style>
 </head>
 <body>
 
@@ -184,25 +190,31 @@ async function carregarBacias() {
     var r = await fetch(API + '/api/bacias'); var d = await r.json();
     var g = await (await fetch(API + '/api/bacias/geojson')).json();
     var feats = {}; g.features.forEach(function(f){ feats[f.properties.codigo] = f; });
-    var CORES = { 'Guaíba':'#2A5A8C', 'Uruguai':'#7A5C2D', 'Litoral':'#1B6B8C' };
+    // cor distinta por bacia (ângulo áureo — 25 tons bem separados)
+    var CORB = {};
+    d.bacias.forEach(function(b, i){ CORB[b.codigo] = 'hsl(' + Math.round((i*137.508)%360) + ',60%,34%)'; });
     BACIAS = d.bacias.map(function(b){
       return { id: b.codigo, nome: b.nome_curto, regiao: b.regiao,
                municipios_n: b.municipios,
                rios: b.regiao + ' · ' + b.estacoes_ativas + ' estações ativas',
-               cor: CORES[b.regiao] || '#2D7A5C', feature: feats[b.codigo] || null };
+               cor: CORB[b.codigo], feature: feats[b.codigo] || null };
     });
     BACIAS_GEO = L.geoJSON(g, {
-      style: function(f){ return { color: CORES[f.properties.regiao]||'#2D7A5C',
-        weight: 2, fillOpacity: 0.08 }; },
+      style: function(f){ return { color: CORB[f.properties.codigo]||'#2D7A5C',
+        weight: 2.5, fillColor: CORB[f.properties.codigo]||'#2D7A5C', fillOpacity: 0.14 }; },
       onEachFeature: function(f, ly) {
-        ly.bindTooltip(f.properties.codigo + ' — ' + f.properties.nome, {sticky:true});
+        var curto = f.properties.nome.replace(/^Bacia Hidrográfica (do |dos |da |de )?/,'');
+        ly.bindTooltip(curto, { permanent:true, direction:'center', className:'bacia-label' });
         ly.on('click', function(){
           var b = BACIAS.find(function(x){ return x.id === f.properties.codigo; });
           if (b) selecionarBacia(b);
         });
       }
     });
-    if (TAB === 'bacia') renderLista();
+    if (TAB === 'bacia') {
+      renderLista();
+      if (MAPA && !MAPA.hasLayer(BACIAS_GEO)) BACIAS_GEO.addTo(MAPA);  // aparece na hora
+    }
   } catch(e) { console.warn('bacias oficiais indisponíveis:', e); }
 }
 carregarBacias();

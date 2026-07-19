@@ -16,7 +16,14 @@ const PainelSituacao = {
      cabeçalhos fixos das páginas (correção do texto oculto). */
   _fixarAbaixoDaBarra() {
     const el = document.getElementById('painel-situacao');
-    if (el) el.style.cssText = '';
+    if (el) {
+      // ancora a faixa imediatamente ABAIXO da topbar, no fluxo normal
+      // (corrige KPIs escondidos sob a barra do sistema — 19/07/2026)
+      const tb = document.querySelector('.topbar');
+      if (tb && tb.parentNode && el.previousElementSibling !== tb)
+        tb.insertAdjacentElement('afterend', el);
+      el.style.cssText = 'position:relative;z-index:150;';
+    }
   },
 
   async carregar() {

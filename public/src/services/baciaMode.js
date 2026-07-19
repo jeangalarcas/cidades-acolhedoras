@@ -97,3 +97,45 @@ if (window.L && L.Map && L.Map.addInitHook) {
     }, 400);
   });
 }
+
+
+/* ── Camada estadual das 25 bacias (toggle na toolbar do Mapa) ─────────── */
+const BaciasCamada = {
+  _layer: null, _carregando: false,
+  _mapa() {
+    return (window.SGA_MAPAS || []).find(m => m._container && m._container.id === 'leaflet-map')
+        || (window.SGA_MAPAS || [])[0] || null;
+  },
+  async toggle() {
+    const mapa = this._mapa(); const btn = document.getElementById('lb-bacias');
+    if (!mapa) return;
+    if (this._layer && mapa.hasLayer(this._layer)) {
+      mapa.removeLayer(this._layer);
+      if (btn) btn.className = 'layer-btn';
+      return;
+    }
+    if (!this._layer && !this._carregando) {
+      this._carregando = true;
+      try {
+        const g = await (await fetch(BaciaMode._API + '/api/bacias/geojson')).json();
+        const cor = {}; g.features.forEach((f, i) => {
+          cor[f.properties.codigo] = 'hsl(' + Math.round((i * 137.508) % 360) + ',60%,52%)';
+        });
+        this._layer = L.geoJSON(g, {
+          style: f => ({ color: cor[f.properties.codigo], weight: 2,
+                         fillColor: cor[f.properties.codigo], fillOpacity: 0.07 }),
+          onEachFeature: (f, ly) => {
+            const curto = f.properties.nome.replace(/^Bacia Hidrográfica (do |dos |da |de )?/, '');
+            ly.bindTooltip(curto, { permanent: true, direction: 'center', className: 'bacia-label-dark' });
+          },
+        });
+      } catch (e) { console.warn('[BaciasCamada]', e.message); }
+      this._carregando = false;
+    }
+    if (this._layer) {
+      this._layer.addTo(mapa);
+      if (btn) btn.className = 'layer-btn on-blue';
+    }
+  },
+};
+window.BaciasCamada = BaciasCamada;

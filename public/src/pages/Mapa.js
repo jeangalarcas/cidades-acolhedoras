@@ -25,6 +25,7 @@ const MapaPage = {
         <button id="lb-cprm"   class="layer-btn"         onclick="toggleLayer('cprm')">🟣 CPRM Suscet.</button>
         <button id="lb-abrigo" class="layer-btn"         onclick="toggleLayer('abrigo')">🏠 Abrigos</button>
         <button id="lb-rota"   class="layer-btn"         onclick="toggleLayer('rota')">🟢 Rotas de fuga</button>
+        <button id="lb-bacias" class="layer-btn"         onclick="BaciasCamada.toggle()">🌊 Bacias</button>
       </div>
 
       <!-- MAPA + LEGENDA -->
