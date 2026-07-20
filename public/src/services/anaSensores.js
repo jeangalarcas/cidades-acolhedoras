@@ -177,7 +177,9 @@ const AnaSensores = {
                  janela: t ? t.horas + 'h' : null,
                  vazao: ult && ult.Vazao_Adotada != null ? ult.Vazao_Adotada : '—',
                  status: c != null ? 'Ativo' : 'Offline' };
-      });
+      })
+      // ativas primeiro, offline por último (pedido 20/07)
+      .sort((a, b) => (b.status === 'Ativo') - (a.status === 'Ativo'));
       const hw = document.querySelector('#p-hidroweb');
       if (hw && window.HidroWebPage) hw.outerHTML = HidroWebPage.render();
 
@@ -239,6 +241,9 @@ const AnaSensores = {
           });
         }
       } catch (_) {}
+
+      // Ordem: estações ATIVAS sempre primeiro, offline por último (pedido 20/07)
+      SGA.sensoresPluvio.sort((a, b) => (b.status === 'Ativo') - (a.status === 'Ativo'));
 
       // (Solo & Encostas: sem fonte ANA — permanece como está, sem inventar)
 
