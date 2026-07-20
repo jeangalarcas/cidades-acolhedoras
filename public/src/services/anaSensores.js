@@ -50,6 +50,12 @@ const AnaSensores = {
       if (bacia) {
         doMunicipio = todas.filter(e => bacia.temEstacao
           ? bacia.temEstacao(e.codigo) : bacia.estacoes.has(String(e.codigo)));
+        // Ordem oficial da bacia: a API lista primeiro as réguas com limiar
+        // SGB (Encantado, Estrela, Muçum…) — o Set preserva essa inserção.
+        const pos = new Map(); let i = 0;
+        bacia.estacoes.forEach(c => pos.set(String(c), i++));
+        doMunicipio.sort((a, b) => (pos.get(String(a.codigo)) ?? 1e9)
+                                 - (pos.get(String(b.codigo)) ?? 1e9));
       } else {
         doMunicipio = todas.filter(e => e.cod_ibge === codIBGE);
         if (!doMunicipio.length) {
