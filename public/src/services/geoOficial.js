@@ -156,6 +156,82 @@ window.GeoOficial = GeoOficial;
 
 
 /**
+ * SGA — Ferramentas Web GIS de medição (turf.js) no mapa principal.
+ * 📏 Distância: cliques adicionam vértices; duplo clique encerra.
+ * ⬛ Área: cliques desenham o polígono; duplo clique fecha e mede.
+ * Medição geodésica (WGS84) via turf.length / turf.area.
+ */
+const MedirMapa = {
+  _modo: null, _pts: [], _layer: null, _click: null, _dbl: null,
+
+  distancia() { this._iniciar('dist'); },
+  area()      { this._iniciar('area'); },
+
+  _mapa() {
+    return (window.SGA_MAPAS || []).find(m => m._container && m._container.id === 'leaflet-map')
+        || (window.SGA_MAPAS || [])[0] || null;
+  },
+
+  _iniciar(modo) {
+    const mapa = this._mapa();
+    if (!mapa || !window.turf) return;
+    this.limpar();
+    this._modo = modo; this._pts = [];
+    mapa._container.style.cursor = 'crosshair';
+    mapa.doubleClickZoom.disable();
+    this._click = (ev) => { this._pts.push([ev.latlng.lng, ev.latlng.lat]); this._desenhar(); };
+    this._dbl   = () => this._finalizar();
+    mapa.on('click', this._click);
+    mapa.on('dblclick', this._dbl);
+    const btn = document.getElementById(modo === 'dist' ? 'wg-dist' : 'wg-area');
+    if (btn) btn.className = 'layer-btn on-amber';
+  },
+
+  _desenhar(fechado) {
+    const mapa = this._mapa();
+    if (this._layer) mapa.removeLayer(this._layer);
+    if (this._pts.length < 1) return;
+    const latlngs = this._pts.map(p => [p[1], p[0]]);
+    let rotulo = '';
+    if (this._modo === 'area' && this._pts.length >= 3) {
+      const anel = [...this._pts, this._pts[0]];
+      const km2 = turf.area(turf.polygon([anel])) / 1e6;
+      rotulo = km2 >= 1 ? km2.toFixed(2) + ' km²' : Math.round(km2 * 1e6).toLocaleString('pt-BR') + ' m²';
+      this._layer = L.polygon(latlngs, { color: '#E8A23A', weight: 2, fillOpacity: 0.12 });
+    } else if (this._pts.length >= 2) {
+      const km = turf.length(turf.lineString(this._pts), { units: 'kilometers' });
+      rotulo = km >= 1 ? km.toFixed(2) + ' km' : Math.round(km * 1000) + ' m';
+      this._layer = L.polyline(latlngs, { color: '#E8A23A', weight: 3, dashArray: fechado ? null : '6 4' });
+    } else {
+      this._layer = L.circleMarker(latlngs[0], { radius: 4, color: '#E8A23A' });
+    }
+    if (rotulo) this._layer.bindTooltip('📐 ' + rotulo + (fechado ? '' : ' (duplo clique encerra)'),
+                                        { permanent: true, sticky: false });
+    this._layer.addTo(mapa);
+  },
+
+  _finalizar() {
+    const mapa = this._mapa();
+    this._desenhar(true);
+    if (mapa) {
+      mapa.off('click', this._click); mapa.off('dblclick', this._dbl);
+      mapa._container.style.cursor = ''; mapa.doubleClickZoom.enable();
+    }
+    ['wg-dist', 'wg-area'].forEach(id => { const b = document.getElementById(id); if (b) b.className = 'layer-btn'; });
+    this._modo = null;
+  },
+
+  limpar() {
+    const mapa = this._mapa();
+    if (mapa && this._layer) mapa.removeLayer(this._layer);
+    this._layer = null;
+    this._finalizar();
+  },
+};
+window.MedirMapa = MedirMapa;
+
+
+/**
  * SGA — Análise Espacial (página) — população/imóveis na faixa de influência
  * Método (dasimetria simples, DECLARADO na tela): buffer de X m sobre a
  * hidrografia BC250 dentro do município; para cada bairro, estima-se
