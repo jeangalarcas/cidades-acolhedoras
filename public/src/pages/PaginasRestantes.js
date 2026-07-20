@@ -115,11 +115,11 @@ const SensoresPage = {
                   <div><span class="sc-value" style="color:${s.col}">${s.cota}</span><span class="sc-unit">m</span>${s.tend ? `
                     <span title="Δ ${s.tend.delta} em ${s.tend.horas}h" style="font-size:20px;font-weight:800;margin-left:6px;color:${s.tend.cor}">${s.tend.seta}</span>` : ''}</div>
                   <div class="sc-sub">${s.tend ? `Δ ${s.tend.horas}h: <b style="color:${s.tend.cor}">${s.tend.delta}</b> · ` : ''}Taxa: ${s.taxa}</div>
-                  <div class="sc-sub"><span class="pill ${s.status==='Crítico'?'pill-red':s.status==='Alto'?'pill-amber':s.status==='Offline'?'pill-gray':'pill-green'}">${s.status}</span></div>
+                  <div class="sc-sub"><span class="pill ${s.status==='Crítico'?'pill-red':s.status==='Alto'?'pill-amber':s.status==='Offline'?'st-off':'st-on'}">${s.status}</span></div>
                   <div class="sc-bar"><div class="sc-fill ${s.status==='Crítico'?'sc-fill-err':s.status==='Alto'?'sc-fill-warn':'sc-fill-ok'}"
                     style="width:${Math.min(s.cota/8*100,100)}%"></div></div>
                   <div class="sparkline" id="sp-${s.id.toLowerCase().replace('-','')}"></div>
-                ` : `<div class="sc-sub pill pill-gray">Offline</div>`}
+                ` : `<div class="sc-sub"><span class="pill st-off">Offline</span></div>`}
               </div>
             `).join('')}
           </div>
@@ -134,7 +134,7 @@ const SensoresPage = {
                 <div><span class="sc-value" style="color:${s.col}">${s.mmh}</span><span class="sc-unit">mm/h</span></div>
                 <div class="sc-sub">Acum. 6h: ${s.acum6h}mm${s.acum24h != null ? ' · 24h: ' + s.acum24h + 'mm' : ''}</div>
                 ${s.medidoEm ? `<div class="sc-sub">Última medição: ${s.medidoEm}</div>` : ''}
-                <div class="sc-sub"><span class="pill ${s.status==='Crítico'?'pill-red':s.status==='Alto'?'pill-amber':'pill-green'}">${s.status}</span></div>
+                <div class="sc-sub"><span class="pill ${s.status==='Crítico'?'pill-red':s.status==='Alto'?'pill-amber':s.status==='Offline'?'st-off':'st-on'}">${s.status}</span></div>
                 <div class="sc-bar"><div class="sc-fill ${s.status==='Crítico'?'sc-fill-err':s.status==='Alto'?'sc-fill-warn':'sc-fill-ok'}"
                   style="width:${Math.min(s.mmh/150*100,100)}%"></div></div>
                 <div class="sparkline" id="sp-${s.id.toLowerCase().replace('-','')}"></div>
@@ -253,7 +253,7 @@ const HidroWebPage = {
             <div class="card">
               <div class="card-header">
                 <div class="card-title">💧 ${e.nome}</div>
-                <span class="pill ${e.status==='Crítico'?'pill-red':e.status==='Alto'?'pill-amber':e.status==='Atenção'?'pill-amber':'pill-green'}">${e.status}</span>
+                <span class="pill ${e.status==='Crítico'?'pill-red':e.status==='Alto'?'pill-amber':e.status==='Atenção'?'pill-amber':e.status==='Offline'?'st-off':'st-on'}">${e.status}</span>
               </div>
               <div class="card-body">
                 <div class="g2" style="margin-bottom:8px">
