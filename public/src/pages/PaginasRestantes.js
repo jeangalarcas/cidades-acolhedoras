@@ -514,44 +514,138 @@ window.IAPage = IAPage;
 /**
  * SGA — Abrigos & Rotas
  */
+/**
+ * SGA — Abrigos & Rotas (locais REAIS via OpenStreetMap)
+ * ───────────────────────────────────────────────────────────────────────────
+ * HONESTIDADE: não inventamos capacidade nem ocupação. Esta página lista
+ * LOCAIS CANDIDATOS a abrigo (escolas, ginásios, centros comunitários e
+ * abrigos já mapeados) vindos do OpenStreetMap ao redor da sede do município
+ * ativo, com distância real e link de navegação. A designação e ativação de
+ * abrigos é ato da Defesa Civil municipal.
+ */
 const AbrigosPage = {
+  _cacheIbge: null, _locais: null,
+  _MIRRORS: ['https://overpass-api.de/api/interpreter',
+             'https://overpass.kumi.systems/api/interpreter'],
+
   render() {
-    const abrigos = SGA.abrigos || [];
-    const vagasTotal = abrigos.reduce((s,a) => s + Math.round(a.cap*(1-a.ocup/100)), 0);
     return `
     <div class="page" id="p-abrigos">
       <div class="page-header">
         <div>
           <div class="page-title">Abrigos & Rotas de Fuga</div>
-          <div class="page-sub">Padrão ESFERA 3,5m² por pessoa</div>
+          <div class="page-sub" id="abr-sub">Locais candidatos a abrigo · fonte OpenStreetMap · designação oficial é da Defesa Civil</div>
         </div>
         <div class="page-actions">
-          <span class="pill pill-green">${vagasTotal.toLocaleString('pt-BR')} vagas disponíveis</span>
+          <span class="pill pill-gray" id="abr-pill">—</span>
         </div>
       </div>
       <div class="page-body">
-        <div class="g2">
-          ${abrigos.map(a => {
-            const vagas = Math.round(a.cap*(1-a.ocup/100));
-            const pct = a.ocup;
-            return `
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">🏠 ${a.nome}</div>
-                <span class="pill ${pct>80?'pill-red':pct>50?'pill-amber':'pill-green'}">${pct}% ocupado</span>
-              </div>
-              <div class="card-body">
-                <div class="metric-row"><span class="mr-label">Capacidade</span><span class="mr-value">${a.cap.toLocaleString('pt-BR')} pessoas</span></div>
-                <div class="metric-row"><span class="mr-label">Vagas livres</span><span class="mr-value" style="color:var(--green-mid)">${vagas.toLocaleString('pt-BR')}</span></div>
-                <div class="metric-row"><span class="mr-label">Cota de segurança</span><span class="mr-value">${a.cota}m</span></div>
-                <div class="metric-row"><span class="mr-label">Acessível PCD</span><span class="mr-value">${a.acess?'✓ Sim':'—'}</span></div>
-                <div class="sc-bar" style="margin-top:8px"><div class="sc-fill ${pct>80?'sc-fill-err':pct>50?'sc-fill-warn':'sc-fill-ok'}" style="width:${pct}%"></div></div>
-              </div>
-            </div>`;
-          }).join('')}
+        <div class="card">
+          <div class="card-body" style="font-size:12px;color:var(--text-2);line-height:1.7;padding:10px 14px">
+            <b style="color:var(--text-1)">Leia antes de usar:</b> os locais abaixo vêm do OpenStreetMap (dados
+            comunitários — podem estar incompletos ou desatualizados) e são <b>candidatos</b>: escolas, ginásios e
+            centros comunitários são os tipos mais usados como abrigo em cheias. Capacidade e ocupação não são
+            publicadas — não exibimos números inventados (referência de planejamento: padrão Esfera, 3,5 m²/pessoa).
+            O link "Como chegar" usa as vias atuais e <b>não considera trechos alagados</b> — em emergência, siga a
+            orientação da Defesa Civil (199) e dos Bombeiros (193).
+          </div>
+        </div>
+        <div class="g2" id="abr-lista">
+          <div style="font-size:12px;color:var(--text-3);padding:8px">Selecione um município para buscar locais reais.</div>
         </div>
       </div>
     </div>`;
+  },
+
+  async carregar() {
+    const alvo = document.getElementById('abr-lista');
+    if (!alvo) return;
+    const m = SGA.config.municipioAtivo;
+    if (!m || m.lat == null || m.lng == null) {
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Selecione um município para buscar locais reais.</div>';
+      return;
+    }
+    if (this._cacheIbge === m.cod_ibge && this._locais) { this._renderLista(m); return; }
+    alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Consultando o OpenStreetMap ao redor de <b>' + m.nome + '</b>…</div>';
+
+    const q = '[out:json][timeout:25];(' +
+      'nwr["amenity"="shelter"](around:12000,' + m.lat + ',' + m.lng + ');' +
+      'nwr["amenity"="community_centre"](around:12000,' + m.lat + ',' + m.lng + ');' +
+      'nwr["leisure"="sports_centre"](around:12000,' + m.lat + ',' + m.lng + ');' +
+      'nwr["amenity"="school"](around:12000,' + m.lat + ',' + m.lng + ');' +
+      ');out center 200;';
+    let dados = null;
+    for (const url of this._MIRRORS) {
+      try {
+        const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q),
+                                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        if (r.ok) { dados = await r.json(); break; }
+      } catch (_) { /* tenta o próximo espelho */ }
+    }
+    if (!dados) {
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--amber);padding:8px">OpenStreetMap (Overpass) indisponível agora — tente novamente em instantes.</div>';
+      return;
+    }
+
+    const dist = (la1, lo1, la2, lo2) => {
+      const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLo = (lo2 - lo1) * Math.PI / 180;
+      const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dLo / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    const TIPO = e =>
+      e.tags.amenity === 'shelter' ? ['Abrigo mapeado', '🏠'] :
+      e.tags.amenity === 'community_centre' ? ['Centro comunitário', '🏢'] :
+      e.tags.leisure === 'sports_centre' ? ['Ginásio / esportivo', '🏟'] : ['Escola', '🏫'];
+    const vistos = new Set();
+    this._locais = (dados.elements || [])
+      .filter(e => e.tags && e.tags.name)
+      .map(e => {
+        const c = e.center || e;
+        const [tipo, icone] = TIPO(e);
+        return { nome: e.tags.name, tipo, icone, lat: c.lat, lng: c.lon,
+                 dist_km: +dist(m.lat, m.lng, c.lat, c.lon).toFixed(1) };
+      })
+      .filter(l => { const k = l.nome + '|' + l.lat.toFixed(3) + '|' + l.lng.toFixed(3);
+                     if (vistos.has(k)) return false; vistos.add(k); return true; })
+      .sort((a, b) => a.dist_km - b.dist_km)
+      .slice(0, 40);
+    this._cacheIbge = m.cod_ibge;
+
+    // camada "Abrigos" do mapa passa a plotar os locais reais
+    SGA.abrigos = this._locais.map(l => ({ nome: l.nome, lat: l.lat, lng: l.lng,
+                                           tipo: l.tipo + ' · ' + l.dist_km + ' km da sede (OSM)' }));
+    this._renderLista(m);
+  },
+
+  _renderLista(m) {
+    const alvo = document.getElementById('abr-lista');
+    if (!alvo) return;
+    const ls = this._locais || [];
+    const pill = document.getElementById('abr-pill');
+    if (pill) { pill.textContent = ls.length + ' locais (OSM)'; pill.className = 'pill ' + (ls.length ? 'pill-green' : 'pill-gray'); }
+    const sub = document.getElementById('abr-sub');
+    if (sub) sub.textContent = m.nome + ' · raio de 12 km da sede · fonte OpenStreetMap (agora) · designação oficial é da Defesa Civil';
+    if (!ls.length) {
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Nenhum local com nome mapeado no OSM num raio de 12 km — isso é uma lacuna do mapeamento, não ausência de abrigos. Consulte a Defesa Civil municipal.</div>';
+      return;
+    }
+    alvo.innerHTML = ls.map(l => `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">${l.icone} ${l.nome}</div>
+          <span class="pill pill-gray">${l.dist_km} km</span>
+        </div>
+        <div class="card-body">
+          <div class="metric-row"><span class="mr-label">Tipo</span><span class="mr-value">${l.tipo}</span></div>
+          <div class="metric-row"><span class="mr-label">Capacidade</span><span class="mr-value" style="color:var(--text-3)">não publicada — Defesa Civil define</span></div>
+          <div class="metric-row"><span class="mr-label">Coordenadas</span><span class="mr-value mono">${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}</span></div>
+          <div style="margin-top:8px">
+            <a class="btn btn-outline" style="font-size:11px" target="_blank" rel="noopener"
+               href="https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}&travelmode=driving">🧭 Como chegar (rota atual — não considera alagamentos)</a>
+          </div>
+        </div>
+      </div>`).join('');
   },
 };
 window.AbrigosPage = AbrigosPage;
