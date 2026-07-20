@@ -41,23 +41,44 @@ const AnaSensores = {
       }
       const todas = this._cacheEstacoes;
 
-      // 2) Estações do município; se não houver, usa as mais próximas (rotulado)
-      let doMunicipio = todas.filter(e => e.cod_ibge === codIBGE);
-      let aproximadas = false;
-      if (!doMunicipio.length) {
-        const m = SGA.config.municipioAtivo || {};
-        if (m.lat != null && m.lng != null) {
-          doMunicipio = [...todas]
-            .filter(e => e.latitude != null && e.longitude != null)
-            .sort((a, b) => this._dist(m.lat, m.lng, a.latitude, a.longitude)
-                          - this._dist(m.lat, m.lng, b.latitude, b.longitude))
-            .slice(0, this.MAX_POR_ABA * 2);
-          aproximadas = true;
+      // 2) Universo de estações:
+      //    • MODO BACIA (Fase 2): membros de SGA.config.baciaAtiva.estacoes
+      //      (estações dentro do polígono oficial SEMA — vindas da API);
+      //    • senão: estações do município; se não houver, as mais próximas.
+      const bacia = (window.SGA && SGA.config && SGA.config.baciaAtiva) || null;
+      let doMunicipio, aproximadas = false;
+      if (bacia) {
+        doMunicipio = todas.filter(e => bacia.temEstacao
+          ? bacia.temEstacao(e.codigo) : bacia.estacoes.has(String(e.codigo)));
+      } else {
+        doMunicipio = todas.filter(e => e.cod_ibge === codIBGE);
+        if (!doMunicipio.length) {
+          const m = SGA.config.municipioAtivo || {};
+          if (m.lat != null && m.lng != null) {
+            doMunicipio = [...todas]
+              .filter(e => e.latitude != null && e.longitude != null)
+              .sort((a, b) => this._dist(m.lat, m.lng, a.latitude, a.longitude)
+                            - this._dist(m.lat, m.lng, b.latitude, b.longitude))
+              .slice(0, this.MAX_POR_ABA * 2);
+            aproximadas = true;
+          }
         }
       }
 
-      const flu = doMunicipio.filter(e => e.tipo === 'Fluviometrica').slice(0, this.MAX_POR_ABA);
-      const plu = doMunicipio.filter(e => e.tipo === 'Pluviometrica' && e.operadora_sigla !== 'CEMADEN').slice(0, this.MAX_POR_ABA);
+      // Limite de consultas ao vivo por aba (bacia pode ter dezenas de estações)
+      const cap = bacia ? 12 : this.MAX_POR_ABA;
+      const fluTodas = doMunicipio.filter(e => e.tipo === 'Fluviometrica');
+      const pluTodas = doMunicipio.filter(e => e.tipo === 'Pluviometrica' && e.operadora_sigla !== 'CEMADEN');
+      const flu = fluTodas.slice(0, cap);
+      const plu = pluTodas.slice(0, cap);
+      SGA.sensoresInfo = {
+        bacia: bacia ? bacia.nome : null,
+        totalFlu: fluTodas.length, exibFlu: flu.length,
+        totalPlu: pluTodas.length, exibPlu: plu.length,
+      };
+      if (bacia && (fluTodas.length > flu.length || pluTodas.length > plu.length))
+        console.log('[AnaSensores] bacia', bacia.codigo, '— exibindo', flu.length + '/' + fluTodas.length,
+                    'réguas e', plu.length + '/' + pluTodas.length, 'pluviômetros (limite de consultas ao vivo)');
 
       // 3) Leituras ao vivo (paralelo, tolerante a falha individual)
       const buscarSerie = async (e) => {
@@ -77,7 +98,8 @@ const AnaSensores = {
       const rotulo = (e) => {
         let l = e.nome || e.codigo;
         if (e.rio_nome) l += ' · ' + e.rio_nome;
-        if (aproximadas && e.municipio_nome) l += ' (' + e.municipio_nome + ')';
+        // bacia atravessa vários municípios → sempre rotular a cidade da estação
+        if ((aproximadas || bacia) && e.municipio_nome) l += ' (' + e.municipio_nome + ')';
         return l;
       };
 
@@ -134,6 +156,9 @@ const AnaSensores = {
       });
 
 // ── Pluviômetros CEMADEN (PED): acumulados oficiais por município ──
+      // No modo bacia, só se o município ativo pertence à bacia (senão a lista
+      // misturaria pluviômetros de fora do recorte).
+      if (bacia && !bacia.temMunicipio(codIBGE)) { /* pula CEMADEN */ } else
       try {
         const [rc, re] = await Promise.all([
           fetch(`${api}/api/cemaden/acumulados?ibge=${codIBGE}`),

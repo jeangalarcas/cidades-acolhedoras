@@ -30,8 +30,12 @@ const BaciaMode = {
       window.SGA = window.SGA || {}; SGA.config = SGA.config || {};
       SGA.config.baciaAtiva = {
         codigo: det.codigo, nome: det.nome_curto, regiao: det.regiao,
-        ibges: new Set(det.municipios.map(m => m.cod_ibge)),
-        estacoes: new Set(det.estacoes.map(e => e.codigo)),
+        // Sets normalizados para String — cod_ibge pode vir number (JSON local)
+        // ou string (Postgres); comparar sempre via temMunicipio/temEstacao.
+        ibges: new Set(det.municipios.map(m => String(m.cod_ibge))),
+        estacoes: new Set(det.estacoes.map(e => String(e.codigo))),
+        temMunicipio(v) { return v != null && this.ibges.has(String(v)); },
+        temEstacao(v)   { return v != null && this.estacoes.has(String(v)); },
       };
 
       // Topbar
@@ -44,6 +48,12 @@ const BaciaMode = {
       this._banner(det);
       // mapas já criados + futuros (initHook cuida dos futuros)
       (window.SGA_MAPAS || []).forEach(m => this._aplicarNoMapa(m));
+
+      // Fase 2 — re-filtra listas que possam ter carregado ANTES da bacia chegar
+      // (corrida: MunicipiosPage.iniciar roda ~1.2s após o load; AnaSensores é
+      //  disparado pelo municipioInit; esta chamada garante o filtro nos 2 casos)
+      if (window.MunicipiosPage && MunicipiosPage.aplicarBacia) MunicipiosPage.aplicarBacia();
+      if (window.AnaSensores) AnaSensores.carregar(SGA.config.codIBGE);
       console.log('[BaciaMode] ativa:', det.codigo, det.nome_curto,
                   '·', det.total_municipios, 'municípios ·', det.total_estacoes, 'estações');
     } catch (e) { console.warn('[BaciaMode] falha:', e.message); }
