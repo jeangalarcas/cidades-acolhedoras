@@ -8,6 +8,38 @@ const AlertasPage = {
     solo:  SGA?.config?.alertThresholds?.solo  || 85,
   },
 
+  /* Fonte única: SGA.alertasAtivos (motor real — o mesmo da topbar).
+     O array legado SGA.alertas (mock) foi aposentado desta página. */
+  rowsHtml() {
+    const as = SGA.alertasAtivos || [];
+    if (!as.length) return `<div style="padding:14px;font-size:12px;color:var(--text-3)">
+      Nenhum alerta do motor para o município ativo agora. Os avisos meteorológicos
+      estaduais do INMET (acima) são independentes deste contador.</div>`;
+    return as.map(a => `
+      <div class="alert-row">
+        <span class="ar-dot ${a.nivel==='Critico'||a.nivel==='Crítico'?'red':'amber'}"></span>
+        <div class="ar-body">
+          <div class="ar-title">${a.titulo}</div>
+          <div class="ar-sub">Fontes: ${(a.fontes||[]).join(', ')}</div>
+          <div class="ar-sub" style="margin-top:2px">${a.desc}</div>
+        </div>
+        <div class="ar-meta">
+          <span class="pill ${a.nivel==='Critico'||a.nivel==='Crítico'?'pill-red':'pill-amber'}">${a.nivel}</span>
+          <div class="ar-time">${a.hora||''}</div>
+        </div>
+      </div>`).join('');
+  },
+
+  atualizar() {
+    const n = (SGA.alertasAtivos||[]).length;
+    const b = document.getElementById('alx-badge');
+    if (b) b.textContent = '⚠ ' + n + ' ALERTAS ATIVOS';
+    const p = document.getElementById('alx-pill');
+    if (p) p.textContent = n + ' ativos';
+    const l = document.getElementById('alx-lista');
+    if (l) l.innerHTML = this.rowsHtml();
+  },
+
   render() {
     return `
     <div class="page" id="p-alertas">
@@ -17,7 +49,7 @@ const AlertasPage = {
           <div class="page-sub">Motor multicamada · 3 camadas independentes</div>
         </div>
         <div class="page-actions">
-          <span class="tb-alert-badge">⚠ ${SGA.alertas.length} ALERTAS ATIVOS</span>
+          <span class="tb-alert-badge" id="alx-badge">⚠ ${(SGA.alertasAtivos||[]).length} ALERTAS ATIVOS</span>
         </div>
       </div>
       <div class="page-body">
@@ -35,23 +67,10 @@ const AlertasPage = {
           <!-- ALERTAS ATIVOS -->
           <div class="card">
             <div class="card-header">
-              <div class="card-title">🔔 Alertas em Curso</div>
-              <span class="pill pill-red">${SGA.alertas.length} ativos</span>
+              <div class="card-title">🔔 Alertas em Curso — município ativo</div>
+              <span class="pill pill-red" id="alx-pill">${(SGA.alertasAtivos||[]).length} ativos</span>
             </div>
-            ${SGA.alertas.map(a => `
-              <div class="alert-row">
-                <span class="ar-dot ${a.nivel==='Crítico'?'red':'amber'}"></span>
-                <div class="ar-body">
-                  <div class="ar-title">${a.titulo}</div>
-                  <div class="ar-sub">${a.local} · Score IA: ${a.score} · Fontes: ${a.fontes.join(', ')}</div>
-                  <div class="ar-sub" style="margin-top:2px">${a.desc}</div>
-                </div>
-                <div class="ar-meta">
-                  <span class="pill ${a.nivel==='Crítico'?'pill-red':'pill-amber'}">${a.nivel}</span>
-                  <div class="ar-time">${a.hora}</div>
-                </div>
-              </div>
-            `).join('')}
+            <div id="alx-lista">${AlertasPage.rowsHtml()}</div>
           </div>
 
           <!-- MOTOR DE ALERTAS -->
