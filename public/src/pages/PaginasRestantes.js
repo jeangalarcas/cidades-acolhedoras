@@ -112,8 +112,9 @@ const SensoresPage = {
               <div class="sensor-card" style="border-left:3px solid ${s.col||'var(--border)'}">
                 <div class="sc-name">${s.id} — ${s.local}</div>
                 ${s.cota != null ? `
-                  <div><span class="sc-value" style="color:${s.col}">${s.cota}</span><span class="sc-unit">m</span></div>
-                  <div class="sc-sub">Normal: ${s.normal}m · Taxa: ${s.taxa}</div>
+                  <div><span class="sc-value" style="color:${s.col}">${s.cota}</span><span class="sc-unit">m</span>${s.tend ? `
+                    <span title="Δ ${s.tend.delta} em ${s.tend.horas}h" style="font-size:20px;font-weight:800;margin-left:6px;color:${s.tend.cor}">${s.tend.seta}</span>` : ''}</div>
+                  <div class="sc-sub">${s.tend ? `Δ ${s.tend.horas}h: <b style="color:${s.tend.cor}">${s.tend.delta}</b> · ` : ''}Taxa: ${s.taxa}</div>
                   <div class="sc-sub"><span class="pill ${s.status==='Crítico'?'pill-red':s.status==='Alto'?'pill-amber':s.status==='Offline'?'pill-gray':'pill-green'}">${s.status}</span></div>
                   <div class="sc-bar"><div class="sc-fill ${s.status==='Crítico'?'sc-fill-err':s.status==='Alto'?'sc-fill-warn':'sc-fill-ok'}"
                     style="width:${Math.min(s.cota/8*100,100)}%"></div></div>
@@ -260,8 +261,8 @@ const HidroWebPage = {
                     <div style="font-size:24px;font-weight:800;font-family:var(--mono);color:${e.status==='Crítico'?'var(--red)':e.status==='Alto'?'var(--amber)':'var(--green-mid)'}">${e.cota}m</div>
                   </div>
                   <div>
-                    <div style="font-size:10px;color:var(--text-3)">VARIAÇÃO</div>
-                    <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:${(e.variacao||'').startsWith('+')?'var(--red)':'var(--green-mid)'}">${e.variacao}</div>
+                    <div style="font-size:10px;color:var(--text-3)">VARIAÇÃO${e.janela ? ' (' + e.janela + ')' : ''}</div>
+                    <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:${(e.variacao||'').startsWith('+')?'var(--amber)':(e.variacao||'').startsWith('-')?'var(--green-mid)':'var(--text-3)'}">${e.variacao}</div>
                   </div>
                 </div>
                 <div class="metric-row"><span class="mr-label">Rio</span><span class="mr-value">${e.rio}</span></div>
