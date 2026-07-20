@@ -72,6 +72,7 @@ const Sidebar = {
     { section: 'ANALISE', items: [
       { id:'ia',         icon:'IA', label:'IA Preditiva' },
       { id:'municipios', icon:'Mu', label:'Municipios RS', badge:'497', badgeClass:'b' },
+      { id:'analise',    icon:'Ge', label:'Analise Espacial', badge:'IBGE', badgeClass:'b' },
       { id:'hidroweb',   icon:'H',  label:'ANA HidroWeb' },
       { id:'geodados',   icon:'G',  label:'Geodados e Sociais' },
       { id:'municipio',  icon:'MU', label:'Municipio Ativo', badge:'LIVE', badgeClass:'r' },
