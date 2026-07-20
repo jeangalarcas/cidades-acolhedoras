@@ -3,7 +3,8 @@
  * Tabela interativa com busca, filtros por risco/bacia/mesorregião
  */
 const MunicipiosPage = {
-  _todos:    [],
+  _master:   [],   // lista completa (497) — nunca filtrada
+  _todos:    [],   // universo visível (= _master, ou só membros da bacia ativa)
   _filtrado: [],
   _pagina:   0,
   _porPagina: 50,
@@ -118,8 +119,29 @@ const MunicipiosPage = {
   // Chamado após renderização
   async iniciar() {
     if (!window.MunicipioService) return;
-    this._todos = await MunicipioService.carregarTodos();
+    this._master = await MunicipioService.carregarTodos();
+    this.aplicarBacia();   // aplica (ou não) o recorte da bacia ativa
+  },
+
+  /* Modo bacia (Fase 2): restringe o universo aos municípios membros da bacia
+     ativa (SGA.config.baciaAtiva, códigos oficiais SEMA). Chamado pelo iniciar()
+     e também pelo BaciaMode ao ativar — cobre as duas ordens de carregamento. */
+  aplicarBacia() {
+    if (!this._master.length) return;               // ainda não carregou
+    const b = window.SGA?.config?.baciaAtiva;
+    this._todos = b ? this._master.filter(m => b.temMunicipio(m.cod_ibge))
+                    : [...this._master];
     this._filtrado = [...this._todos];
+    this._pagina = 0;
+
+    // Cabeçalho + filtro de bacia (redundante no modo bacia — nomes informais)
+    const sub = document.querySelector('#p-municipios .page-sub');
+    if (sub) sub.textContent = b
+      ? `Bacia ${b.nome} (${b.codigo}) · ${this._todos.length} municípios membros · Clique para ativar no SGA`
+      : '497 municípios monitoráveis · Clique para ativar no SGA';
+    const fb = document.getElementById('mun-fbacia');
+    if (fb) { fb.style.display = b ? 'none' : ''; if (b) fb.value = ''; }
+
     this._renderResumo();
     this._renderTabela();
   },

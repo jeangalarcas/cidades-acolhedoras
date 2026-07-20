@@ -80,12 +80,17 @@ const SensoresPage = {
     const solo   = SGA.sensoresSolo   || [];
     const totalSensores = hidro.length + pluvio.length + solo.length;
     const ativos = Math.max(totalSensores - 1, 0);
+    const info = SGA.sensoresInfo || {};
+    const sub = info.bacia
+      ? `Bacia ${info.bacia} · ${info.exibFlu}${info.totalFlu > info.exibFlu ? ' de ' + info.totalFlu : ''} réguas · `
+        + `${info.exibPlu}${info.totalPlu > info.exibPlu ? ' de ' + info.totalPlu : ''} pluviômetros ANA`
+      : 'LoRaWAN + 4G · Atualização a cada 5 min';
     return `
     <div class="page" id="p-sensores">
       <div class="page-header">
         <div>
           <div class="page-title">Sensores & IoT</div>
-          <div class="page-sub">LoRaWAN + 4G · Atualização a cada 5 min</div>
+          <div class="page-sub">${sub}</div>
         </div>
         <div class="page-actions">
           <span class="pill pill-green">${ativos} ativos</span>
@@ -228,12 +233,13 @@ window.IntegracoesPage = IntegracoesPage;
 const HidroWebPage = {
   render() {
     const estacoes = SGA.estacoesANA || [];
+    const b = (window.SGA && SGA.config && SGA.config.baciaAtiva) || null;
     return `
     <div class="page" id="p-hidroweb">
       <div class="page-header">
         <div>
           <div class="page-title">ANA HidroWeb</div>
-          <div class="page-sub">6 estações fluviométricas · Municipio Ativo</div>
+          <div class="page-sub">${estacoes.length} estaç${estacoes.length === 1 ? 'ão' : 'ões'} fluviométrica${estacoes.length === 1 ? '' : 's'} · ${b ? 'Bacia ' + b.nome : 'Município ativo'}</div>
         </div>
         <div class="page-actions">
           <span class="ds-badge ds-ana">HidroWeb API</span>
