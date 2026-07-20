@@ -269,7 +269,11 @@ router.get('/cota-municipio/:cod_ibge', async (req, res) => {
         LEFT JOIN cotas_referencia cr ON cr.codigo_estacao = e.codigo
        WHERE m.cod_ibge = $1
        ORDER BY (e.categoria = 'ativa') DESC,
-                (cr.codigo_estacao IS NOT NULL) DESC,
+                -- referência oficial só ganha prioridade num raio de 40 km:
+                -- antes, Dom Pedrito era servido por régua a 80 km só por ter limiar
+                (cr.codigo_estacao IS NOT NULL AND
+                 extensions.ST_DistanceSphere(e.geom,
+                   extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)) <= 40000) DESC,
                 e.geom <-> extensions.ST_SetSRID(extensions.ST_MakePoint(m.lng, m.lat),4326)
        LIMIT 1`, [parseInt(req.params.cod_ibge, 10)]);
     if (!rows.length) return res.status(404).json({ erro: 'município não encontrado' });
