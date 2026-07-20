@@ -94,6 +94,7 @@ const App = {
           ${GeodadosPage.render()}
           ${IAPage.render()}
           ${MunicipiosPage.render()}
+          ${AnaliseEspacialPage.render()}
           ${AbrigosPage.render()}
           ${CanaisPage.render()}
           ${MunicipioPage.render()}
