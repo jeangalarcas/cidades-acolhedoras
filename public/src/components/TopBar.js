@@ -61,6 +61,7 @@ const Sidebar = {
   items: [
     { section: 'MONITORAMENTO', items: [
       { id:'painel',      icon:'P',  label:'Painel Geral' },
+      { id:'controle',    icon:'CC', label:'Centro de Controle', badge:'SGB', badgeClass:'r' },
       { id:'mapa',        icon:'M',  label:'Mapa OSM / CPRM' },
       { id:'sensores',    icon:'S',  label:'Sensores e IoT'},
       { id:'integracoes', icon:'I',  label:'Integracoes' },
