@@ -350,55 +350,161 @@ window.GeodadosPage = GeodadosPage;
 
 
 /**
- * SGA — IA Preditiva
+ * SGA — Análise Preditiva (Índice Heurístico Transparente)
+ * ───────────────────────────────────────────────────────────────────────────
+ * HONESTIDADE: não existe modelo treinado neste sistema. Esta página calcula,
+ * AO VIVO e no navegador, um índice heurístico de pesos fixos sobre dados
+ * oficiais (Open-Meteo, CEMADEN/PED, ANA + limiares SGB/SACE) e mostra cada
+ * componente com valor bruto, fonte, horário e contribuição — auditável.
+ * Sinais sem dado NÃO pontuam: os pesos são renormalizados e isso fica dito.
  */
 const IAPage = {
+  PESOS: { prev24: 30, prob24: 10, obs24: 25, cota: 30, tendencia: 5 },
+
   render() {
-    const municipios = SGA.municipios || [];
     return `
     <div class="page" id="p-ia">
       <div class="page-header">
         <div>
-          <div class="page-title">IA Preditiva — LSTM-v3</div>
-          <div class="page-sub">Previsão 24–48h · F1=0.891 · Acurácia 84%</div>
+          <div class="page-title">Análise Preditiva — Índice Heurístico</div>
+          <div class="page-sub">Fórmula aberta sobre dados oficiais · sem modelo treinado · Open-Meteo + CEMADEN + ANA/SGB</div>
         </div>
         <div class="page-actions">
-          <span class="ds-badge ds-ai">LSTM-v3 Online</span>
+          <span class="ds-badge ds-ai">100% auditável</span>
         </div>
       </div>
       <div class="page-body">
         <div class="g2">
           <div class="card">
-            <div class="card-header"><div class="card-title">📊 Previsão por Município — 24h</div></div>
-            <div class="card-body">
-              ${municipios.slice(0,8).map(m => `
-                <div class="ia-pred ${m.score>=0.85?'high':m.score>=0.65?'medium':m.score>=0.40?'low':'safe'}">
-                  <div class="ia-pct ${m.score>=0.85?'high':m.score>=0.65?'medium':m.score>=0.40?'low':'safe'}">${Math.round((m.score||0)*100)}%</div>
-                  <div><div class="ia-name">${m.name}</div><div class="ia-detail">${m.nota}</div></div>
-                </div>
-              `).join('')}
+            <div class="card-header"><div class="card-title">📊 Índice do município ativo — calculado agora</div></div>
+            <div class="card-body" id="ia-calc">
+              <div style="font-size:12px;color:var(--text-3);padding:8px">
+                Selecione um município para calcular o índice ao vivo.
+              </div>
             </div>
           </div>
           <div class="card">
-            <div class="card-header"><div class="card-title">🧠 Métricas do Modelo</div></div>
-            <div class="card-body">
-              ${[
-                ['Arquitetura','LSTM 3 camadas + Ensemble'],
-                ['Acurácia 48h','84%'],
-                ['F1-score','0.891'],
-                ['Dados de treino','14 anos · 1,8M registros'],
-                ['Fontes de treino','ANA + CEMADEN + INMET'],
-                ['Retreino','Mensal automático'],
-                ['Janela de previsão','24–48 horas'],
-                ['IC saída','90% (isotonic calibration)'],
-              ].map(([l,v]) => `
-                <div class="metric-row"><span class="mr-label">${l}</span><span class="mr-value">${v}</span></div>
-              `).join('')}
+            <div class="card-header"><div class="card-title">🧭 Método & limitações — leia antes de usar</div></div>
+            <div class="card-body" style="font-size:12px;color:var(--text-2);line-height:1.75">
+              <p style="margin:0 0 8px"><b style="color:var(--text-1)">O que é:</b> uma heurística de pesos fixos
+                (chuva prevista 24h ${this.PESOS.prev24}% · probabilidade de chuva ${this.PESOS.prob24}% ·
+                chuva observada 24h ${this.PESOS.obs24}% · cota vs limiar oficial ${this.PESOS.cota}% ·
+                tendência da régua ${this.PESOS.tendencia}%). Cada componente aparece ao lado com valor bruto,
+                fonte e horário — a conta inteira é auditável nesta tela.</p>
+              <p style="margin:0 0 8px"><b style="color:var(--text-1)">O que NÃO é:</b> não há rede neural nem modelo
+                estatístico treinado. Os rótulos "LSTM", "acurácia" e "F1" de versões anteriores eram aspiracionais
+                e foram removidos. A coluna "Score IA" da tabela de municípios usa valores sintéticos de protótipo
+                e não deve orientar decisão operacional.</p>
+              <p style="margin:0 0 8px"><b style="color:var(--text-1)">Fontes:</b> previsão Open-Meteo (ECMWF+GFS) por
+                coordenada da sede; chuva observada CEMADEN/PED; cota e tendência ANA HidroWeb na estação telemétrica
+                mais próxima; limiares oficiais SGB/SACE quando publicados.</p>
+              <p style="margin:0"><b style="color:var(--text-1)">Limitações:</b> pesos definidos por julgamento, sem
+                calibração estatística nem validação histórica; chuva prevista não é vazão; a estação mais próxima
+                pode estar a quilômetros da sede (a distância é exibida); sinais indisponíveis não pontuam e os pesos
+                são renormalizados — o índice fica menos informativo e isso é sinalizado.</p>
             </div>
           </div>
         </div>
       </div>
     </div>`;
+  },
+
+  async carregar() {
+    const alvo = document.getElementById('ia-calc');
+    if (!alvo) return;
+    const m = SGA.config.municipioAtivo;
+    if (!m || !m.cod_ibge) {
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Selecione um município para calcular o índice ao vivo.</div>';
+      return;
+    }
+    alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Calculando para <b>' + m.nome + '</b> — consultando Open-Meteo, CEMADEN e ANA…</div>';
+
+    const api = (window.MunicipioInit && MunicipioInit.API_BASE) || 'https://sga-api-1705.onrender.com';
+    const jfetch = u => fetch(api + u).then(r => r.json()).catch(() => null);
+    const [cota, prev, acum] = await Promise.all([
+      jfetch('/api/ana/cota-municipio/' + m.cod_ibge),
+      jfetch('/api/municipio/' + m.cod_ibge + '/previsao'),
+      jfetch('/api/cemaden/acumulados?ibge=' + m.cod_ibge),
+    ]);
+
+    // tendência da mesma régua usada na cota (Δ na janela de 6h)
+    let delta6 = null;
+    if (cota && cota.cod_estacao) {
+      const s = await jfetch('/api/ana/serie/' + cota.cod_estacao + '?range=HORA_6');
+      const ls = (s && s.leituras) || [];
+      if (ls.length >= 2) {
+        const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+        const p = num(ls[0].Cota_Adotada), u = num(ls[ls.length - 1].Cota_Adotada);
+        if (p != null && u != null) delta6 = (u - p) / 100;   // cm → m
+      }
+    }
+
+    // ── componentes: {rotulo, bruto, fonte, frac 0-1 ou null(sem dado), peso}
+    const P = this.PESOS, comp = [];
+    const d = (prev && prev.daily) || {};
+    const prev24 = Array.isArray(d.precipitation_sum) ? d.precipitation_sum[0] : null;
+    comp.push({ rotulo: 'Chuva prevista 24h', peso: P.prev24,
+      bruto: prev24 != null ? prev24.toFixed(1) + ' mm' : null,
+      fonte: 'Open-Meteo (agora)', frac: prev24 != null ? Math.min(prev24 / 80, 1) : null });
+
+    const prob24 = Array.isArray(d.precipitation_probability_max) ? d.precipitation_probability_max[0] : null;
+    comp.push({ rotulo: 'Prob. máx. de chuva 24h', peso: P.prob24,
+      bruto: prob24 != null ? prob24 + '%' : null,
+      fonte: 'Open-Meteo (agora)', frac: prob24 != null ? prob24 / 100 : null });
+
+    const acums = Array.isArray(acum) ? acum.filter(a => a.acc24hr != null) : [];
+    const obs24 = acums.length ? Math.max(...acums.map(a => a.acc24hr)) : null;
+    comp.push({ rotulo: 'Chuva observada 24h', peso: P.obs24,
+      bruto: obs24 != null ? obs24.toFixed(1) + ' mm (máx. entre ' + acums.length + ' estações)' : null,
+      fonte: obs24 != null ? 'CEMADEN/PED' : 'CEMADEN — sem estação no município',
+      frac: obs24 != null ? Math.min(obs24 / 80, 1) : null });
+
+    const NIVEIS = { normalidade: 0, atencao: 0.5, alerta: 0.8, inundacao: 1 };
+    const temRef = cota && cota.referencia && (cota.referencia.alerta_m != null || cota.referencia.inundacao_m != null);
+    const nivRef = cota && cota.nivel_referencia;
+    comp.push({ rotulo: 'Cota vs limiar oficial', peso: P.cota,
+      bruto: cota && cota.cota_m != null
+        ? cota.cota_m + ' m em ' + (cota.nome || cota.cod_estacao) + ' (' + (cota.dist_km != null ? cota.dist_km + ' km' : '?') + ')'
+          + (temRef ? ' · nível: ' + nivRef : ' · régua SEM limiar SGB')
+        : null,
+      fonte: cota && cota.medido_em ? 'ANA + SGB/SACE · medição ' + cota.medido_em : 'ANA — sem leitura',
+      frac: (cota && cota.cota_m != null && temRef && NIVEIS[nivRef] != null) ? NIVEIS[nivRef] : null });
+
+    comp.push({ rotulo: 'Tendência da régua (6h)', peso: P.tendencia,
+      bruto: delta6 != null ? (delta6 > 0 ? '+' : '') + delta6.toFixed(2) + ' m' : null,
+      fonte: 'ANA HidroWeb (janela 6h)',
+      frac: delta6 != null ? (delta6 > 0.02 ? 1 : delta6 < -0.02 ? 0 : 0.2) : null });
+
+    // ── índice: soma das contribuições / pesos disponíveis (renormalizado)
+    const disp = comp.filter(c => c.frac != null);
+    const pesoDisp = disp.reduce((s, c) => s + c.peso, 0);
+    const indice = pesoDisp ? Math.round(disp.reduce((s, c) => s + c.frac * c.peso, 0) / pesoDisp * 100) : null;
+    const nivel = indice == null ? ['—', 'var(--text-3)']
+      : indice >= 70 ? ['Crítico', 'var(--red)'] : indice >= 50 ? ['Alto', 'var(--red)']
+      : indice >= 30 ? ['Médio-Alto', 'var(--amber)'] : indice >= 15 ? ['Médio', 'var(--amber)']
+      : ['Baixo', 'var(--green-mid)'];
+
+    alvo.innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+        <div style="font-size:34px;font-weight:800;font-family:var(--mono);color:${nivel[1]}">${indice != null ? indice : '—'}<span style="font-size:16px">/100</span></div>
+        <div>
+          <div style="font-weight:700;color:${nivel[1]}">${nivel[0]}</div>
+          <div style="font-size:11px;color:var(--text-3)">${m.nome} · calculado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} no seu navegador</div>
+        </div>
+      </div>
+      ${comp.map(c => `
+        <div class="metric-row" title="${c.fonte}">
+          <span class="mr-label">${c.rotulo} <span style="opacity:.6">(peso ${c.peso})</span></span>
+          <span class="mr-value">${c.frac != null
+            ? (c.bruto || '—') + ' → <b>' + (c.frac * c.peso).toFixed(1) + ' pt</b>'
+            : '<span style="color:var(--text-3)">sem dado — não pontua</span>'}</span>
+        </div>
+        <div style="font-size:10px;color:var(--text-3);margin:-2px 0 6px">${c.fonte}</div>
+      `).join('')}
+      <div style="font-size:11px;color:var(--text-3);margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+        ${pesoDisp < 100 ? '⚠ Apenas ' + pesoDisp + ' de 100 pontos de peso têm dado disponível — índice renormalizado e menos informativo. ' : ''}
+        Heurística transparente — não é previsão de modelo treinado. Confirme sempre nos boletins oficiais (SGB/SACE · Defesa Civil).
+      </div>`;
   },
 };
 window.IAPage = IAPage;

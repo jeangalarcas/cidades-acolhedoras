@@ -95,7 +95,7 @@ const MunicipiosPage = {
                 <th>Bacia</th>
                 <th>Pop.</th>
                 <th>Risco</th>
-                <th>Score IA</th>
+                <th title="Valor sintético de protótipo — o índice real e auditável está na página Análise Preditiva">Score (protótipo)</th>
                 <th>Ação</th>
               </tr>
             </thead>
