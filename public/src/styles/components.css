@@ -430,3 +430,17 @@
 .layer-btn.on-red   { background: var(--red-pale);   border-color: var(--red);         color: var(--red); }
 .layer-btn.on-blue  { background: var(--blue-pale);  border-color: var(--blue);        color: var(--blue); }
 .layer-btn.on-amber { background: var(--amber-pale); border-color: var(--amber);       color: var(--amber); }
+
+/* ── Status piscante das estações/sensores (pedido 20/07) ─────────────────
+   Ativo = verde fluorescente pulsando · Offline = vermelho piscando */
+@keyframes st-blink-on  { 0%,100% { opacity: 1; text-shadow: 0 0 8px rgba(57,255,20,.8); }
+                          50%     { opacity: .35; text-shadow: none; } }
+@keyframes st-blink-off { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.pill.st-on {
+  background: rgba(57,255,20,.10); border: 1px solid rgba(57,255,20,.45);
+  color: #39FF14; animation: st-blink-on 1.6s ease-in-out infinite;
+}
+.pill.st-off {
+  background: rgba(255,59,48,.10); border: 1px solid rgba(255,59,48,.5);
+  color: #FF3B30; animation: st-blink-off 1s ease-in-out infinite;
+}

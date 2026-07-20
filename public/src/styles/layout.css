@@ -59,12 +59,17 @@
   letter-spacing: .3px;
 }
 
-/* ── WRAP PRINCIPAL ── */
+/* ── WRAP PRINCIPAL ──
+   #app em coluna flex: topbar + painel de situação + wrap SEMPRE somam 100vh.
+   Antes o wrap tinha altura fixa (100vh − topbar) e, com a faixa de KPIs no
+   meio, o total passava da tela — os KPIs ficavam espremidos/cortados. */
+#app { display: flex; flex-direction: column; height: 100vh; }
+#painel-situacao { flex-shrink: 0; }
 .app-wrap {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
-  height: calc(100vh - var(--topbar-h));
 }
 
 /* ── SIDEBAR ── */
