@@ -85,6 +85,7 @@ const App = {
         <div class="content" id="content">
           <div id="painel-situacao"></div>
           ${PainelPage.render()}
+          ${ControlePage.render()}
           ${MapaPage.render()}
           ${AlertasPage.render()}
           ${FluxoPage.render()}

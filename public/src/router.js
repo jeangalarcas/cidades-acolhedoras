@@ -1,6 +1,6 @@
 const Router = {
   pages: [
-    'painel','mapa','alertas','fluxo','sensores','integracoes',
+    'painel','controle','mapa','alertas','fluxo','sensores','integracoes',
     'hidroweb','geodados','ia','municipios','analise','abrigos','canais',
     'municipio','relatorio'
   ],
@@ -32,6 +32,9 @@ const Router = {
     if (pageId === 'ia' && window.IAPage && IAPage.carregar) IAPage.carregar();
     if (pageId === 'abrigos' && window.AbrigosPage && AbrigosPage.carregar) AbrigosPage.carregar();
     if (pageId === 'analise' && window.AnaliseEspacialPage && AnaliseEspacialPage.carregar) AnaliseEspacialPage.carregar();
+    if (pageId === 'controle' && window.ControlePage) {
+      if (ControlePage._timer) ControlePage.carregar(); else ControlePage.iniciar();
+    }
     if (pageId === 'municipio') setTimeout(function(){
       MunicipioPage.iniciar(MunicipioService.getAtivo() || SGA.config.municipioAtivo);
     }, 100);
