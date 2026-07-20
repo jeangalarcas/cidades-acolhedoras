@@ -224,6 +224,47 @@ var FILTRO_RISCO = 'todos';
 var FILTRO_TEXTO = '';
 var MAPA = null;
 var MARCADORES = {};
+var MUNS_GEO = null;       // limites municipais oficiais (IBGE Malha 2022)
+var MUNS_GEO_SEL = null;   // camada de destaque do município selecionado
+
+/* Limites dos 497 municípios (IBGE 2022) clicáveis — seleção direto no mapa */
+async function carregarLimitesMunicipais() {
+  try {
+    var g = await (await fetch('/data/geo/municipios_rs.geojson')).json();
+    var porIbge = {};
+    MUNICIPIOS.forEach(function(m){ porIbge[String(m.cod_ibge)] = m; });
+    MUNS_GEO = L.geoJSON(g, {
+      style: function(f) {
+        var m = porIbge[String(f.properties.CD_MUN)];
+        return { color: '#6d8f81', weight: 1,
+                 fillColor: (m && m.risco && m.risco.cor) || '#8aa79b', fillOpacity: 0.14 };
+      },
+      onEachFeature: function(f, ly) {
+        var m = porIbge[String(f.properties.CD_MUN)];
+        ly.bindTooltip('<b>' + f.properties.NM_MUN + '</b>' +
+          (m ? '<br>' + m.risco.nivel_str + ' · ' + m.populacao.toLocaleString('pt-BR') + ' hab.<br><span style="opacity:.7">clique para selecionar</span>'
+             : '<br>IBGE ' + f.properties.CD_MUN), { sticky: true });
+        if (m) ly.on('click', function(){ selecionarMun(m); });
+      }
+    });
+    if (TAB === 'municipio' && MAPA) MUNS_GEO.addTo(MAPA);
+  } catch (e) { console.warn('limites municipais indisponíveis:', e); }
+}
+
+/* destaque do polígono do município selecionado */
+function destacarMun(m) {
+  if (MUNS_GEO_SEL) { MAPA.removeLayer(MUNS_GEO_SEL); MUNS_GEO_SEL = null; }
+  if (!MUNS_GEO || !m) return;
+  MUNS_GEO.eachLayer(function(ly){
+    if (ly.feature && String(ly.feature.properties.CD_MUN) === String(m.cod_ibge)) {
+      MUNS_GEO_SEL = L.geoJSON(ly.feature, {
+        style: { color: '#E8A23A', weight: 3, fillColor: '#E8A23A', fillOpacity: 0.18 },
+        interactive: false
+      }).addTo(MAPA);
+      try { MAPA.fitBounds(MUNS_GEO_SEL.getBounds(), { padding: [24, 24] }); } catch (_) {}
+    }
+  });
+}
 
 // ── INIT ─────────────────────────────────────────────────────────
 window.addEventListener('load', async function() {
@@ -246,6 +287,7 @@ window.addEventListener('load', async function() {
 
   iniciarMapa();
   renderLista();
+  carregarLimitesMunicipais();   // limites já visíveis e clicáveis ao abrir
 });
 
 // ── CTA central (linha das abas / rodapé no celular) ─────────────
@@ -315,10 +357,16 @@ function setTab(tab) {
   document.getElementById('btn-entrar').textContent = tab==='municipio'?'Selecione um municipio':'Selecione uma bacia';
   renderLista();
   renderMarcadores();
+  if (MUNS_GEO_SEL) { MAPA.removeLayer(MUNS_GEO_SEL); MUNS_GEO_SEL = null; }
   if (tab==='bacia') {
     MAPA.setView([-29.5,-53.0],7);
     if (BACIAS_GEO && !MAPA.hasLayer(BACIAS_GEO)) BACIAS_GEO.addTo(MAPA);
-  } else if (BACIAS_GEO && MAPA.hasLayer(BACIAS_GEO)) { MAPA.removeLayer(BACIAS_GEO); }
+    if (MUNS_GEO && MAPA.hasLayer(MUNS_GEO)) MAPA.removeLayer(MUNS_GEO);
+  } else {
+    if (BACIAS_GEO && MAPA.hasLayer(BACIAS_GEO)) MAPA.removeLayer(BACIAS_GEO);
+    if (MUNS_GEO && !MAPA.hasLayer(MUNS_GEO)) MUNS_GEO.addTo(MAPA);
+    MAPA.setView([-29.5,-53.0],7);
+  }
 }
 
 // ── LISTA MUNICÍPIOS ─────────────────────────────────────────────
@@ -379,8 +427,9 @@ function selecionarMun(m) {
   document.getElementById('btn-entrar').textContent = 'Abrir SGA para ' + m.nome;
   document.getElementById('sel-info').textContent = m.microrregiao + ' · ' + m.bacia_hidrografica + ' · ' + m.populacao.toLocaleString('pt-BR') + ' hab.';
   atualizarCTA('Abrir SGA para ' + m.nome);
-  // Centralizar mapa
-  MAPA.setView([m.lat, m.lng], 11);
+  // Destacar o polígono oficial e enquadrar (fallback: centralizar no ponto)
+  destacarMun(m);
+  if (!MUNS_GEO_SEL) MAPA.setView([m.lat, m.lng], 11);
   // Atualizar lista
   renderLista();
 }
