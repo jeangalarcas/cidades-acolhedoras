@@ -95,10 +95,27 @@ const AnaSensores = {
           return { e, leituras: d.leituras || [] };
         } catch (_) { return { e, leituras: [] }; }
       };
-      const [resFlu, resPlu] = await Promise.all([
-        Promise.all(flu.map(buscarSerie)),
-        Promise.all(plu.map(buscarSerie)),
-      ]);
+      // Em LOTES de 4: 24 consultas simultâneas estouram o fail-fast de 6s
+      // (Render free + ANA) e devolvem {"erro":"timeout"} — tudo virava Offline.
+      const emLotes = async (arr, n) => {
+        const out = [];
+        for (let i = 0; i < arr.length; i += n)
+          out.push(...await Promise.all(arr.slice(i, i + n).map(buscarSerie)));
+        return out;
+      };
+      // 2ª chance só para as que falharam (token/rota já aquecidos na 1ª onda)
+      const comRetry = async (res) => {
+        const falhas = res.filter(r => !r.leituras.length).map(r => r.e);
+        if (!falhas.length) return res;
+        const seg = await emLotes(falhas, 4);
+        const porCod = new Map(seg.map(r => [String(r.e.codigo), r]));
+        return res.map(r => r.leituras.length ? r
+                          : (porCod.get(String(r.e.codigo)) || r));
+      };
+      let resFlu = await emLotes(flu, 4);
+      let resPlu = await emLotes(plu, 4);
+      resFlu = await comRetry(resFlu);
+      resPlu = await comRetry(resPlu);
 
       const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
       const rotulo = (e) => {
