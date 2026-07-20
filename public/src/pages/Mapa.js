@@ -28,6 +28,16 @@ const MapaPage = {
         <button id="lb-bacias" class="layer-btn"         onclick="BaciasCamada.toggle()">🌊 Bacias</button>
       </div>
 
+      <!-- CAMADAS OFICIAIS IBGE (desligadas por padrão · carregam sob demanda) -->
+      <div class="map-toolbar" style="border-top:none">
+        <span style="font-size:11px;font-weight:700;color:var(--text-2);margin-right:4px" title="Fontes: IBGE Malha 2022 · Bairros CD2022 + Censo 2022 · BC250 v2025">IBGE:</span>
+        <button id="lg-uf"      class="layer-btn" onclick="GeoOficial.toggle('uf')">🗺 Limite RS</button>
+        <button id="lg-mun"     class="layer-btn" onclick="GeoOficial.toggle('mun')">🔲 Municípios</button>
+        <button id="lg-bairros" class="layer-btn" onclick="GeoOficial.toggle('bairros')">🏘 Bairros</button>
+        <button id="lg-rios"    class="layer-btn" onclick="GeoOficial.toggle('rios')">〰 Rios BC250</button>
+        <button id="lg-massas"  class="layer-btn" onclick="GeoOficial.toggle('massas')">🔵 Lagos/Massas</button>
+      </div>
+
       <!-- MAPA + LEGENDA -->
       <div class="map-wrap" style="flex:1;display:flex;flex-direction:column;margin:0;border-radius:0">
         <div id="leaflet-map" style="flex:1"></div>
