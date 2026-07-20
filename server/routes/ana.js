@@ -30,6 +30,13 @@ const db = require('../db');
 const BASE = 'https://www.ana.gov.br/hidrowebservice';
 const enc = encodeURIComponent;
 
+/* Data local do RS (America/Sao_Paulo) em yyyy-MM-dd.
+   A ANA indexa as leituras pela data LOCAL; usar toISOString (UTC) fazia o
+   sistema pedir a data de "amanhã" a partir das 21h (BRT), zerando as séries
+   e derrubando as réguas para Offline toda noite. en-CA formata yyyy-MM-dd. */
+const dataLocalRS = () =>
+  new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
 /* ── Token ANA com cache (validade 60 min; renovamos aos 50) ──────────────── */
 let _token = null;
 let _tokenExpira = 0;
@@ -114,7 +121,7 @@ async function ultimaLeitura(codigo) {
   try {
     const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
       'Código da Estação': codigo, 'Tipo Filtro Data': 'DATA_LEITURA',
-      'Data de Busca (yyyy-MM-dd)': new Date().toISOString().slice(0, 10),
+      'Data de Busca (yyyy-MM-dd)': dataLocalRS(),
       'Range Intervalo de busca': 'HORA_24',
     });
     const ls = j.items || []; const u = ls[ls.length - 1];
@@ -234,7 +241,7 @@ router.get('/estacoes', async (req, res) => {
 router.get('/serie/:codigo', async (req, res) => {
   try {
     const range = req.query.range || 'HORA_24';
-    const data  = req.query.data  || new Date().toISOString().slice(0, 10);
+    const data  = req.query.data  || dataLocalRS();
     const j = await anaGet('/EstacoesTelemetricas/HidroinfoanaSerieTelemetricaAdotada/v1', {
       'Código da Estação':          req.params.codigo,
       'Tipo Filtro Data':           'DATA_LEITURA',
