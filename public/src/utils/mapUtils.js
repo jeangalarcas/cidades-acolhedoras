@@ -171,7 +171,10 @@ const MapUtils = {
     // ABRIGOS
     lg.abrigo = L.layerGroup();
     (SGA.abrigos||[]).forEach(function(a) {
-      var vagas = typeof a.vagas_livres !== 'undefined' ? a.vagas_livres : Math.round((a.capacidade||a.cap||0) * 0.7);
+      // Honesto: sem inventar vagas — mostra o tipo real (OSM) ou aviso
+      var det = a.tipo ? a.tipo
+              : (typeof a.vagas_livres !== 'undefined' ? a.vagas_livres + ' vagas livres'
+              : 'capacidade não publicada');
       L.marker([a.lat, a.lng], {
         icon: L.divIcon({
           className:'',
@@ -179,7 +182,7 @@ const MapUtils = {
           iconSize:[18,18], iconAnchor:[9,9],
         })
       })
-      .bindTooltip('<b>'+(a.nome||a.nome)+'</b><br>'+vagas+' vagas livres', {sticky:true})
+      .bindTooltip('<b>'+a.nome+'</b><br>'+det, {sticky:true})
       .addTo(lg.abrigo);
     });
 
