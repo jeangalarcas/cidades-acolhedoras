@@ -6,12 +6,12 @@
  *   • Limite estadual RS ....... IBGE, Malha Territorial 2022 (EPSG:4674)
  *   • Municípios RS (499*) ..... IBGE, Malha Municipal 2022 (*inclui Lagoa dos
  *                                Patos e Lagoa Mirim, presentes na malha oficial)
- *   • Bairros (piloto) ......... IBGE, Malha de Bairros CD2022 + Agregados por
+ *   • Bairros (RS inteiro) ..... IBGE, Malha de Bairros CD2022 + Agregados por
  *                                bairros do Censo 2022 (v0001 pessoas, v0002
- *                                domicílios, v0007 ocupados — dicionário oficial)
- *                                Piloto: Lajeado, Estrela, Canoas, Dom Pedrito,
- *                                Santa Cruz do Sul. Quaraí NÃO possui bairros
- *                                delimitados no CD2022 (lacuna do IBGE).
+ *                                domicílios, v0007 ocupados — dicionário oficial).
+ *                                2.240 bairros em 162 municípios; os demais 335
+ *                                municípios (incl. Quaraí) NÃO têm bairro
+ *                                delimitado no CD2022 (lacuna do próprio IBGE).
  *   • Rios (BC250) ............. IBGE BC250 v2025, trechos de drenagem COM NOME
  *                                (16.631 trechos no RS; atributos nome, tipo,
  *                                regime, largura média quando publicada)
@@ -24,7 +24,7 @@ const GeoOficial = {
   _defs: {
     uf:      { arq: 'uf_rs.geojson',           rotulo: 'Limite RS' },
     mun:     { arq: 'municipios_rs.geojson',   rotulo: 'Municípios' },
-    bairros: { arq: 'bairros_piloto.geojson',  rotulo: 'Bairros' },
+    bairros: { arq: 'bairros_rs.geojson',      rotulo: 'Bairros' },
     rios:    { arq: 'hidro_rios_rs.geojson',   rotulo: 'Rios BC250' },
     massas:  { arq: 'hidro_massas_rs.geojson', rotulo: 'Massas d’água' },
   },
@@ -206,9 +206,10 @@ const AnaliseEspacialPage = {
             hidrografia IBGE BC250 v2025 (trechos nomeados e massas d'água — vazão não é publicada nesta base).
             A análise gera um buffer da distância escolhida sobre a hidrografia dentro do município e estima
             pessoas/domicílios na faixa pela <b>fração da área</b> de cada bairro intersectada (dasimetria simples —
-            assume distribuição uniforme; é estimativa de planejamento, não contagem). Piloto: Lajeado, Estrela,
-            Canoas, Dom Pedrito e Santa Cruz do Sul. <b>Quaraí não possui bairros delimitados no CD2022</b> (lacuna do
-            próprio IBGE). Geometrias simplificadas para web.
+            assume distribuição uniforme; é estimativa de planejamento, não contagem). Cobertura: <b>2.240 bairros
+            em 162 municípios do RS</b> — os demais 335 municípios (incluindo Quaraí) não têm bairro delimitado no
+            CD2022 (lacuna do próprio IBGE). Em municípios grandes a análise pode levar até ~1 minuto.
+            Geometrias simplificadas para web.
           </div>
         </div>
       </div>
