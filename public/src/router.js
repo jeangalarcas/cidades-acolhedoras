@@ -30,6 +30,7 @@ const Router = {
     if (pageId === 'hidroweb') setTimeout(function(){ SparklineUtils.renderHidroWeb(); }, 100);
     if (pageId === 'municipios' && MunicipiosPage._todos.length === 0) MunicipiosPage.iniciar();
     if (pageId === 'ia' && window.IAPage && IAPage.carregar) IAPage.carregar();
+    if (pageId === 'abrigos' && window.AbrigosPage && AbrigosPage.carregar) AbrigosPage.carregar();
     if (pageId === 'municipio') setTimeout(function(){
       MunicipioPage.iniciar(MunicipioService.getAtivo() || SGA.config.municipioAtivo);
     }, 100);
