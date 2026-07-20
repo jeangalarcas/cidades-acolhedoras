@@ -36,6 +36,10 @@ const MapaPage = {
         <button id="lg-bairros" class="layer-btn" onclick="GeoOficial.toggle('bairros')">🏘 Bairros</button>
         <button id="lg-rios"    class="layer-btn" onclick="GeoOficial.toggle('rios')">〰 Rios BC250</button>
         <button id="lg-massas"  class="layer-btn" onclick="GeoOficial.toggle('massas')">🔵 Lagos/Massas</button>
+        <span style="font-size:11px;font-weight:700;color:var(--text-2);margin:0 4px 0 10px">GIS:</span>
+        <button id="wg-dist" class="layer-btn" onclick="MedirMapa.distancia()" title="Cliques adicionam pontos; duplo clique encerra">📏 Medir distância</button>
+        <button id="wg-area" class="layer-btn" onclick="MedirMapa.area()" title="Cliques desenham o polígono; duplo clique fecha">⬛ Medir área</button>
+        <button class="layer-btn" onclick="MedirMapa.limpar()">✕</button>
       </div>
 
       <!-- MAPA + LEGENDA -->
