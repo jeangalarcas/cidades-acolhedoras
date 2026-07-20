@@ -238,9 +238,16 @@ const AnaliseEspacialPage = {
 
   _tabela(props) {
     const o = this._ord;
+    // sort robusto: numérico quando ambos os valores forem números (mesmo se
+    // vierem como string do GeoJSON); senão, alfabético pt-BR; null no fim
+    const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
     props = [...props].sort((a, b) => {
-      const x = a[o.col], y = b[o.col];
-      return (typeof x === 'string' ? String(x).localeCompare(String(y)) : (x || 0) - (y || 0)) * (o.desc ? -1 : 1);
+      const x = num(a[o.col]), y = num(b[o.col]);
+      let r;
+      if (x != null && y != null) r = x - y;
+      else if (x == null && y == null) r = String(a[o.col] ?? '').localeCompare(String(b[o.col] ?? ''), 'pt');
+      else return x == null ? 1 : -1;   // null sempre no fim
+      return r * (o.desc ? -1 : 1);
     });
     const COLS = [['NM_BAIRRO','Bairro'],['NM_MUN','Município'],['pessoas','Pessoas'],['domicilios','Domicílios'],
                   ['dom_ocupados','Ocupados'],['media_moradores','Média morad.'],['area_km2','Área km²'],['dens_hab_km2','Dens. hab/km²']];

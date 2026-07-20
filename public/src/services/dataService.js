@@ -142,9 +142,19 @@ const DataService = {
     else if(mmh>=20) alertas.push({nivel:'Atencao',titulo:`Chuva moderada - ${nome}`,desc:`${mmh.toFixed(1)}mm/h - Monitoramento forcado`,hora,fontes:['Open-Meteo']});
     if(acum6h>=60&&mmh<40) alertas.push({nivel:'Alto',titulo:`Volume acumulado alto - ${nome}`,desc:`${acum6h.toFixed(0)}mm acumulados - Solo em saturacao`,hora,fontes:['Open-Meteo']});
     if(cape>=1500) alertas.push({nivel:'Alto',titulo:`Risco de tempestade - ${nome}`,desc:`CAPE: ${Math.round(cape)} J/kg - Risco de granizo`,hora,fontes:['Open-Meteo']});
-    if(cota?.cota_m&&cota?.cota_emergencia_m){
-      if(cota.cota_m>=cota.cota_emergencia_m) alertas.push({nivel:'Critico',titulo:`Emergencia - ${cota.nome||'Rio'}`,desc:`Cota: ${cota.cota_m}m (lim: ${cota.cota_emergencia_m}m)`,hora,fontes:['ANA HidroWeb']});
-      else if(cota.cota_m>=cota.cota_alerta_m) alertas.push({nivel:'Alto',titulo:`Alerta - ${cota.nome||'Rio'} em elevacao`,desc:`Cota: ${cota.cota_m}m`,hora,fontes:['ANA HidroWeb']});
+    // Camada cota: SÓ limiares OFICIAIS (SGB/SACE) — o fallback genérico de
+    // 3,5m foi aposentado (disparava "alerta" sem base oficial, ex.: Quaraí).
+    const ref=cota&&cota.referencia;
+    if(cota?.cota_m!=null&&ref){
+      const fontesRef=['ANA HidroWeb',ref.fonte||'SGB/SACE'];
+      if(ref.inundacao_m!=null&&cota.cota_m>=ref.inundacao_m)
+        alertas.push({nivel:'Critico',titulo:`INUNDACAO - ${cota.nome||'Rio'}`,desc:`Cota ${cota.cota_m}m atingiu a cota de inundacao oficial (${ref.inundacao_m}m)`,hora,fontes:fontesRef});
+      else if(ref.alerta_m!=null&&cota.cota_m>=ref.alerta_m)
+        alertas.push({nivel:'Alto',titulo:`Alerta oficial - ${cota.nome||'Rio'}`,desc:`Cota ${cota.cota_m}m acima da cota de alerta oficial (${ref.alerta_m}m)`,hora,fontes:fontesRef});
+      else if(ref.atencao_m!=null&&cota.cota_m>=ref.atencao_m)
+        alertas.push({nivel:'Atencao',titulo:`Atencao - ${cota.nome||'Rio'}`,desc:`Cota ${cota.cota_m}m acima da cota de atencao oficial (${ref.atencao_m}m)`,hora,fontes:fontesRef});
+      else if(ref.inundacao_m!=null&&cota.cota_m>=0.7*ref.inundacao_m)
+        alertas.push({nivel:'Atencao',titulo:`Rio proximo do limiar - ${cota.nome||'Rio'}`,desc:`Cota ${cota.cota_m}m = ${Math.round(cota.cota_m/ref.inundacao_m*100)}% da cota de inundacao oficial (${ref.inundacao_m}m)`,hora,fontes:fontesRef});
     }
     if(solo>=0.45&&acum6h>20) alertas.push({nivel:'Atencao',titulo:`Solo saturado - ${nome}`,desc:`Umidade: ${(solo*100).toFixed(0)}% - Risco de deslizamento`,hora,fontes:['Open-Meteo']});
     return alertas;

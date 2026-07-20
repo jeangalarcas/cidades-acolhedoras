@@ -163,7 +163,9 @@ const AnaSensores = {
           status: cotaCm != null ? 'Ativo' : 'Offline',
           col: cotaCm != null ? 'var(--green-mid)' : 'var(--border)',
         };
-      });
+      })
+      // réguas com leitura primeiro; sem transmissão vão para o fim da lista
+      .sort((a, b) => (b.cota != null) - (a.cota != null));
 // alimenta a página ANA HidroWeb com as mesmas réguas reais
       SGA.estacoesANA = resFlu.map(({ e, leituras }) => {
         const ult = leituras[leituras.length-1];
@@ -224,8 +226,9 @@ const AnaSensores = {
             const fresco = a.datahora && (Date.now() - utc(a.datahora).getTime()) <= 6 * 3600e3;
             SGA.sensoresPluvio.push({
               id: a.codestacao,
-              local: (nomes[a.codestacao] || a.codestacao)
-                   + (munNome ? ' · ' + munNome : '') + ' · CEMADEN',
+              // sem nome no cadastro → não repetir o código (o card já mostra o id)
+              local: (nomes[a.codestacao] ? nomes[a.codestacao] + ' · ' : '')
+                   + (munNome ? munNome + ' · ' : '') + 'CEMADEN',
               mmh:     a.acc1hr  != null ? a.acc1hr  : '—',
               acum6h:  a.acc6hr  != null ? a.acc6hr  : '—',
               acum24h: a.acc24hr != null ? a.acc24hr : null,
