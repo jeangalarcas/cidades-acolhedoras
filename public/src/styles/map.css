@@ -125,11 +125,12 @@
 }
 
 /* ── Labels das camadas oficiais IBGE (GeoOficial) ─────────────────────── */
-.geo-label {
-  background: transparent; border: none; box-shadow: none;
+.leaflet-tooltip.geo-label {
+  background: transparent !important; border: none !important;
+  box-shadow: none !important; padding: 0 2px;
   color: #e8f0ec; font-size: 10px; font-weight: 700;
   text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.6);
   pointer-events: none;
 }
-.geo-label::before { display: none; }
-.geo-label-amber { color: #F0C070; }
+.leaflet-tooltip.geo-label::before { display: none; }
+.leaflet-tooltip.geo-label-amber { color: #F0C070; }
