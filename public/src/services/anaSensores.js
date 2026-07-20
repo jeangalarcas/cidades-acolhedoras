@@ -103,24 +103,40 @@ const AnaSensores = {
         return l;
       };
 
+      // Tendência do rio na janela (Δ cota em m entre 1ª e última leitura).
+      // Honesta: só existe com ≥2 leituras válidas; |Δ| < 2 cm conta como estável.
+      const tendencia = (leituras) => {
+        if (leituras.length < 2) return null;
+        const ult = leituras[leituras.length - 1];
+        const p = num(leituras[0].Cota_Adotada), u = num(ult.Cota_Adotada);
+        if (p == null || u == null) return null;
+        const horas = Math.max((new Date(ult.Data_Hora_Medicao) -
+                                new Date(leituras[0].Data_Hora_Medicao)) / 36e5, 0.1);
+        const d = (u - p) / 100;                       // cm → m
+        const dir = Math.abs(d) < 0.02 ? 'flat' : (d > 0 ? 'up' : 'down');
+        return {
+          dir,
+          delta: (d > 0 ? '+' : '') + d.toFixed(2) + ' m',
+          taxa: ((u - p) / 100 / horas).toFixed(2).replace('-0.00', '0.00') + ' m/h',
+          horas: +horas.toFixed(1),
+          // rio subindo = atenção (âmbar); descendo = alívio (verde); estável = neutro
+          seta: dir === 'up' ? '↑' : dir === 'down' ? '↓' : '→',
+          cor:  dir === 'up' ? 'var(--amber)' : dir === 'down' ? 'var(--green-mid)' : 'var(--text-3)',
+        };
+      };
+
       // 4) Réguas → SGA.sensoresHidro (cota em m; taxa real = Δ na janela, m/h)
       SGA.sensoresHidro = resFlu.map(({ e, leituras }) => {
         const ult = leituras[leituras.length - 1];
         const cotaCm = ult ? num(ult.Cota_Adotada) : null;
-        let taxa = '—';
-        if (leituras.length >= 2) {
-          const p = num(leituras[0].Cota_Adotada), u = num(ult.Cota_Adotada);
-          const horas = Math.max((new Date(ult.Data_Hora_Medicao) -
-                                  new Date(leituras[0].Data_Hora_Medicao)) / 36e5, 0.1);
-          if (p != null && u != null)
-            taxa = ((u - p) / 100 / horas).toFixed(2).replace('-0.00','0.00') + ' m/h';
-        }
+        const t = tendencia(leituras);
         return {
           id: e.codigo, local: rotulo(e),
           lat: e.latitude, lng: e.longitude,        // ← ADICIONE ESTA LINHA
           cota: cotaCm != null ? +(cotaCm / 100).toFixed(2) : null,  // cm → m
           normal: '—',           // nível de referência por estação: não publicado pela ANA
-          taxa,
+          taxa: t ? t.taxa : '—',
+          tend: t,               // {dir, delta, seta, cor, horas} ou null
           status: cotaCm != null ? 'Ativo' : 'Offline',
           col: cotaCm != null ? 'var(--green-mid)' : 'var(--border)',
         };
@@ -129,9 +145,12 @@ const AnaSensores = {
       SGA.estacoesANA = resFlu.map(({ e, leituras }) => {
         const ult = leituras[leituras.length-1];
         const c = ult ? parseFloat(ult.Cota_Adotada) : null;
+        const t = tendencia(leituras);
         return { nome: e.nome, rio: e.rio_nome || '—', cod: e.codigo,
                  cota: c != null ? (c/100).toFixed(2) : '—', normal: '—',
-                 variacao: '', vazao: ult && ult.Vazao_Adotada != null ? ult.Vazao_Adotada : '—',
+                 variacao: t ? t.delta + ' ' + t.seta : '—',
+                 janela: t ? t.horas + 'h' : null,
+                 vazao: ult && ult.Vazao_Adotada != null ? ult.Vazao_Adotada : '—',
                  status: c != null ? 'Ativo' : 'Offline' };
       });
       const hw = document.querySelector('#p-hidroweb');
