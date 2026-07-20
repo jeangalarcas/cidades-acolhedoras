@@ -464,10 +464,11 @@ const IAPage = {
     const nivRef = cota && cota.nivel_referencia;
     comp.push({ rotulo: 'Cota vs limiar oficial', peso: P.cota,
       bruto: cota && cota.cota_m != null
-        ? cota.cota_m + ' m em ' + (cota.nome || cota.cod_estacao) + ' (' + (cota.dist_km != null ? cota.dist_km + ' km' : '?') + ')'
-          + (temRef ? ' · nível: ' + nivRef : ' · régua SEM limiar SGB')
+        ? cota.cota_m + ' m · ' + (temRef ? 'nível: ' + nivRef : 'régua sem limiar SGB')
         : null,
-      fonte: cota && cota.medido_em ? 'ANA + SGB/SACE · medição ' + cota.medido_em : 'ANA — sem leitura',
+      fonte: cota && cota.cota_m != null
+        ? (cota.nome || cota.cod_estacao) + ' (' + (cota.dist_km != null ? cota.dist_km + ' km da sede' : '?') + ') · ANA + SGB/SACE · medição ' + (cota.medido_em || '—')
+        : 'ANA — sem leitura',
       frac: (cota && cota.cota_m != null && temRef && NIVEIS[nivRef] != null) ? NIVEIS[nivRef] : null });
 
     comp.push({ rotulo: 'Tendência da régua (6h)', peso: P.tendencia,
