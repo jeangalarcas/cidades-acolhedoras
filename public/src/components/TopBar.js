@@ -5,7 +5,7 @@
 const TopBar = {
   render() {
     return `
-    <div class="topbar" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:52px;background:#1B3A2D;color:#fff;position:fixed;top:0;left:0;right:0;z-index:1000;gap:8px">
+    <div class="topbar" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:52px;background:#1B3A2D;color:#fff;position:relative;z-index:200;flex-shrink:0;gap:8px">
 
       <button id="btn-menu" onclick="toggleSidebar()"
         style="display:none;flex-direction:column;justify-content:center;gap:5px;
