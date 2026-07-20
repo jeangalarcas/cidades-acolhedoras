@@ -519,17 +519,24 @@ window.IAPage = IAPage;
  * ───────────────────────────────────────────────────────────────────────────
  * HONESTIDADE: não inventamos capacidade nem ocupação. Esta página lista
  * LOCAIS CANDIDATOS a abrigo (escolas, ginásios, centros comunitários e
- * abrigos já mapeados) vindos do OpenStreetMap ao redor da sede do município
- * ativo, com distância real e link de navegação. A designação e ativação de
- * abrigos é ato da Defesa Civil municipal.
+ * abrigos já mapeados) vindos do OpenStreetMap, com distância real e link
+ * de navegação. A designação e ativação de abrigos é ato da Defesa Civil.
+ *
+ * ARQUITETURA (v2): a fonte primária é uma BASE ESTÁTICA estadual
+ * (/data/geo/abrigos_rs.geojson — 4.751 locais nomeados extraídos do OSM
+ * via Geofabrik em 20/07/2026, já com código IBGE do município). Carrega
+ * instantâneo, sem depender dos servidores públicos Overpass, que ficam
+ * como ATUALIZAÇÃO OPCIONAL ("ao vivo") via botão.
  */
 const AbrigosPage = {
-  _cacheIbge: null, _locais: null,
+  _cacheIbge: null, _locais: null, _base: null, _fonte: '',
+  _BASE_URL: '/data/geo/abrigos_rs.geojson',
+  _BASE_DATA: '20/07/2026',
   _MIRRORS: ['https://overpass-api.de/api/interpreter',
              'https://overpass.kumi.systems/api/interpreter',
              'https://overpass.private.coffee/api/interpreter'],
   _TIMEOUT_MS: 20000,   // por espelho — sem isso, um espelho pendurado trava tudo
-  _TTL_MS: 24 * 3600e3, // cache por município no sessionStorage
+  _TTL_MS: 24 * 3600e3, // cache por município no sessionStorage (só p/ modo ao vivo)
 
   render() {
     return `
@@ -561,6 +568,26 @@ const AbrigosPage = {
     </div>`;
   },
 
+  _dist(la1, lo1, la2, lo2) {
+    const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLo = (lo2 - lo1) * Math.PI / 180;
+    const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dLo / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  },
+
+  _TIPOS: {
+    shelter:          ['Abrigo mapeado',     '🏠'],
+    community_centre: ['Centro comunitário', '🏢'],
+    sports_centre:    ['Ginásio / esportivo','🏟'],
+    school:           ['Escola',             '🏫'],
+  },
+
+  _publicar(m) {
+    // camada "Abrigos" do mapa plota os locais reais
+    SGA.abrigos = (this._locais || []).map(l => ({ nome: l.nome, lat: l.lat, lng: l.lng,
+      tipo: l.tipo + ' · ' + l.dist_km + ' km da sede (OSM)' }));
+    this._renderLista(m);
+  },
+
   async carregar() {
     const alvo = document.getElementById('abr-lista');
     if (!alvo) return;
@@ -571,45 +598,84 @@ const AbrigosPage = {
     }
     if (this._cacheIbge === m.cod_ibge && this._locais) { this._renderLista(m); return; }
 
-    // ── cache de 24h no sessionStorage: segunda visita é instantânea
+    // ── atualização "ao vivo" já feita nesta sessão? usa ela (mais recente que a base)
     try {
       const cc = JSON.parse(sessionStorage.getItem('sga_abrigos_' + m.cod_ibge) || 'null');
-      if (cc && cc.t && (Date.now() - cc.t) < this._TTL_MS && Array.isArray(cc.locais)) {
+      if (cc && cc.t && (Date.now() - cc.t) < this._TTL_MS && Array.isArray(cc.locais) && cc.locais.length) {
         this._locais = cc.locais; this._cacheIbge = m.cod_ibge;
-        SGA.abrigos = cc.locais.map(l => ({ nome: l.nome, lat: l.lat, lng: l.lng,
-          tipo: l.tipo + ' · ' + l.dist_km + ' km da sede (OSM)' }));
-        this._renderLista(m); return;
+        this._fonte = 'OSM ao vivo (' + new Date(cc.t).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }).slice(0, 17) + ')';
+        this._publicar(m); return;
       }
     } catch (_) {}
 
-    // query enxuta (2 blocos em vez de 4 — mesma cobertura, ~metade do custo)
+    // ── FONTE PRIMÁRIA: base estática estadual — instantânea, sem Overpass
+    if (!this._base) {
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Carregando base estadual de locais candidatos…</div>';
+      try {
+        const r = await fetch(this._BASE_URL, { signal: AbortSignal.timeout(15000) });
+        if (r.ok) { const gj = await r.json(); this._base = gj.features || []; }
+      } catch (_) {}
+    }
+    if (this._base && this._base.length) {
+      const ibge = String(m.cod_ibge);
+      this._locais = this._base
+        .map(f => {
+          const [lng, lat] = f.geometry.coordinates;
+          const p = f.properties || {};
+          return { nome: p.nome, tipoRaw: p.tipo, ibge: p.ibge, lat, lng,
+                   dist_km: +this._dist(m.lat, m.lng, lat, lng).toFixed(1) };
+        })
+        .filter(l => l.ibge === ibge || l.dist_km <= 12)   // município + vizinhança de 12 km
+        .map(l => { const t = this._TIPOS[l.tipoRaw] || ['Local', '📍'];
+                    return { nome: l.nome, tipo: t[0], icone: t[1], lat: l.lat, lng: l.lng, dist_km: l.dist_km }; })
+        .sort((a, b) => a.dist_km - b.dist_km)
+        .slice(0, 40);
+      this._cacheIbge = m.cod_ibge;
+      this._fonte = 'base OSM de ' + this._BASE_DATA;
+      this._publicar(m);
+      return;
+    }
+
+    // ── fallback: base indisponível → consulta Overpass direto (fluxo antigo)
+    this.atualizarAoVivo();
+  },
+
+  // Overpass agora é OPCIONAL: botão "atualizar ao vivo" ou fallback da base
+  async atualizarAoVivo() {
+    const alvo = document.getElementById('abr-lista');
+    const m = SGA.config.municipioAtivo;
+    if (!alvo || !m || m.lat == null) return;
+
+    // query enxuta (2 blocos — mesma cobertura, ~metade do custo)
     const q = '[out:json][timeout:20];(' +
       'nwr["amenity"~"^(shelter|community_centre|school)$"](around:12000,' + m.lat + ',' + m.lng + ');' +
       'nwr["leisure"="sports_centre"](around:12000,' + m.lat + ',' + m.lng + ');' +
       ');out center 200;';
     let dados = null;
     for (let i = 0; i < this._MIRRORS.length; i++) {
-      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Consultando o OpenStreetMap ao redor de <b>' + m.nome + '</b>… servidor ' + (i + 1) + ' de ' + this._MIRRORS.length + ' <span style="opacity:.6">(até 20 s cada)</span></div>';
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Atualizando via OpenStreetMap ao redor de <b>' + m.nome + '</b>… servidor ' + (i + 1) + ' de ' + this._MIRRORS.length + ' <span style="opacity:.6">(até 20 s cada)</span></div>';
       try {
         const r = await fetch(this._MIRRORS[i], {
           method: 'POST', body: 'data=' + encodeURIComponent(q),
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          signal: AbortSignal.timeout(this._TIMEOUT_MS),   // ← nunca mais pendurar
+          signal: AbortSignal.timeout(this._TIMEOUT_MS),   // ← nunca pendurar
         });
         if (r.ok) { dados = await r.json(); break; }
       } catch (_) { /* timeout ou falha → próximo espelho */ }
     }
     if (!dados) {
-      alvo.innerHTML = '<div style="font-size:12px;color:var(--amber);padding:8px">Os servidores públicos do OpenStreetMap (Overpass) estão sobrecarregados agora. ' +
-        '<button class="btn btn-outline" style="font-size:11px;margin-left:8px" onclick="AbrigosPage._cacheIbge=null;AbrigosPage.carregar()">↺ Tentar de novo</button></div>';
+      if (this._locais && this._locais.length && this._cacheIbge === m.cod_ibge) {
+        // já temos a base estática na tela — só avisa e mantém a lista
+        this._publicar(m);
+        const sub = document.getElementById('abr-sub');
+        if (sub) sub.textContent += ' · atualização ao vivo indisponível agora (Overpass sobrecarregado)';
+      } else {
+        alvo.innerHTML = '<div style="font-size:12px;color:var(--amber);padding:8px">Os servidores públicos do OpenStreetMap (Overpass) estão sobrecarregados agora. ' +
+          '<button class="btn btn-outline" style="font-size:11px;margin-left:8px" onclick="AbrigosPage._cacheIbge=null;AbrigosPage.carregar()">↺ Tentar de novo</button></div>';
+      }
       return;
     }
 
-    const dist = (la1, lo1, la2, lo2) => {
-      const R = 6371, dLa = (la2 - la1) * Math.PI / 180, dLo = (lo2 - lo1) * Math.PI / 180;
-      const a = Math.sin(dLa / 2) ** 2 + Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) * Math.sin(dLo / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    };
     const TIPO = e =>
       e.tags.amenity === 'shelter' ? ['Abrigo mapeado', '🏠'] :
       e.tags.amenity === 'community_centre' ? ['Centro comunitário', '🏢'] :
@@ -621,20 +687,17 @@ const AbrigosPage = {
         const c = e.center || e;
         const [tipo, icone] = TIPO(e);
         return { nome: e.tags.name, tipo, icone, lat: c.lat, lng: c.lon,
-                 dist_km: +dist(m.lat, m.lng, c.lat, c.lon).toFixed(1) };
+                 dist_km: +this._dist(m.lat, m.lng, c.lat, c.lon).toFixed(1) };
       })
       .filter(l => { const k = l.nome + '|' + l.lat.toFixed(3) + '|' + l.lng.toFixed(3);
                      if (vistos.has(k)) return false; vistos.add(k); return true; })
       .sort((a, b) => a.dist_km - b.dist_km)
       .slice(0, 40);
     this._cacheIbge = m.cod_ibge;
+    this._fonte = 'OSM ao vivo (agora)';
     try { sessionStorage.setItem('sga_abrigos_' + m.cod_ibge,
       JSON.stringify({ t: Date.now(), locais: this._locais })); } catch (_) {}
-
-    // camada "Abrigos" do mapa passa a plotar os locais reais
-    SGA.abrigos = this._locais.map(l => ({ nome: l.nome, lat: l.lat, lng: l.lng,
-                                           tipo: l.tipo + ' · ' + l.dist_km + ' km da sede (OSM)' }));
-    this._renderLista(m);
+    this._publicar(m);
   },
 
   _renderLista(m) {
@@ -644,12 +707,14 @@ const AbrigosPage = {
     const pill = document.getElementById('abr-pill');
     if (pill) { pill.textContent = ls.length + ' locais (OSM)'; pill.className = 'pill ' + (ls.length ? 'pill-green' : 'pill-gray'); }
     const sub = document.getElementById('abr-sub');
-    if (sub) sub.textContent = m.nome + ' · raio de 12 km da sede · fonte OpenStreetMap (agora) · designação oficial é da Defesa Civil';
+    if (sub) sub.textContent = m.nome + ' · município + raio de 12 km da sede · ' + (this._fonte || 'OpenStreetMap') + ' · designação oficial é da Defesa Civil';
+    const btnVivo = '<div style="grid-column:1/-1;display:flex;justify-content:flex-end;padding:2px 0">' +
+      '<button class="btn btn-outline" style="font-size:11px" onclick="AbrigosPage.atualizarAoVivo()">↺ Atualizar ao vivo (OpenStreetMap)</button></div>';
     if (!ls.length) {
-      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Nenhum local com nome mapeado no OSM num raio de 12 km — isso é uma lacuna do mapeamento, não ausência de abrigos. Consulte a Defesa Civil municipal.</div>';
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Nenhum local com nome mapeado no OSM neste município nem num raio de 12 km — isso é uma lacuna do mapeamento comunitário, não ausência de abrigos. Consulte a Defesa Civil municipal (199).</div>' + btnVivo;
       return;
     }
-    alvo.innerHTML = ls.map(l => `
+    alvo.innerHTML = btnVivo + ls.map(l => `
       <div class="card">
         <div class="card-header">
           <div class="card-title">${l.icone} ${l.nome}</div>
