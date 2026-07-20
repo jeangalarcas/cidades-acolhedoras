@@ -312,6 +312,38 @@ router.get('/cota-municipio/:cod_ibge', async (req, res) => {
   } catch (e) { res.status(500).json({ erro: e.message }); }
 });
 
+/* ── GET /api/ana/panorama-limiares — Centro de Controle ──────────────────
+   Todas as réguas com cota de inundação OFICIAL (SGB/SACE) + última cota do
+   cache do banco (enriquecimento 12h) + % da cota de inundação. O front
+   atualiza as mais críticas AO VIVO — aqui é o panorama instantâneo. */
+router.get('/panorama-limiares', async (_req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT e.codigo, e.nome, e.rio_nome, e.municipio_nome, e.cod_ibge,
+             e.latitude, e.longitude, e.ultima_cota_cm, e.ultima_medicao_em,
+             cr.cota_atencao_cm, cr.cota_alerta_cm, cr.cota_inundacao_cm, cr.fonte
+        FROM cotas_referencia cr
+        JOIN estacoes_ana e ON e.codigo = cr.codigo_estacao
+       WHERE cr.cota_inundacao_cm IS NOT NULL
+       ORDER BY (e.ultima_cota_cm / cr.cota_inundacao_cm) DESC NULLS LAST`);
+    res.json({
+      total: rows.length,
+      estacoes: rows.map(r => ({
+        codigo: r.codigo, nome: r.nome, rio: r.rio_nome, municipio: r.municipio_nome,
+        cod_ibge: r.cod_ibge, lat: r.latitude, lng: r.longitude,
+        cota_cm: r.ultima_cota_cm != null ? +r.ultima_cota_cm : null,
+        medido_em: r.ultima_medicao_em,
+        atencao_cm: r.cota_atencao_cm != null ? +r.cota_atencao_cm : null,
+        alerta_cm: r.cota_alerta_cm != null ? +r.cota_alerta_cm : null,
+        inundacao_cm: +r.cota_inundacao_cm, fonte: r.fonte,
+        pct_inundacao: r.ultima_cota_cm != null
+          ? Math.round(r.ultima_cota_cm / r.cota_inundacao_cm * 1000) / 10 : null,
+      })),
+      fonte: 'ANA (cache do enriquecimento) + limiares oficiais SGB/SACE',
+    });
+  } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
 /* ── POST /api/ana/enriquecer-status (única versão — com plano B) ─────────── */
 router.post('/enriquecer-status', async (req, res) => {
   try {
