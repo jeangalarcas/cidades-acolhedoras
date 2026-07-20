@@ -132,7 +132,8 @@ const SensoresPage = {
               <div class="sensor-card" style="border-left:3px solid ${s.col}">
                 <div class="sc-name">${s.id} — ${s.local}</div>
                 <div><span class="sc-value" style="color:${s.col}">${s.mmh}</span><span class="sc-unit">mm/h</span></div>
-                <div class="sc-sub">Acum. 6h: ${s.acum6h}mm</div>
+                <div class="sc-sub">Acum. 6h: ${s.acum6h}mm${s.acum24h != null ? ' · 24h: ' + s.acum24h + 'mm' : ''}</div>
+                ${s.medidoEm ? `<div class="sc-sub">Última medição: ${s.medidoEm}</div>` : ''}
                 <div class="sc-sub"><span class="pill ${s.status==='Crítico'?'pill-red':s.status==='Alto'?'pill-amber':'pill-green'}">${s.status}</span></div>
                 <div class="sc-bar"><div class="sc-fill ${s.status==='Crítico'?'sc-fill-err':s.status==='Alto'?'sc-fill-warn':'sc-fill-ok'}"
                   style="width:${Math.min(s.mmh/150*100,100)}%"></div></div>
