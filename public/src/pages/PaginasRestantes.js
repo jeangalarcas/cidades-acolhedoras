@@ -526,7 +526,10 @@ window.IAPage = IAPage;
 const AbrigosPage = {
   _cacheIbge: null, _locais: null,
   _MIRRORS: ['https://overpass-api.de/api/interpreter',
-             'https://overpass.kumi.systems/api/interpreter'],
+             'https://overpass.kumi.systems/api/interpreter',
+             'https://overpass.private.coffee/api/interpreter'],
+  _TIMEOUT_MS: 20000,   // por espelho — sem isso, um espelho pendurado trava tudo
+  _TTL_MS: 24 * 3600e3, // cache por município no sessionStorage
 
   render() {
     return `
@@ -567,24 +570,38 @@ const AbrigosPage = {
       return;
     }
     if (this._cacheIbge === m.cod_ibge && this._locais) { this._renderLista(m); return; }
-    alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Consultando o OpenStreetMap ao redor de <b>' + m.nome + '</b>…</div>';
 
-    const q = '[out:json][timeout:25];(' +
-      'nwr["amenity"="shelter"](around:12000,' + m.lat + ',' + m.lng + ');' +
-      'nwr["amenity"="community_centre"](around:12000,' + m.lat + ',' + m.lng + ');' +
+    // ── cache de 24h no sessionStorage: segunda visita é instantânea
+    try {
+      const cc = JSON.parse(sessionStorage.getItem('sga_abrigos_' + m.cod_ibge) || 'null');
+      if (cc && cc.t && (Date.now() - cc.t) < this._TTL_MS && Array.isArray(cc.locais)) {
+        this._locais = cc.locais; this._cacheIbge = m.cod_ibge;
+        SGA.abrigos = cc.locais.map(l => ({ nome: l.nome, lat: l.lat, lng: l.lng,
+          tipo: l.tipo + ' · ' + l.dist_km + ' km da sede (OSM)' }));
+        this._renderLista(m); return;
+      }
+    } catch (_) {}
+
+    // query enxuta (2 blocos em vez de 4 — mesma cobertura, ~metade do custo)
+    const q = '[out:json][timeout:20];(' +
+      'nwr["amenity"~"^(shelter|community_centre|school)$"](around:12000,' + m.lat + ',' + m.lng + ');' +
       'nwr["leisure"="sports_centre"](around:12000,' + m.lat + ',' + m.lng + ');' +
-      'nwr["amenity"="school"](around:12000,' + m.lat + ',' + m.lng + ');' +
       ');out center 200;';
     let dados = null;
-    for (const url of this._MIRRORS) {
+    for (let i = 0; i < this._MIRRORS.length; i++) {
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:8px">Consultando o OpenStreetMap ao redor de <b>' + m.nome + '</b>… servidor ' + (i + 1) + ' de ' + this._MIRRORS.length + ' <span style="opacity:.6">(até 20 s cada)</span></div>';
       try {
-        const r = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q),
-                                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        const r = await fetch(this._MIRRORS[i], {
+          method: 'POST', body: 'data=' + encodeURIComponent(q),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          signal: AbortSignal.timeout(this._TIMEOUT_MS),   // ← nunca mais pendurar
+        });
         if (r.ok) { dados = await r.json(); break; }
-      } catch (_) { /* tenta o próximo espelho */ }
+      } catch (_) { /* timeout ou falha → próximo espelho */ }
     }
     if (!dados) {
-      alvo.innerHTML = '<div style="font-size:12px;color:var(--amber);padding:8px">OpenStreetMap (Overpass) indisponível agora — tente novamente em instantes.</div>';
+      alvo.innerHTML = '<div style="font-size:12px;color:var(--amber);padding:8px">Os servidores públicos do OpenStreetMap (Overpass) estão sobrecarregados agora. ' +
+        '<button class="btn btn-outline" style="font-size:11px;margin-left:8px" onclick="AbrigosPage._cacheIbge=null;AbrigosPage.carregar()">↺ Tentar de novo</button></div>';
       return;
     }
 
@@ -611,6 +628,8 @@ const AbrigosPage = {
       .sort((a, b) => a.dist_km - b.dist_km)
       .slice(0, 40);
     this._cacheIbge = m.cod_ibge;
+    try { sessionStorage.setItem('sga_abrigos_' + m.cod_ibge,
+      JSON.stringify({ t: Date.now(), locais: this._locais })); } catch (_) {}
 
     // camada "Abrigos" do mapa passa a plotar os locais reais
     SGA.abrigos = this._locais.map(l => ({ nome: l.nome, lat: l.lat, lng: l.lng,
