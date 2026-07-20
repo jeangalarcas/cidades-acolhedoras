@@ -51,7 +51,9 @@ const TopBar = {
     const n = Array.isArray(SGA.alertasAtivos) ? SGA.alertasAtivos.length : 0;
     el.textContent = n + (n === 1 ? ' ALERTA' : ' ALERTAS');
     el.style.display = n > 0 ? 'inline-block' : 'none';
-  }, 
+    // Central de Alertas lê a MESMA fonte — mantém os contadores em sincronia
+    if (window.AlertasPage && AlertasPage.atualizar) AlertasPage.atualizar();
+  },
 };
 window.TopBar = TopBar;
 
