@@ -211,13 +211,25 @@ const AnaSensores = {
           const cad   = re.ok ? await re.json() : [];
           const nomes = {};
           (Array.isArray(cad) ? cad : []).forEach(c => { nomes[c.codestacao] = c.nome; });
+          // datahora da PED vem em UTC sem o "Z" — anexar p/ parse e exibição corretos
+          const utc = (dh) => new Date(dh && !String(dh).endsWith('Z') ? dh + 'Z' : dh);
+          const quando = (dh) => {
+            try {
+              return utc(dh).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo',
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            } catch (_) { return String(dh); }
+          };
+          const munNome = (SGA.config.municipioAtivo && SGA.config.municipioAtivo.nome) || '';
           (Array.isArray(acum) ? acum : []).forEach(a => {
-            const fresco = a.datahora && (Date.now() - new Date(a.datahora).getTime()) <= 6 * 3600e3;
+            const fresco = a.datahora && (Date.now() - utc(a.datahora).getTime()) <= 6 * 3600e3;
             SGA.sensoresPluvio.push({
               id: a.codestacao,
-              local: (nomes[a.codestacao] || a.codestacao) + ' · CEMADEN',
-              mmh:    a.acc1hr != null ? a.acc1hr : '—',
-              acum6h: a.acc6hr != null ? a.acc6hr : '—',
+              local: (nomes[a.codestacao] || a.codestacao)
+                   + (munNome ? ' · ' + munNome : '') + ' · CEMADEN',
+              mmh:     a.acc1hr  != null ? a.acc1hr  : '—',
+              acum6h:  a.acc6hr  != null ? a.acc6hr  : '—',
+              acum24h: a.acc24hr != null ? a.acc24hr : null,
+              medidoEm: a.datahora ? quando(a.datahora) : null,
               status: fresco ? 'Ativo' : 'Offline',
               col:    fresco ? 'var(--green-mid)' : 'var(--border)',
             });
