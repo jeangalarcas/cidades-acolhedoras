@@ -238,7 +238,7 @@ const RelatosPage = {
                      ('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2) : '—';
       var nf  = Array.isArray(r.fotos) ? r.fotos.length : 0;
       var linha = `
-      <tr style="cursor:pointer" onclick="RelatosPage.abrir(${r.id})">
+      <tr style="cursor:pointer" onclick="RelatosPage.abrir('${r.id}')">
         <td class="mono"><b>${self.esc(r.protocolo)}</b></td>
         <td class="mono" style="font-size:11px;color:var(--text-3)">${qdo}</td>
         <td style="font-size:11px">${t.icone} ${self.esc(t.rotulo)}</td>
@@ -246,15 +246,15 @@ const RelatosPage = {
         <td style="font-size:11px">${self.esc(r.nome || '—')}<div style="font-size:10px;color:var(--text-3)">${self.esc(r.telefone || '')}</div></td>
         <td style="font-size:11px">${nf ? '📷 ' + nf : '—'}</td>
         <td><span class="pill ${s[1]}">${s[0]}</span></td>
-        <td style="font-size:10px;color:var(--text-3)">${self._aberto === r.id ? '▲' : '▼'}</td>
+        <td style="font-size:10px;color:var(--text-3)">${String(self._aberto) === String(r.id) ? '▲' : '▼'}</td>
       </tr>`;
-      if (self._aberto === r.id) linha += self._detalhe(r);
+      if (String(self._aberto) === String(r.id)) linha += self._detalhe(r);
       return linha;
     }).join('');
   },
 
   abrir(id) {
-    this._aberto = this._aberto === id ? null : id;
+    this._aberto = String(this._aberto) === String(id) ? null : String(id);
     this._renderTabela();
   },
 
@@ -333,7 +333,7 @@ const RelatosPage = {
               <select id="rc-st-${r.id}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text-1)">${opcoes}</select>
               <input id="rc-obs-${r.id}" placeholder="observação (opcional)"
                 style="flex:1;min-width:160px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text-1)">
-              <button class="btn btn-outline" style="font-size:11px" onclick="RelatosPage.mudarStatus(${r.id})">Aplicar</button>
+              <button class="btn btn-outline" style="font-size:11px" onclick="RelatosPage.mudarStatus('${r.id}')">Aplicar</button>
             </div>
             <div style="font-size:10px;color:var(--text-3);margin-top:6px">
               A mudança entra no histórico e o cidadão vê pelo protocolo no app.</div>
