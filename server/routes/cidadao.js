@@ -96,6 +96,26 @@ const chaveOk = (req) =>
 /* ── GET /api/cidadao/tipos ───────────────────────────────────────────────── */
 router.get('/tipos', (req, res) => res.json({ tipos: TIPOS }));
 
+/* ── GET /api/cidadao/municipios (lista leve p/ o seletor do app; cache 24h) ─ */
+let munCache = null, munCacheEm = 0;
+router.get('/municipios', async (req, res) => {
+  try {
+    if (munCache && Date.now() - munCacheEm < 24 * 60 * 60 * 1000)
+      return res.json({ municipios: munCache });
+    const { rows } = await db.query(
+      `SELECT nome, cod_ibge, lat, lng FROM municipios
+        WHERE nome IS NOT NULL AND cod_ibge IS NOT NULL
+        ORDER BY nome`);
+    if (rows.length < 400)                       // 497 esperados — falha deliberada
+      throw new Error('lista de municipios incompleta: ' + rows.length);
+    munCache = rows; munCacheEm = Date.now();
+    res.json({ municipios: rows });
+  } catch (e) {
+    if (munCache) return res.json({ municipios: munCache }); // cache vencido > nada
+    res.status(500).json({ erro: e.message });
+  }
+});
+
 /* ── POST /api/cidadao/relato (multipart) ─────────────────────────────────── */
 router.post('/relato', upload.array('fotos', 3), async (req, res) => {
   try {

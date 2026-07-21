@@ -1,5 +1,5 @@
 /* SGA Cidadão — service worker: casca offline; API sempre pela rede */
-const CACHE = 'sga-cidadao-v1';
+const CACHE = 'sga-cidadao-v2'; /* v2: seletor de município (21/07/2026) */
 const SHELL = ['/app/', '/app/manifest.webmanifest', '/app/icon-192.png', '/app/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

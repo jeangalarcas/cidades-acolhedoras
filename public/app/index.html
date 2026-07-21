@@ -87,6 +87,12 @@ h2{font-size:17px;margin-bottom:8px}
 <!-- FORMULÁRIO -->
 <div class="tela" id="t-form">
   <h2 id="f-titulo"></h2>
+  <div class="card" id="card-mun">
+    <label>Município do evento *</label>
+    <select id="f-mun"><option value="">Carregando municípios…</option></select>
+    <div class="aviso" id="f-mun-dica" style="display:none">📍 Sugerido pela sua localização
+    (sede municipal mais próxima) — confirme ou corrija se necessário.</div>
+  </div>
   <div class="card" id="f-campos"></div>
   <div class="card">
     <label>Descreva o que está acontecendo *</label>
@@ -172,6 +178,59 @@ fetch(API+'/api/cidadao/tipos').then(r=>r.json()).then(d=>{
     '<div class="tipo" onclick="escolher('+i+')"><span>'+t.icone+'</span>'+t.rotulo+'</div>').join('');
 }).catch(()=>{ document.getElementById('lista-tipos').textContent='Sem conexão — tente novamente.'; });
 
+/* ---- município do evento: lista oficial + pré-seleção pela sede mais próxima (GPS) ---- */
+let MUNICIPIOS = [], MUN_MANUAL = false, POS = null;
+
+function distKm(a,b){
+  const R=6371, rad=x=>x*Math.PI/180;
+  const s=Math.sin(rad(b.lat-a.lat)/2)**2 +
+          Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(rad(b.lng-a.lng)/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function carregarMunicipios(){
+  fetch(API+'/api/cidadao/municipios').then(r=>r.json()).then(d=>{
+    MUNICIPIOS=(d.municipios||[]).filter(m=>m.nome&&m.cod_ibge);
+    if(MUNICIPIOS.length) renderMun();
+    else document.getElementById('card-mun').style.display='none';
+  }).catch(()=>{ /* sem lista: campo some e o relato segue sem município (como antes) */
+    document.getElementById('card-mun').style.display='none';
+  });
+}
+function renderMun(){
+  const sel=document.getElementById('f-mun');
+  if(!MUNICIPIOS.length) return;
+  document.getElementById('card-mun').style.display='block';
+  const manter = MUN_MANUAL ? sel.value : '';
+  const az=[...MUNICIPIOS].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  let html='<option value="">Selecione o município…</option>';
+  let maisProx=null;
+  if(POS){
+    const prox=[...MUNICIPIOS].filter(m=>m.lat!=null&&m.lng!=null)
+      .sort((a,b)=>distKm(POS,a)-distKm(POS,b)).slice(0,10);
+    maisProx=prox[0]||null;
+    html+='<optgroup label="📍 Mais próximos de você">'+prox.map(m=>{
+      const d=distKm(POS,m);
+      return '<option value="'+m.cod_ibge+'">'+m.nome+' — '+(d<10?d.toFixed(1):Math.round(d))+' km</option>';
+    }).join('')+'</optgroup>';
+  }
+  html+='<optgroup label="Todos (A–Z)">'+az.map(m=>
+    '<option value="'+m.cod_ibge+'">'+m.nome+'</option>').join('')+'</optgroup>';
+  sel.innerHTML=html;
+  if(MUN_MANUAL && manter){ sel.value=manter; }
+  else if(maisProx){
+    sel.value=String(maisProx.cod_ibge);
+    document.getElementById('f-mun-dica').style.display='block';
+  }
+}
+function pegarGPS(){
+  if(POS || !navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    p=>{ POS={lat:p.coords.latitude,lng:p.coords.longitude}; renderMun(); },
+    ()=>{}, {enableHighAccuracy:true, timeout:10000, maximumAge:60000});
+}
+document.getElementById('f-mun').addEventListener('change', ()=>{ MUN_MANUAL=true; });
+carregarMunicipios();
+
 function escolher(i){
   TIPO = TIPOS[i];
   document.getElementById('f-titulo').textContent = TIPO.icone+' '+TIPO.rotulo;
@@ -185,6 +244,8 @@ function escolher(i){
   FOTOS=[null,null,null]; META=[null,null,null];
   [0,1,2].forEach(n=>{ const f=document.getElementById('foto-'+n);
     f.className='foto'; f.style.backgroundImage=''; f.innerHTML='📷<br>Foto '+(n+1); });
+  if(!MUNICIPIOS.length) carregarMunicipios();
+  pegarGPS();
   mostrar('t-form');
 }
 
@@ -200,6 +261,7 @@ document.getElementById('input-foto').addEventListener('change', async function(
   navigator.geolocation.getCurrentPosition(
     p=>{ META[slot]={lat:+p.coords.latitude.toFixed(6), lng:+p.coords.longitude.toFixed(6),
                      ts:new Date().toISOString()};
+         if(!POS){ POS={lat:META[slot].lat, lng:META[slot].lng}; renderMun(); }
          const g=el.querySelector('.gps'); if(g) g.textContent='📍 GPS ok'; },
     ()=>{ META[slot]={lat:null,lng:null,ts:new Date().toISOString()}; },
     {enableHighAccuracy:true, timeout:12000});
@@ -228,6 +290,9 @@ async function enviar(){
   for(const c of TIPO.campos)
     if(c.obrigatorio && !document.getElementById('q-'+c.id).value)
       return mostraErro('Preencha: '+c.rotulo);
+  const selMun=document.getElementById('f-mun');
+  if(MUNICIPIOS.length && !selMun.value)
+    return mostraErro('Selecione o município do evento.');
   const fotos=FOTOS.filter(Boolean);
   if(!fotos.length) return mostraErro('Anexe ao menos 1 foto (recomendado: 3).');
 
@@ -246,6 +311,11 @@ async function enviar(){
   fd.append('descricao', desc);
   fd.append('endereco', document.getElementById('f-end').value.trim());
   fd.append('respostas', JSON.stringify(respostas));
+  if(selMun.value){
+    const mSel=MUNICIPIOS.find(m=>String(m.cod_ibge)===selMun.value);
+    fd.append('cod_ibge', selMun.value);
+    if(mSel) fd.append('municipio_nome', mSel.nome);
+  }
   const metas=[]; FOTOS.forEach((f,i)=>{ if(f){ fd.append('fotos', f, 'foto'+(i+1)+'.jpg');
                                                metas.push(META[i]||{}); }});
   fd.append('foto_meta', JSON.stringify(metas));
@@ -264,7 +334,7 @@ async function enviar(){
 function mostraErro(m){ const e=document.getElementById('f-erro'); e.textContent=m; e.style.display='block'; }
 function copiarProto(){ navigator.clipboard.writeText(document.getElementById('ok-proto').textContent)
   .then(()=>alert('Protocolo copiado!')); }
-function reiniciar(){ PILHA=[]; mostrar('t-home'); }
+function reiniciar(){ PILHA=[]; MUN_MANUAL=false; document.getElementById('f-mun-dica').style.display='none'; mostrar('t-home'); }
 
 async function consultar(){
   const err=document.getElementById('q-erro'); err.style.display='none';
