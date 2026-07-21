@@ -1,0 +1,14 @@
+{
+  "name": "SGA Cidadão — Defesa Civil",
+  "short_name": "SGA Cidadão",
+  "description": "Relate inundações, destelhamentos, estiagem e outros eventos à Defesa Civil com fotos e localização.",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#14352b",
+  "theme_color": "#14352b",
+  "icons": [
+    { "src": "/app/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/app/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
