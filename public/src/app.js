@@ -88,6 +88,7 @@ const App = {
           ${ControlePage.render()}
           ${MapaPage.render()}
           ${AlertasPage.render()}
+          ${RelatosPage.render()}
           ${FluxoPage.render()}
           ${SensoresPage.render()}
           ${IntegracoesPage.render()}

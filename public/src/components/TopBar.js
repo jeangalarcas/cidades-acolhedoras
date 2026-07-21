@@ -68,6 +68,7 @@ const Sidebar = {
     ]},
     { section: 'RESPOSTA', items: [
       { id:'alertas',  icon:'A',  label:'Central de Alertas' },
+      { id:'relatos',  icon:'RC', label:'Relatos do Cidadao', badge:'APP', badgeClass:'r' },
       { id:'fluxo',    icon:'F',  label:'Fluxo de Decisao' },
       { id:'abrigos',  icon:'Ab', label:'Abrigos e Rotas' },
       { id:'canais',   icon:'C',  label:'Canais de Emissao' },
