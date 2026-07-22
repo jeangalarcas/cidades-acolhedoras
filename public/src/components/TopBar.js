@@ -17,6 +17,7 @@ const TopBar = {
       </button>
 
       <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;overflow:hidden">
+        <img src="/app/icon-192.png" alt="Cidades Acolhedoras" style="width:34px;height:34px;border-radius:8px;flex-shrink:0">
         <span style="background:#4BAF82;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0">SGA V3</span>
         <span id="tb-title-text" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           Sistema de Gestao e Alertas
