@@ -149,6 +149,13 @@ const MunicipioPage = {
           </div>
         </div>
       </div>
+      <div class="card" id="card-cameras" style="display:none;margin-bottom:14px">
+        <div class="card-header">
+          <div class="card-title">📹 Câmeras ao vivo — Nível do Rio</div>
+          <span style="font-size:9px;color:var(--text-3)">niveldorio.com · Infotec (leitura por IA)</span>
+        </div>
+        <div id="cameras-lista" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px"></div>
+      </div>
       <div class="g2" style="margin-bottom:14px">
         <div class="card">
           <div class="card-header">
@@ -204,6 +211,29 @@ const MunicipioPage = {
       </div>
     `;
     setTimeout(()=>this._initMapa(m),150);
+    this.carregarCameras(m.cod_ibge);
+  },
+
+  async carregarCameras(ibge){
+    const card=document.getElementById('card-cameras');
+    const lista=document.getElementById('cameras-lista');
+    if(!card||!lista) return;
+    try{
+      const api=(window.MunicipioInit&&MunicipioInit.API_BASE)||'https://sga-api-1705.onrender.com';
+      const d=await (await fetch(api+'/api/cameras/'+ibge)).json();
+      if(!d.total){ card.style.display='none'; return; }
+      lista.innerHTML=d.cameras.map(c=>`
+        <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px">
+          <div style="font-size:11px;font-weight:800;color:var(--text-1)">${c.nome}</div>
+          <div style="font-size:10px;color:var(--text-3)">${c.rio_nome||''}</div>
+          <div style="font-size:22px;font-weight:900;color:${c.nivel_m!=null?'var(--green-light)':'var(--text-3)'};margin:4px 0">
+            ${c.nivel_m!=null?c.nivel_m.toFixed(2)+' m':'—'}</div>
+          <div style="font-size:9px;color:var(--text-3)">${c.medido_em?('medido '+c.medido_em):(d.aviso||'sem leitura')}</div>
+          <button class="btn btn-outline" style="margin-top:8px;width:100%;font-size:11px"
+            onclick="window.open('${c.url_pagina}','_blank')">📹 Ver câmera ao vivo</button>
+        </div>`).join('');
+      card.style.display='block';
+    }catch(e){ card.style.display='none'; }
   },
 
   _initMapa(m){
