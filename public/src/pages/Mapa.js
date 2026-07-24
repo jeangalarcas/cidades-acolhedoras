@@ -42,6 +42,14 @@ const MapaPage = {
         <button class="layer-btn" onclick="MedirMapa.limpar()">✕</button>
       </div>
 
+      <!-- CAMADAS DE CHEIA (BHO/ANA · SGB · IPH-UFRGS · simulação HAND · sob demanda) -->
+      <div class="map-toolbar" style="border-top:none">
+        <span style="font-size:11px;font-weight:700;color:var(--text-2);margin-right:4px" title="Fontes: BHO 2017 (ANA) · Manchas SGB/CPRM e IPH-UFRGS · Simulação HAND (ANADEM 30m) · CNEFE 2022 (IBGE)">CHEIAS:</span>
+        <button id="lc-fluxo"   class="layer-btn" onclick="CamadasCheia.toggleFluxo()" title="Escoamento animado no sentido real do fluxo (topologia BHO/ANA)">🌊 Escoamento</button>
+        <button id="lc-manchas" class="layer-btn" onclick="CamadasCheia.toggleManchas()" title="Manchas oficiais por cota de régua — Montenegro, S.S. do Caí, Lajeado, Alegrete, Uruguaiana">🟦 Manchas oficiais</button>
+        <button id="lc-hand"    class="layer-btn" onclick="CamadasCheia.toggleSimulada()" title="SIMULAÇÃO HAND (região de Canoas) — não considera diques/bombas">🟪 Simulação (Canoas)</button>
+      </div>
+
       <!-- MAPA + LEGENDA -->
       <div class="map-wrap" style="flex:1;display:flex;flex-direction:column;margin:0;border-radius:0">
         <div id="leaflet-map" style="flex:1"></div>
