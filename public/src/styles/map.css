@@ -64,16 +64,34 @@
   flex-shrink: 0;
 }
 
-/* Tooltips do Leaflet — override */
+/* Tooltips do Leaflet — override
+   IMPORTANTE: fundo branco sólido + texto PRETO fixo (#000).
+   Não usar var(--text): no tema escuro ela vira quase-branca e o texto
+   fica ilegível sobre o fundo branco do tooltip. */
 .leaflet-tooltip {
   font-family: var(--font) !important;
   font-size: 12px !important;
   border-radius: 7px !important;
   padding: 6px 10px !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: var(--shadow-sm) !important;
-  color: var(--text) !important;
+  border: 1px solid #B9B4A8 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35) !important;
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  opacity: 1 !important;
 }
+.leaflet-tooltip b { color: #000000 !important; }
+
+/* Popups do Leaflet — mesmo princípio: fundo branco, texto preto */
+.leaflet-popup-content-wrapper {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 12px rgba(0,0,0,.4) !important;
+}
+.leaflet-popup-content,
+.leaflet-popup-content b { color: #000000 !important; }
+.leaflet-popup-content a { color: #0B5ED7 !important; }
+.leaflet-popup-tip { background: #FFFFFF !important; }
 
 /* Controles do Leaflet */
 .leaflet-control-zoom a {
@@ -128,9 +146,9 @@
 .leaflet-tooltip.geo-label {
   background: transparent !important; border: none !important;
   box-shadow: none !important; padding: 0 2px;
-  color: #e8f0ec; font-size: 10px; font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.6);
+  color: #000000 !important; font-size: 10px; font-weight: 700;
+  text-shadow: 0 1px 3px rgba(255,255,255,.95), 0 0 6px rgba(255,255,255,.8);
   pointer-events: none;
 }
 .leaflet-tooltip.geo-label::before { display: none; }
-.leaflet-tooltip.geo-label-amber { color: #F0C070; }
+.leaflet-tooltip.geo-label-amber { color: #6B4A00 !important; }

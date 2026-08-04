@@ -13,10 +13,27 @@ const MapUtils = {
       var zoom   = SGA.config.mapZoom   || 7;
       var m = L.map('leaflet-map', { zoomControl:true }).setView(center, zoom);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      // ── BASE MAPS — seletor no canto superior direito ──────────────────
+      var baseOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap | CPRM · ANA HidroWeb · Cidades Acolhedoras / Correa Eco Social',
         maxZoom: 18,
       }).addTo(m);
+      var baseMaps = {
+        '🗺 Padrão (OSM)': baseOSM,
+        '🛰 Satélite (Esri World Imagery)': L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          { attribution: 'Esri · Maxar · Earthstar Geographics', maxZoom: 19 }),
+        '⛰ Topográfico (OpenTopoMap)': L.tileLayer(
+          'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+          { attribution: '© OpenStreetMap · SRTM | © OpenTopoMap (CC-BY-SA)', maxZoom: 17 }),
+        '🏔 Terreno/Relevo (Esri World Topo)': L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+          { attribution: 'Esri · USGS · NOAA', maxZoom: 19 }),
+        '💧 Claro/hídrico (CARTO Voyager)': L.tileLayer(
+          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          { attribution: '© OpenStreetMap © CARTO', maxZoom: 19 }),
+      };
+      L.control.layers(baseMaps, null, { position: 'topright', collapsed: true }).addTo(m);
 
       SGA.maps.main = m;
 
@@ -24,7 +41,7 @@ const MapUtils = {
       var todos = await MapUtils._carregarTodosMunicipios();
       MapUtils._buildAllLayers(m, todos);
 
-      ['risco','hidro','pluvio','hidrov'].forEach(function(id) {
+      ['risco','pluvio','hidrov'].forEach(function(id) {
         if (SGA.maps.layerGroups[id]) SGA.maps.layerGroups[id].addTo(m);
       });
     }, 150);
@@ -112,23 +129,8 @@ const MapUtils = {
       }).addTo(lg.risco);
     });
 
-    // HIDROGRAFIA — principais rios do RS
-    lg.hidro = L.layerGroup();
-    var rios = [
-      {pts:[[-29.50,-52.80],[-29.67,-52.54],[-29.79,-52.38],[-29.99,-52.37],[-30.04,-52.10],[-29.90,-51.80]], nome:'Rio Pardo'},
-      {pts:[[-29.40,-52.60],[-29.52,-52.50],[-29.62,-52.44],[-29.72,-52.43]], nome:'Rio Pardinho'},
-      {pts:[[-29.20,-53.50],[-29.35,-53.20],[-29.47,-52.90],[-29.52,-52.65],[-29.67,-52.54]], nome:'Rio Jacui Superior'},
-      {pts:[[-30.04,-52.89],[-30.02,-52.40],[-29.90,-51.80],[-29.95,-51.50],[-30.00,-51.20]], nome:'Rio Jacui'},
-      {pts:[[-29.97,-51.22],[-30.02,-51.18],[-30.05,-51.15]], nome:'Guaiba'},
-      {pts:[[-29.95,-51.20],[-29.75,-51.15],[-29.62,-51.05],[-29.47,-50.98]], nome:'Rio dos Sinos'},
-      {pts:[[-30.85,-52.52],[-30.54,-52.52],[-30.28,-52.38],[-30.05,-52.10]], nome:'Rio Camaqua'},
-      {pts:[[-29.75,-57.08],[-29.60,-56.50],[-29.40,-55.80],[-29.20,-54.80]], nome:'Rio Uruguai'},
-      {pts:[[-29.95,-51.20],[-29.97,-51.18],[-29.92,-51.15],[-29.87,-51.12]], nome:'Rio Gravataí'},
-    ];
-    rios.forEach(function(r) {
-      L.polyline(r.pts, {color:'#2A5A8C', weight:2.5, opacity:.55})
-        .bindTooltip(r.nome+' · ANA HidroWeb', {sticky:true}).addTo(lg.hidro);
-    });
+    // (Camada "Hidrografia" removida — hidrografia oficial disponível via
+    //  IBGE: Rios BC250 e Lagos/Massas d'água, em GeoOficial)
 
   // ── ESTAÇÕES ANA — estado inteiro (GeoJSON do backend, pontos reais) ──
     // 🟢 ativa (12h) · 🟡 silenciosa · ⚫ convencional
@@ -168,34 +170,171 @@ const MapUtils = {
       .addTo(lg.cprm);
     });
 
-    // ABRIGOS
+    // ABRIGOS — pontos reais (base estadual OSM, mesma da página "Abrigos & Rotas"),
+    // filtrados pelo município ativo. Construção dinâmica em _construirAbrigos().
     lg.abrigo = L.layerGroup();
-    (SGA.abrigos||[]).forEach(function(a) {
-      // Honesto: sem inventar vagas — mostra o tipo real (OSM) ou aviso
-      var det = a.tipo ? a.tipo
-              : (typeof a.vagas_livres !== 'undefined' ? a.vagas_livres + ' vagas livres'
-              : 'capacidade não publicada');
-      L.marker([a.lat, a.lng], {
+
+    // ROTAS DE FUGA — sede do município → abrigos candidatos mais próximos,
+    // traçado real pelas vias (OSRM/OSM). Construção dinâmica em _construirRotas().
+    lg.rota = L.layerGroup();
+  },
+
+  // ── ABRIGOS & ROTAS dinâmicos por município ──────────────────────────────
+  // Fonte: /data/geo/abrigos_rs.geojson (locais OSM com cod. IBGE — mesma
+  // base da AbrigosPage). HONESTIDADE: capacidade não é inventada; rota OSRM
+  // NÃO considera alagamentos — navegação ao vivo é via Waze/Google Maps.
+
+  _abrigosIbge: undefined,  // município da última construção da camada abrigo
+  _rotasIbge:   undefined,  // idem para rotas
+
+  _ABRIGO_TIPOS: {
+    shelter:          ['Abrigo mapeado',      '🏠'],
+    community_centre: ['Centro comunitário',  '🏢'],
+    sports_centre:    ['Ginásio / esportivo', '🏟'],
+    school:           ['Escola',              '🏫'],
+  },
+
+  _distKm(la1, lo1, la2, lo2) {
+    var R = 6371, dLa = (la2-la1)*Math.PI/180, dLo = (lo2-lo1)*Math.PI/180;
+    var a = Math.sin(dLa/2)*Math.sin(dLa/2) +
+            Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  },
+
+  async _baseAbrigos() {
+    if (SGA._abrigosBaseCache) return SGA._abrigosBaseCache;
+    try {
+      var r = await fetch('/data/geo/abrigos_rs.geojson', { signal: AbortSignal.timeout(15000) });
+      if (r.ok) {
+        var gj = await r.json();
+        SGA._abrigosBaseCache = gj.features || [];
+        return SGA._abrigosBaseCache;
+      }
+    } catch(e) { console.warn('[mapa] base de abrigos:', e.message); }
+    return [];
+  },
+
+  // Mesma regra da AbrigosPage: município (cod IBGE) + vizinhança de 12 km
+  _abrigosDoMunicipio(base, m) {
+    var self = this, ibge = String(m.cod_ibge);
+    return base
+      .map(function(f) {
+        var c = f.geometry.coordinates, p = f.properties || {};
+        return { nome: p.nome, tipoRaw: p.tipo, ibge: p.ibge, lat: c[1], lng: c[0],
+                 dist_km: +self._distKm(m.lat, m.lng, c[1], c[0]).toFixed(1) };
+      })
+      .filter(function(l){ return l.ibge === ibge || l.dist_km <= 12; })
+      .map(function(l){
+        var t = self._ABRIGO_TIPOS[l.tipoRaw] || ['Local', '📍'];
+        return { nome: l.nome, tipo: t[0], icone: t[1], lat: l.lat, lng: l.lng, dist_km: l.dist_km };
+      })
+      .sort(function(a,b){ return a.dist_km - b.dist_km; })
+      .slice(0, 40);
+  },
+
+  _linksNavegacao(lat, lng) {
+    var gmaps = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng + '&travelmode=driving';
+    var waze  = 'https://www.waze.com/ul?ll=' + lat + '%2C' + lng + '&navigate=yes';
+    return '<div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;font-weight:700">' +
+           '<a href="' + gmaps + '" target="_blank" rel="noopener">🧭 Google Maps</a>' +
+           '<a href="' + waze  + '" target="_blank" rel="noopener">🚙 Waze</a></div>';
+  },
+
+  _avisoMapa(titulo, msg) {
+    if (!SGA.maps.main) return;
+    L.popup({ maxWidth: 280 })
+      .setLatLng(SGA.maps.main.getCenter())
+      .setContent('<b>' + titulo + '</b><br>' + msg)
+      .openOn(SGA.maps.main);
+  },
+
+  async _construirAbrigos() {
+    var lg = SGA.maps.layerGroups;
+    if (!lg.abrigo) return;
+    var m = SGA.config.municipioAtivo;
+    lg.abrigo.clearLayers();
+    this._abrigosIbge = m ? m.cod_ibge : null;
+    if (!m || m.lat == null) {
+      this._avisoMapa('🏠 Abrigos', 'Selecione um município para ver os locais candidatos a abrigo (fonte OpenStreetMap).');
+      return;
+    }
+    var locais = this._abrigosDoMunicipio(await this._baseAbrigos(), m);
+    locais.forEach(function(l) {
+      var pop = '<b>' + l.icone + ' ' + l.nome + '</b><br>' +
+        'Tipo: ' + l.tipo + '<br>' +
+        'Distância da sede: ' + l.dist_km + ' km<br>' +
+        'Coordenadas: ' + l.lat.toFixed(5) + ', ' + l.lng.toFixed(5) + '<br>' +
+        'Capacidade: não publicada — designação é da Defesa Civil' +
+        MapUtils._linksNavegacao(l.lat, l.lng) +
+        '<div style="margin-top:4px;font-size:10px;color:#444">Fonte: OpenStreetMap · a rota nos apps usa condições ao vivo (trânsito/bloqueios)</div>';
+      L.marker([l.lat, l.lng], {
         icon: L.divIcon({
           className:'',
           html:'<div style="width:18px;height:18px;border-radius:4px;background:#2D7A5C;border:2px solid #fff;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4)">A</div>',
           iconSize:[18,18], iconAnchor:[9,9],
         })
       })
-      .bindTooltip('<b>'+a.nome+'</b><br>'+det, {sticky:true})
+      .bindTooltip('<b>' + l.nome + '</b><br>' + l.tipo + ' · ' + l.dist_km + ' km da sede', {sticky:true})
+      .bindPopup(pop, { maxWidth: 300 })
       .addTo(lg.abrigo);
     });
+    if (!locais.length) {
+      this._avisoMapa('🏠 Abrigos', 'Nenhum local candidato com nome mapeado no OSM em ' + m.nome +
+        ' nem num raio de 12 km — lacuna do mapeamento comunitário, não ausência de abrigos. Consulte a Defesa Civil (199).');
+    }
+  },
 
-    // ROTAS (OSM-based)
-    lg.rota = L.layerGroup();
-    [
-      {pts:[[-29.99,-52.37],[-29.90,-52.40],[-29.72,-52.43]], label:'RS-471 → Santa Cruz'},
-      {pts:[[-29.99,-52.37],[-30.04,-52.50],[-30.04,-52.89]], label:'RS-287 → Cachoeira do Sul'},
-      {pts:[[-29.99,-52.37],[-30.10,-52.20],[-30.20,-51.80],[-30.10,-51.50]], label:'BR-290 → Porto Alegre'},
-    ].forEach(function(r) {
-      L.polyline(r.pts, {color:'#2D7A5C', weight:2.5, opacity:.7, dashArray:'8 5'})
-        .bindTooltip('Rota de fuga: '+r.label+' · OSM', {sticky:true}).addTo(lg.rota);
-    });
+  async _construirRotas() {
+    var lg = SGA.maps.layerGroups;
+    if (!lg.rota) return;
+    var m = SGA.config.municipioAtivo;
+    lg.rota.clearLayers();
+    this._rotasIbge = m ? m.cod_ibge : null;
+    if (!m || m.lat == null) {
+      this._avisoMapa('🟢 Rotas de fuga', 'Selecione um município para traçar as rotas (sede → abrigos candidatos mais próximos).');
+      return;
+    }
+    var destinos = this._abrigosDoMunicipio(await this._baseAbrigos(), m)
+      .filter(function(l){ return l.dist_km >= 0.3; })   // ignora locais colados na sede
+      .slice(0, 3);
+    if (!destinos.length) {
+      this._avisoMapa('🟢 Rotas de fuga', 'Sem abrigos candidatos mapeados para traçar rotas em ' + m.nome + '. Consulte a Defesa Civil (199).');
+      return;
+    }
+    var aviso = '<div style="margin-top:4px;font-size:10px;color:#8a5a00"><b>Atenção:</b> traçado pelas vias (OSRM/OpenStreetMap) — ' +
+                'NÃO considera alagamentos, pontes caídas ou interdições em tempo real. ' +
+                'Para condições ao vivo, abra a rota no Waze ou Google Maps.</div>';
+    await Promise.all(destinos.map(async function(l) {
+      var pop = '<b>🟢 Rota de fuga → ' + l.nome + '</b><br>' + 'Tipo: ' + l.tipo + '<br>';
+      try {
+        var url = 'https://router.project-osrm.org/route/v1/driving/' +
+                  m.lng + ',' + m.lat + ';' + l.lng + ',' + l.lat +
+                  '?overview=full&geometries=geojson&alternatives=false';
+        var r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var j = await r.json();
+        if (!j.routes || !j.routes.length) throw new Error('sem rota');
+        var rt = j.routes[0];
+        var latlngs = rt.geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+        pop += 'Distância pela via: ' + (rt.distance/1000).toFixed(1) + ' km<br>' +
+               'Tempo estimado (sem trânsito): ' + Math.round(rt.duration/60) + ' min' +
+               MapUtils._linksNavegacao(l.lat, l.lng) + aviso;
+        L.polyline(latlngs, { color:'#2D7A5C', weight:3.5, opacity:.85 })
+          .bindTooltip('Rota de fuga → ' + l.nome + ' · ' + (rt.distance/1000).toFixed(1) + ' km (OSRM)', {sticky:true})
+          .bindPopup(pop, { maxWidth: 300 })
+          .addTo(lg.rota);
+      } catch(e) {
+        // Fallback honesto: linha reta tracejada, claramente marcada como aproximação
+        console.warn('[mapa] OSRM indisponível para ' + l.nome + ':', e.message);
+        pop += 'Distância em linha reta: ' + l.dist_km + ' km<br>' +
+               '<span style="color:#8a5a00">Roteador OSRM indisponível — traçado aproximado (linha reta).</span>' +
+               MapUtils._linksNavegacao(l.lat, l.lng) + aviso;
+        L.polyline([[m.lat, m.lng], [l.lat, l.lng]], { color:'#2D7A5C', weight:2.5, opacity:.7, dashArray:'8 5' })
+          .bindTooltip('Rota aproximada → ' + l.nome + ' (OSRM indisponível)', {sticky:true})
+          .bindPopup(pop, { maxWidth: 300 })
+          .addTo(lg.rota);
+      }
+    }));
   },
 
   toggleLayer(id) {
@@ -204,12 +343,18 @@ const MapUtils = {
     state[id] = !state[id];
     var lg = SGA.maps.layerGroups[id];
     if (lg) {
-      if (state[id]) lg.addTo(SGA.maps.main);
+      if (state[id]) {
+        // Abrigos e Rotas são dinâmicos: (re)constrói se o município mudou
+        var ibgeAtual = SGA.config.municipioAtivo ? SGA.config.municipioAtivo.cod_ibge : null;
+        if (id === 'abrigo' && MapUtils._abrigosIbge !== ibgeAtual) MapUtils._construirAbrigos();
+        if (id === 'rota'   && MapUtils._rotasIbge   !== ibgeAtual) MapUtils._construirRotas();
+        lg.addTo(SGA.maps.main);
+      }
       else SGA.maps.main.removeLayer(lg);
     }
     var btn = document.getElementById('lb-' + id);
     if (btn) {
-      var classes = {risco:' on',hidro:' on-blue',pluvio:' on-amber',hidrov:' on-blue',cprm:' on',abrigo:' on',rota:' on'};
+      var classes = {risco:' on',pluvio:' on-amber',hidrov:' on-blue',cprm:' on',abrigo:' on',rota:' on'};
       btn.className = 'layer-btn' + (state[id] ? (classes[id]||' on') : '');
     }
   },
@@ -231,6 +376,10 @@ const MapUtils = {
   centralizarMunicipio(municipio) {
     if (SGA.maps.main && municipio) {
       SGA.maps.main.setView([municipio.lat, municipio.lng], 11);
+      // Camadas dinâmicas acompanham o filtro de município
+      var st = SGA.ui.mapLayers;
+      if (st.abrigo) MapUtils._construirAbrigos();
+      if (st.rota)   MapUtils._construirRotas();
     }
     if (SGA.maps.mini && municipio) {
       SGA.maps.mini.setView([municipio.lat, municipio.lng], 10);

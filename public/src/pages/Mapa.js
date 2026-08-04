@@ -19,7 +19,6 @@ const MapaPage = {
       <div class="map-toolbar">
         <span style="font-size:11px;font-weight:700;color:var(--text-2);margin-right:4px">Camadas:</span>
         <button id="lb-risco"  class="layer-btn on"      onclick="toggleLayer('risco')">🔴 Zonas de risco</button>
-        <button id="lb-hidro"  class="layer-btn on-blue"  onclick="toggleLayer('hidro')">💧 Hidrografia</button>
         <button id="lb-hidrov" class="layer-btn on-blue"  onclick="toggleLayer('hidrov')">📏 Réguas ANA</button>
         <button id="lb-pluvio" class="layer-btn on-amber" onclick="toggleLayer('pluvio')">🌧 Pluviômetros</button>
         <button id="lb-cprm"   class="layer-btn"         onclick="toggleLayer('cprm')">🟣 CPRM Suscet.</button>

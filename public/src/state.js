@@ -26,7 +26,7 @@ const SGA = {
 
   ui: {
     currentPage:   'painel',
-    mapLayers:     { base:true, risco:true, hidro:true, pluvio:true, hidrov:true, cprm:false, abrigo:false, rota:false },
+    mapLayers:     { base:true, risco:true, pluvio:true, hidrov:true, cprm:false, abrigo:false, rota:false },
     intTab:        'all',
     mapInited:     false,
     miniMapInited: false,
