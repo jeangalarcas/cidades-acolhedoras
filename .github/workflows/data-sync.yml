@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
       - name: Install dependencies
         run: npm ci
       - name: Sincronizar dados ANA HidroWeb
@@ -34,7 +34,7 @@ jobs:
       - name: Verificar alertas críticos
         run: node scripts/fetch-data.js --check-alerts
       - name: Commit dados atualizados
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: 'chore: sync dados hidrometeorológicos [skip ci]'
           file_pattern: 'public/data/*.json'

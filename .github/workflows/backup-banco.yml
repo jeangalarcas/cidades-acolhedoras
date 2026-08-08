@@ -38,7 +38,7 @@ jobs:
           ls -lh sga-backup-*.sql.gz
 
       - name: Guardar artefato (90 dias)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sga-backup-${{ github.run_id }}
           path: sga-backup-*.sql.gz
