@@ -64,3 +64,5 @@ temp/
 
 # GitHub Pages (gerado automaticamente)
 _site/
+
+.vercel
