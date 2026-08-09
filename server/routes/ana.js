@@ -354,8 +354,11 @@ router.post('/enriquecer-status', async (req, res) => {
     const offset = parseInt(req.query.offset || '0', 10);
     const LIMIAR_H = 12;
 
+    // CEMADEN fica de fora: a ANA não repassa essa telemetria (ficariam sempre
+    // "silenciosas"); quem as atualiza é /api/cemaden/enriquecer-chuva (feed público)
     const { rows: alvos } = await db.query(
       `SELECT codigo FROM estacoes_ana WHERE telemetrica
+        AND responsavel_sigla IS DISTINCT FROM 'CEMADEN'
         ORDER BY codigo LIMIT $1 OFFSET $2`, [limite, offset]);
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));

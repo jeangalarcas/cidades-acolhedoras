@@ -90,4 +90,99 @@ router.get('/acumulados', (req, res) => trata(res, () =>
     codibge: req.query.ibge, codestacao: req.query.estacao, formato: 'json',
   })));
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * ENRIQUECIMENTO VIA FEED PÚBLICO (sem login) — "Célula Restinga" Fase 1
+ * ───────────────────────────────────────────────────────────────────────────
+ * O feed público do mapa interativo do CEMADEN entrega leituras em tempo real
+ * de ~455 estações no RS, sem autenticação:
+ *   https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=RS
+ *
+ * Esta rota casa essas leituras com as estações CEMADEN do inventário
+ * (estacoes_ana) e atualiza chuva/status — as estações "acendem" no mapa.
+ *
+ * CASAMENTO (validado em 09/08/2026: 120/141 estações = 85%):
+ *   chave = cod_ibge + sufixo do nome normalizado (sem acento/minúsculo/alfanum)
+ *   BD:   "PORTO ALEGRE_Restinga"  → 4314902|restinga
+ *   feed: cidade + "G2-Restinga"   → 4314902|restinga
+ *
+ * POST /api/cemaden/enriquecer-chuva?chave=<ANA_SYNC_TOKEN>
+ * Agendado no ana-status.yml (passo final, após os blocos ANA).
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+const db = require('../db');
+const FEED_PUBLICO = 'https://resources.cemaden.gov.br/graficos/interativo/getJson2.php?uf=RS';
+
+const normaliza = s => String(s || '')
+  .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// "09/08/26 21:10" (hora de Brasília) → Date ISO com fuso -03:00
+function parseDataFeed(s) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})$/.exec(String(s || '').trim());
+  if (!m) return null;
+  const d = new Date(`20${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00-03:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+router.post('/enriquecer-chuva', async (req, res) => {
+  try {
+    if (process.env.ANA_SYNC_TOKEN && req.query.chave !== process.env.ANA_SYNC_TOKEN)
+      return res.status(403).json({ erro: 'chave inválida' });
+
+    const LIMIAR_H = 12; // mesmo limiar do enriquecimento ANA
+
+    // 1) feed público (timeout: nunca pendurar — lição da integração ANA)
+    const r = await fetch(FEED_PUBLICO, { timeout: 25000 });
+    if (!r.ok) return res.status(502).json({ erro: 'feed CEMADEN HTTP ' + r.status });
+    const feed = await r.json();
+    if (!Array.isArray(feed) || !feed.length)
+      return res.status(502).json({ erro: 'feed CEMADEN vazio — nada atualizado' });
+
+    // 2) indexa feed por ibge|sufixo (nomeestacao sem o prefixo "G2-")
+    const porChave = new Map();
+    for (const e of feed) {
+      const suf = String(e.nomeestacao || '').replace(/^G\d-/, '');
+      const k = `${e.codibge}|${normaliza(suf)}`;
+      // se repetir a chave, fica a leitura mais recente
+      const atual = porChave.get(k);
+      if (!atual || (parseDataFeed(e.datahoraUltimovalor) || 0) > (parseDataFeed(atual.datahoraUltimovalor) || 0))
+        porChave.set(k, e);
+    }
+
+    // 3) estações CEMADEN do inventário
+    const { rows: alvos } = await db.query(
+      `SELECT codigo, nome, cod_ibge FROM estacoes_ana
+        WHERE telemetrica AND responsavel_sigla = 'CEMADEN'`);
+
+    let casadas = 0, ativas = 0, silenciosas = 0, semPar = [];
+    for (const a of alvos) {
+      const suf = a.nome.includes('_') ? a.nome.split('_').slice(1).join('_') : a.nome;
+      const e = porChave.get(`${a.cod_ibge}|${normaliza(suf)}`);
+      if (!e) { semPar.push(a.codigo); continue; }
+      casadas++;
+
+      const medEm = parseDataFeed(e.datahoraUltimovalor);
+      const ativa = medEm && (Date.now() - medEm.getTime()) <= LIMIAR_H * 3600e3;
+      const chuva24 = (e.acc24hr === '-' || e.acc24hr == null) ? null : Number(e.acc24hr);
+      if (ativa) ativas++; else silenciosas++;
+
+      await db.query(
+        `UPDATE estacoes_ana SET
+           ultima_medicao_em = $2, ultima_chuva_mm = $3,
+           categoria = $4, cor = $5, enriquecido_em = now()
+         WHERE codigo = $1`,
+        [a.codigo, medEm, Number.isFinite(chuva24) ? chuva24 : null,
+         ativa ? 'ativa' : 'silenciosa',
+         ativa ? '#2D7A5C' : '#E8A23A']);
+    }
+
+    res.json({
+      ok: true, fonte: 'CEMADEN feed público (mapa interativo)',
+      estacoes_feed_rs: feed.length, inventario_cemaden: alvos.length,
+      casadas, ativas, silenciosas, sem_par: semPar.length,
+      sem_par_codigos: semPar,
+    });
+  } catch (e) { res.status(500).json({ erro: e.message }); }
+});
+
 module.exports = router;

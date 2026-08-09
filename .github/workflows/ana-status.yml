@@ -24,3 +24,11 @@ jobs:
             echo ""
             sleep 5
           done
+
+      - name: CEMADEN — chuva ao vivo (feed público, Célula Restinga)
+        run: |
+          echo "── enriquecer CEMADEN via feed público ──"
+          curl -s --max-time 120 -X POST \
+            "https://sga-api-1705.onrender.com/api/cemaden/enriquecer-chuva?chave=${{ secrets.ANA_SYNC_TOKEN }}" \
+            || echo "(CEMADEN falhou — ANA segue valendo; tenta de novo em 3h)"
+          echo ""
