@@ -1,0 +1,48 @@
+name: Gitleaks - Varredura de segredos (historico completo)
+
+# Escaneia TODOS os commits do repositorio em busca de segredos
+# (chaves, tokens, senhas). Saida sempre MASCARADA (--redact).
+# Rodar manualmente ANTES de tornar o repositorio publico.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  varredura:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Rodar gitleaks no historico completo (valores mascarados)
+        run: |
+          set -e
+          curl -sSL -o gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks version
+          set +e
+          ./gitleaks git . --redact -v --exit-code 2 \
+            --report-format json --report-path gitleaks-report.json
+          CODE=$?
+          set -e
+          if [ "$CODE" -eq 2 ]; then
+            echo ""
+            echo "AVISO: possiveis segredos encontrados no historico (ver acima, mascarados)."
+            exit 1
+          elif [ "$CODE" -ne 0 ]; then
+            echo "Erro na execucao do gitleaks (codigo $CODE)"; exit "$CODE"
+          fi
+          echo "OK: nenhum segredo encontrado em todo o historico."
+
+      - name: Guardar relatorio (artefato, 7 dias)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+          retention-days: 7
+          if-no-files-found: ignore
