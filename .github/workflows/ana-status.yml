@@ -1,0 +1,50 @@
+name: ANA — Atualizar status das estações
+
+# Mantém as cores do mapa vivas (verde = ativa 12h / amarelo = silenciosa)
+# percorrendo as 1.192 telemétricas em 8 blocos, agora em 2 FILAS PARALELAS
+# (~metade do tempo, ainda gentil com o backend no Render free).
+on:
+  schedule:
+    - cron: '20 */3 * * *'   # a cada 3 horas, no minuto 20
+  workflow_dispatch:          # permite rodar manualmente na aba Actions
+
+permissions: {}               # não precisa de nenhuma permissão no repositório
+
+concurrency:
+  group: ana-status           # nunca dois runs ao mesmo tempo
+  cancel-in-progress: false
+
+jobs:
+  enriquecer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40       # trava de segurança contra execução pendurada
+    env:
+      CHAVE: ${{ secrets.ANA_SYNC_TOKEN }}
+    steps:
+      - name: Percorrer blocos de estações (2 filas paralelas)
+        run: |
+          set -e
+          processa() {
+            for o in "$@"; do
+              echo "── bloco offset=$o ──"
+              curl -s --max-time 300 -X POST \
+                "https://sga-api-1705.onrender.com/api/ana/enriquecer-status?chave=${CHAVE}&limite=150&offset=${o}" \
+                || echo "(bloco $o falhou — segue o próximo)"
+              echo ""
+              sleep 5
+            done
+          }
+          processa 0 300 600 900 &
+          P1=$!
+          processa 150 450 750 1050 &
+          P2=$!
+          wait "$P1"
+          wait "$P2"
+
+      - name: CEMADEN — chuva ao vivo (feed público, Célula Restinga)
+        run: |
+          echo "── enriquecer CEMADEN via feed público ──"
+          curl -s --max-time 120 -X POST \
+            "https://sga-api-1705.onrender.com/api/cemaden/enriquecer-chuva?chave=${CHAVE}" \
+            || echo "(CEMADEN falhou — ANA segue valendo; tenta de novo em 3h)"
+          echo ""
