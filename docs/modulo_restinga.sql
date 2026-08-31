@@ -1,25 +1,26 @@
--- SGA — Módulo Restinga v0.1 (2026-08-31)
--- Esquema extraído de MODULO_RESTINGA_modelagem.md §7
+-- SGA — Módulo Restinga (2026-08-31)
+-- Esquema APLICADO no Supabase (migração modulo_restinga_v01) — paridade com produção.
+-- Diferenças sobre a v0.1 do documento: colunas codigo_cnes e fonte_coordenadas em equipamentos;
+-- tipo 'climatico_social' em cenarios (usado pelo CLI-5); RLS habilitado com leitura pública
+-- (escrita apenas via service role, padrão do projeto).
 
--- Territórios (bairro, região ObservaPOA, RP do PDUS, setor SGB…)
 create table territorios (
   id bigint generated always as identity primary key,
   tipo text not null check (tipo in ('bairro','regiao_observapoa','regiao_planejamento','setor_risco_sgb','municipio')),
-  codigo text,                -- ex.: IBGE 4314902, RS_PORTOAL_SR_08_CPRM
+  codigo text,
   nome text not null,
   parent_id bigint references territorios(id),
-  geom_ref text,              -- caminho da geometria (geojson em public/data/geo)
+  geom_ref text,
   fonte text not null,
   atualizado_em timestamptz default now()
 );
 
--- Catálogo de indicadores (nada entra sem fonte + vintage)
 create table indicadores (
   id bigint generated always as identity primary key,
-  codigo text unique not null,      -- POP_TOTAL, CMATT30, RENDA_RESP_SM, IDH_UDH, POP_NEGRA_PCT…
+  codigo text unique not null,
   nome text not null,
   unidade text not null,
-  fonte text not null,              -- ObservaPOA/IBGE, IPEA-AOP, SGB, EPTC/GTFS…
+  fonte text not null,
   url_fonte text,
   metodologia text
 );
@@ -30,14 +31,13 @@ create table indicador_valores (
   indicador_id bigint not null references indicadores(id),
   valor numeric,
   valor_texto text,
-  data_ref text not null,           -- 'Censo 2022', '2010', '2019', ISO date…
+  data_ref text not null,
   status_verificacao text not null check (status_verificacao in ('confirmado','ressalva','nao_confirmado')),
   fonte_url text,
   verificado_em date,
   unique (territorio_id, indicador_id, data_ref)
 );
 
--- Rede de apoio
 create table equipamentos (
   id bigint generated always as identity primary key,
   tipo text not null check (tipo in ('hospital','ubs','caps','cras','creas','abrigo','brigada_militar','bombeiros','terminal','escola','centro_comunitario','outro')),
@@ -45,30 +45,31 @@ create table equipamentos (
   endereco text,
   bairro text,
   territorio_id bigint references territorios(id),
-  lat double precision,             -- NULL até geocodificação pelo pipeline OSM
+  lat double precision,
   lon double precision,
   telefone text,
-  capacidade int,                   -- abrigos: vagas (quando oficial)
+  capacidade int,
   operacional boolean default true,
+  codigo_cnes text,
+  fonte_coordenadas text,
   fonte text not null,
   fonte_url text,
   verificado_em date,
   atualizado_em timestamptz default now()
 );
 
--- Cenários e matriz de impacto
 create table cenarios (
   id bigint generated always as identity primary key,
-  codigo text unique not null,      -- CLI-1..5, SOC-A..C
-  tipo text not null check (tipo in ('climatico','estrutural_social')),
+  codigo text unique not null,
+  tipo text not null check (tipo in ('climatico','climatico_social','estrutural_social')),
   nome text not null,
   descricao text,
-  gatilho jsonb                     -- {origem:'CEMADEN', metrica:'chuva_1h', operador:'>=', limiar:…}
+  gatilho jsonb
 );
 
 create table cenario_parametros (
   cenario_id bigint references cenarios(id),
-  parametro text not null,          -- delta_tempo_viagem_min, pop_exposta, cmatt30_pct…
+  parametro text not null,
   valor_base numeric, valor_min numeric, valor_max numeric,
   unidade text, fonte text,
   primary key (cenario_id, parametro)
@@ -81,16 +82,15 @@ create table cenario_impactos (
   publico text not null check (publico in ('cidadao','gestor')),
   severidade int check (severidade between 1 and 5),
   descricao text not null,
-  acoes jsonb                       -- ["evitar deslocamento eixo X", "acionar abrigo Y"…]
+  acoes jsonb
 );
 
--- Tempo real
 create table alertas_territorio (
   id bigint generated always as identity primary key,
   territorio_id bigint references territorios(id),
   cenario_id bigint references cenarios(id),
-  origem text not null,             -- CEMADEN | INMET | ANA_SGB | DEFESA_CIVIL | EPTC
-  nivel text not null,              -- observacao | atencao | alerta | emergencia
+  origem text not null,
+  nivel text not null,
   mensagem text not null,
   payload jsonb,
   valido_de timestamptz not null,
@@ -104,9 +104,35 @@ create table rotas_alternativas (
   destino_tipo text not null check (destino_tipo in ('territorio','equipamento')),
   destino_id bigint not null,
   modo text not null check (modo in ('onibus','carro','a_pe','misto')),
-  vias text[] not null,             -- ex.: {'Av. Edgar Pires de Castro','Estrada do Varejão',…}
+  vias text[] not null,
   status text not null default 'livre' check (status in ('livre','restrita','bloqueada')),
   observacao text,
   fonte text,
   atualizado_em timestamptz default now()
 );
+
+-- RLS no padrão do projeto: habilitado, leitura pública; escrita só via service role
+alter table territorios enable row level security;
+alter table indicadores enable row level security;
+alter table indicador_valores enable row level security;
+alter table equipamentos enable row level security;
+alter table cenarios enable row level security;
+alter table cenario_parametros enable row level security;
+alter table cenario_impactos enable row level security;
+alter table alertas_territorio enable row level security;
+alter table rotas_alternativas enable row level security;
+
+create policy leitura_publica on territorios for select using (true);
+create policy leitura_publica on indicadores for select using (true);
+create policy leitura_publica on indicador_valores for select using (true);
+create policy leitura_publica on equipamentos for select using (true);
+create policy leitura_publica on cenarios for select using (true);
+create policy leitura_publica on cenario_parametros for select using (true);
+create policy leitura_publica on cenario_impactos for select using (true);
+create policy leitura_publica on alertas_territorio for select using (true);
+create policy leitura_publica on rotas_alternativas for select using (true);
+
+-- Estado do seed em 31/08/2026: 8 territorios (município, bairro, região ObservaPOA, RP8, 4 setores SGB),
+-- 12 indicadores + 12 valores (com status de verificação), 8 cenarios + 18 impactos,
+-- 14 equipamentos (8 com coordenada oficial CNES). cenario_parametros e rotas_alternativas
+-- ficam para a Fase 4 (valores numéricos recomputados do aopdata/GTFS).
