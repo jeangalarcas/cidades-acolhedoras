@@ -2,14 +2,21 @@
  "type": "FeatureCollection",
  "metadata": {
   "modulo": "sga-restinga",
-  "versao": "0.1",
+  "versao": "0.2",
   "gerado_em": "2026-08-31",
-  "nota": "geometry=null intencional: coordenadas devem ser geradas por scripts/gerar_geo_restinga.py (OSM) ou validadas via CNES — nenhuma coordenada foi inventada."
+  "nota": "v0.2: unidades de saúde geocodificadas com coordenadas OFICIAIS do CNES/DataSUS (8/14 pontos, todos validados por point-in-polygon no polígono IBGE CD2022 do bairro). CRAS, Brigada Militar, Bombeiros e Terminal seguem com geometry=null até fonte oficial de coordenada (pipeline scripts/gerar_geo_restinga.py ou cadastro municipal) — nenhuma coordenada foi inventada.",
+  "atualizado_em": "2026-08-31"
  },
  "features": [
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.12869739532471,
+     -30.142566469893968
+    ]
+   },
    "properties": {
     "id": "1",
     "tipo": "hospital",
@@ -19,128 +26,186 @@
     "telefone": "(51) 3010-4700",
     "fonte": "Site oficial do hospital",
     "fonte_url": "https://hospitalrestinga.org.br/contato-2/",
-    "status_verificacao": "confirmado_com_ressalva",
+    "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Site do hospital grafa bairro \"Lomba do Pinheiro\" (CEP 91796-000, via na Restinga) — validar no CNES"
+    "observacao": "CNES 7513151 (Associação Hospitalar Vila Nova). CNES e o site grafam bairro Lomba do Pinheiro, mas o ponto oficial CNES cai no polígono IBGE CD2022 do bairro Restinga — divergência documentada e resolvida pela geometria; validado por point-in-polygon em 31/08/2026",
+    "codigo_cnes": "7513151",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.14523634510618,
+     -30.1485906319909
+    ]
+   },
    "properties": {
     "id": "2",
     "tipo": "ubs",
     "nome": "CF Álvaro Difini",
     "endereco": "Rua Alvaro Difini, 520",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3289-5594",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": "433594",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.128891932163405,
+     -30.142711079856902
+    ]
+   },
    "properties": {
     "id": "3",
     "tipo": "ubs",
     "nome": "CF José Mauro Ceratti Lopes",
     "endereco": "Estrada João Antonio da Silveira, 3330",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3261-1405",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": "2264404",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.1405697033279,
+     -30.158346990236613
+    ]
+   },
    "properties": {
     "id": "4",
     "tipo": "ubs",
     "nome": "US Restinga",
     "endereco": "Rua Abolição, 850",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3250-1142",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": "2264587",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.14222616659305,
+     -30.149024274912954
+    ]
+   },
    "properties": {
     "id": "5",
     "tipo": "ubs",
     "nome": "US Macedônia",
     "endereco": "Av. Macedônia, 750",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3289-6588",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": "2264609",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.1413814,
+     -30.1662612
+    ]
+   },
    "properties": {
     "id": "6",
     "tipo": "ubs",
     "nome": "US Chácara do Banco",
     "endereco": "Travessa Jurandi Barrios Mathias, 20",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3289-2689",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": "2264412",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.1341811,
+     -30.1582935
+    ]
+   },
    "properties": {
     "id": "7",
     "tipo": "ubs",
     "nome": "US Núcleo Esperança",
     "endereco": "Rua 7114, 23",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3249-2492",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": "7497547",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
    "type": "Feature",
-   "geometry": null,
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -51.15141084723156,
+     -30.163438057298926
+    ]
+   },
    "properties": {
     "id": "8",
     "tipo": "caps",
     "nome": "CAPS AD III Girassol — Restinga e Extremo-Sul",
-    "endereco": null,
+    "endereco": "Av. João Antônio da Silveira, 440",
     "bairro": "Restinga",
-    "telefone": null,
+    "telefone": "(51) 3248-7704",
     "fonte": "Carta de Serviços — Prefeitura POA",
     "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
-    "status_verificacao": "confirmado_com_ressalva",
+    "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Endereço a confirmar via CNES"
+    "observacao": "Endereço confirmado no CNES: Av. João Antônio da Silveira, 440 — Restinga; validado por point-in-polygon em 31/08/2026",
+    "codigo_cnes": "9752706",
+    "fonte_coordenadas": "CNES/DataSUS — API de dados abertos (apidadosabertos.saude.gov.br), consultada em 31/08/2026; ponto validado dentro do polígono IBGE CD2022 do bairro Restinga"
    }
   },
   {
@@ -157,7 +222,9 @@
     "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/cartadeservicos/cras_end.pdf",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": null,
+    "fonte_coordenadas": null
    }
   },
   {
@@ -174,7 +241,9 @@
     "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/cartadeservicos/cras_end.pdf",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": null
+    "observacao": null,
+    "codigo_cnes": null,
+    "fonte_coordenadas": null
    }
   },
   {
@@ -191,7 +260,9 @@
     "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/cartadeservicos/cras_end.pdf",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Atende a RP8/Extremo-Sul"
+    "observacao": "Atende a RP8/Extremo-Sul",
+    "codigo_cnes": null,
+    "fonte_coordenadas": null
    }
   },
   {
@@ -208,7 +279,9 @@
     "fonte_url": "https://www.brigadamilitar.rs.gov.br/21bpm",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Cobre 13 bairros (~48% do território de POA) — origem: Destacamento Especial da Restinga (1985)"
+    "observacao": "Cobre 13 bairros (~48% do território de POA) — origem: Destacamento Especial da Restinga (1985)",
+    "codigo_cnes": null,
+    "fonte_coordenadas": null
    }
   },
   {
@@ -225,7 +298,9 @@
     "fonte_url": "https://www.bombeiros.rs.gov.br/unidades-de-atendimento",
     "status_verificacao": "nao_confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Página oficial indisponível na sessão — confirmar unidade e endereço"
+    "observacao": "Página oficial indisponível na sessão — confirmar unidade e endereço",
+    "codigo_cnes": null,
+    "fonte_coordenadas": null
    }
   },
   {
@@ -242,7 +317,9 @@
     "fonte_url": "https://prefeitura.poa.br/gp/noticias/terminal-de-onibus-na-restinga-e-entregue-revitalizado-populacao",
     "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Revitalizado, entregue em 2023"
+    "observacao": "Revitalizado, entregue em 2023",
+    "codigo_cnes": null,
+    "fonte_coordenadas": null
    }
   }
  ]
