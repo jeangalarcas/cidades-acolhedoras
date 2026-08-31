@@ -75,7 +75,7 @@
       "codigo": "SOC-B",
       "tipo": "estrutural_social",
       "nome": "Policentralidade e qualificação periférica (PDUS)",
-      "base_verificada": "Novo Plano Diretor (PDUS) sancionado em 14/07/2026; vigência 180 dias após publicação; nº de LC citado como 1075/2026 (agregador) — confirmar no DOPA",
+      "base_verificada": "Lei Complementar nº 1.075, de 14/07/2026 — Institui o Plano Diretor Urbano Sustentável (PDUS); publicada no DOM de 15/07/2026 (LUOS = LC nº 1.076/2026, mesma data); nº confirmado em inteiro teor em 31/08/2026; vigência 180 dias após a publicação",
       "parametros_sensibilidade": [
         {"parametro": "empregos_locais_novos", "efeito": "cada posto de trabalho no bairro reduz km rodado e demanda de pico nos eixos troncais"},
         {"parametro": "cmatt30_pct", "efeito": "meta de elevação do % de empregos acessíveis em 30 min (recomputar via aopdata/GTFS)"}
