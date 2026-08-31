@@ -1,0 +1,249 @@
+{
+ "type": "FeatureCollection",
+ "metadata": {
+  "modulo": "sga-restinga",
+  "versao": "0.1",
+  "gerado_em": "2026-08-31",
+  "nota": "geometry=null intencional: coordenadas devem ser geradas por scripts/gerar_geo_restinga.py (OSM) ou validadas via CNES — nenhuma coordenada foi inventada."
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "1",
+    "tipo": "hospital",
+    "nome": "Hospital Restinga e Extremo-Sul",
+    "endereco": "Av. João Antonio da Silveira, 3700",
+    "bairro": "Restinga",
+    "telefone": "(51) 3010-4700",
+    "fonte": "Site oficial do hospital",
+    "fonte_url": "https://hospitalrestinga.org.br/contato-2/",
+    "status_verificacao": "confirmado_com_ressalva",
+    "verificado_em": "2026-08-31",
+    "observacao": "Site do hospital grafa bairro \"Lomba do Pinheiro\" (CEP 91796-000, via na Restinga) — validar no CNES"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "2",
+    "tipo": "ubs",
+    "nome": "CF Álvaro Difini",
+    "endereco": "Rua Alvaro Difini, 520",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "3",
+    "tipo": "ubs",
+    "nome": "CF José Mauro Ceratti Lopes",
+    "endereco": "Estrada João Antonio da Silveira, 3330",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "4",
+    "tipo": "ubs",
+    "nome": "US Restinga",
+    "endereco": "Rua Abolição, 850",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "5",
+    "tipo": "ubs",
+    "nome": "US Macedônia",
+    "endereco": "Av. Macedônia, 750",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "6",
+    "tipo": "ubs",
+    "nome": "US Chácara do Banco",
+    "endereco": "Travessa Jurandi Barrios Mathias, 20",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "7",
+    "tipo": "ubs",
+    "nome": "US Núcleo Esperança",
+    "endereco": "Rua 7114, 23",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "8",
+    "tipo": "caps",
+    "nome": "CAPS AD III Girassol — Restinga e Extremo-Sul",
+    "endereco": null,
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Carta de Serviços — Prefeitura POA",
+    "fonte_url": "https://prefeitura.poa.br/carta-de-servicos/atencao-primaria-saude-unidades-de-saude",
+    "status_verificacao": "confirmado_com_ressalva",
+    "verificado_em": "2026-08-31",
+    "observacao": "Endereço a confirmar via CNES"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "9",
+    "tipo": "cras",
+    "nome": "CRAS Restinga",
+    "endereco": "Rua Economista Nilo Wulff, s/nº",
+    "bairro": "Restinga",
+    "telefone": "(51) 3289-4788",
+    "fonte": "FASC — PDF oficial de endereços",
+    "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/cartadeservicos/cras_end.pdf",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "10",
+    "tipo": "cras",
+    "nome": "CRAS 5ª Unidade",
+    "endereco": "Rua N 2, 20 — 5ª Unidade",
+    "bairro": "Restinga",
+    "telefone": "(51) 3289-4920",
+    "fonte": "FASC — PDF oficial de endereços",
+    "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/cartadeservicos/cras_end.pdf",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": null
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "11",
+    "tipo": "cras",
+    "nome": "CRAS Extremo Sul",
+    "endereco": "Rua Gumercindo Oliveira, 23",
+    "bairro": "Chapéu do Sol",
+    "telefone": "(51) 3289-4784",
+    "fonte": "FASC — PDF oficial de endereços",
+    "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/cartadeservicos/cras_end.pdf",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": "Atende a RP8/Extremo-Sul"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "12",
+    "tipo": "brigada_militar",
+    "nome": "21º BPM (policiamento do extremo-sul de POA)",
+    "endereco": "Rua Governador Walter Peracchi Barcelos",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Brigada Militar RS — página oficial",
+    "fonte_url": "https://www.brigadamilitar.rs.gov.br/21bpm",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": "Cobre 13 bairros (~48% do território de POA) — origem: Destacamento Especial da Restinga (1985)"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "13",
+    "tipo": "bombeiros",
+    "nome": "Unidade CBMRS de referência da Zona Sul",
+    "endereco": null,
+    "bairro": null,
+    "telefone": null,
+    "fonte": "CBMRS — Unidades de Atendimento",
+    "fonte_url": "https://www.bombeiros.rs.gov.br/unidades-de-atendimento",
+    "status_verificacao": "nao_confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": "Página oficial indisponível na sessão — confirmar unidade e endereço"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": null,
+   "properties": {
+    "id": "14",
+    "tipo": "terminal",
+    "nome": "Terminal Nilo Wulff",
+    "endereco": "Rua Economista Nilo Wulff",
+    "bairro": "Restinga",
+    "telefone": null,
+    "fonte": "Prefeitura POA — notícias oficiais",
+    "fonte_url": "https://prefeitura.poa.br/gp/noticias/terminal-de-onibus-na-restinga-e-entregue-revitalizado-populacao",
+    "status_verificacao": "confirmado",
+    "verificado_em": "2026-08-31",
+    "observacao": "Revitalizado, entregue em 2023"
+   }
+  }
+ ]
+}
