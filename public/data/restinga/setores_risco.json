@@ -1,0 +1,37 @@
+{
+ "modulo": "sga-restinga",
+ "versao": "0.1",
+ "gerado_em": "2026-08-31",
+ "fonte": "SGB/CPRM — Setorização de Áreas de Risco Geológico de Porto Alegre (Defesa Civil POA, dez/2022; 142 setores no município)",
+ "aviso": "Associação dos setores à região Restinga/Extremo-Sul feita na leitura do relatório — confirmar recorte espacial pelas geometrias no GeoSGB antes de fixar no banco.",
+ "setores": [
+  {
+   "codigo_sgb": "RS_PORTOAL_SR_06_CPRM",
+   "tipologia": "Inundação",
+   "grau": "Alto (R3)",
+   "pop_estimada": 412,
+   "observacao": "Associação à região Restinga/Extremo-Sul feita na leitura do PDF — confirmar recorte espacial pelas geometrias no GeoSGB"
+  },
+  {
+   "codigo_sgb": "RS_PORTOAL_SR_07_CPRM",
+   "tipologia": "Enxurrada, erosão, inundação",
+   "grau": "Alto (R3)",
+   "pop_estimada": 260,
+   "observacao": "Idem"
+  },
+  {
+   "codigo_sgb": "RS_PORTOAL_SR_08_CPRM",
+   "tipologia": "Enxurrada, erosão",
+   "grau": "Muito Alto (R4)",
+   "pop_estimada": 404,
+   "observacao": "Idem"
+  },
+  {
+   "codigo_sgb": "RS_PORTOAL_SR_59_CPRM",
+   "tipologia": "Deslizamento, queda de blocos",
+   "grau": "Alto (R3)",
+   "pop_estimada": 136,
+   "observacao": "Idem"
+  }
+ ]
+}
