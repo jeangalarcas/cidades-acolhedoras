@@ -2,7 +2,7 @@
  "type": "FeatureCollection",
  "metadata": {
   "modulo": "sga-restinga",
-  "versao": "0.2",
+  "versao": "0.3",
   "gerado_em": "2026-08-31",
   "nota": "v0.2: unidades de saúde geocodificadas com coordenadas OFICIAIS do CNES/DataSUS (8/14 pontos, todos validados por point-in-polygon no polígono IBGE CD2022 do bairro). CRAS, Brigada Militar, Bombeiros e Terminal seguem com geometry=null até fonte oficial de coordenada (pipeline scripts/gerar_geo_restinga.py ou cadastro municipal) — nenhuma coordenada foi inventada.",
   "atualizado_em": "2026-08-31"
@@ -290,15 +290,15 @@
    "properties": {
     "id": "13",
     "tipo": "bombeiros",
-    "nome": "Unidade CBMRS de referência da Zona Sul",
-    "endereco": null,
-    "bairro": null,
+    "nome": "CBMRS — Pelotão Restinga (1º BBM)",
+    "endereco": "Estrada João Antônio da Silveira, 2590",
+    "bairro": "Restinga",
     "telefone": null,
     "fonte": "CBMRS — Unidades de Atendimento",
     "fonte_url": "https://www.bombeiros.rs.gov.br/unidades-de-atendimento",
-    "status_verificacao": "nao_confirmado",
+    "status_verificacao": "confirmado",
     "verificado_em": "2026-08-31",
-    "observacao": "Página oficial indisponível na sessão — confirmar unidade e endereço",
+    "observacao": "Confirmado na página oficial Unidades de Atendimento do CBMRS em 31/08/2026 (1º BBM · Pel Restinga); coordenada pendente de fonte oficial",
     "codigo_cnes": null,
     "fonte_coordenadas": null
    }
