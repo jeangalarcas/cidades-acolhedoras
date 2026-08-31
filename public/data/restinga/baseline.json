@@ -1,0 +1,168 @@
+{
+  "modulo": "sga-restinga",
+  "versao": "0.1",
+  "gerado_em": "2026-08-31",
+  "territorio": {
+    "bairro": "Restinga",
+    "municipio": "Porto Alegre",
+    "codigo_ibge_municipio": "4314902",
+    "regiao_observapoa": {
+      "nome": "Região Restinga",
+      "bairros": ["Restinga", "Pitinga"],
+      "fonte": "https://prefeitura.poa.br/smpg/observapoa/regiao-restinga",
+      "status_verificacao": "confirmado"
+    },
+    "regiao_planejamento_pdus": {
+      "codigo": "RP8",
+      "nome": "Restinga e Extremo-Sul",
+      "bairros": ["Restinga", "Ponta Grossa", "Belém Novo", "Lageado", "Lami", "Chapéu do Sol", "Extrema", "Boa Vista do Sul", "Pitinga", "São Caetano", "Hípica"],
+      "fonte": "https://prefeitura.poa.br/planodiretor/regiao-de-planejamento-8",
+      "status_verificacao": "confirmado"
+    }
+  },
+  "indicadores": [
+    {
+      "codigo": "POP_TOTAL",
+      "nome": "População residente do bairro Restinga",
+      "valor": 62448,
+      "unidade": "habitantes",
+      "data_ref": "Censo 2022",
+      "fonte": "ObservaPOA/SMPG — Pop_Bairro_Censo_2022.csv",
+      "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/hotsites/smpae/observapoa/Pop_Bairro_Censo_2022.csv",
+      "status_verificacao": "confirmado",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "POP_PCT_MUNICIPIO",
+      "nome": "Participação na população de Porto Alegre",
+      "valor": 4.69,
+      "unidade": "%",
+      "contexto": "População total de Porto Alegre no Censo 2022: 1.332.845",
+      "data_ref": "Censo 2022",
+      "fonte": "ObservaPOA/SMPG — Pop_Bairro_Censo_2022.csv",
+      "fonte_url": "https://prefeitura.poa.br/sites/default/files/usu_doc/hotsites/smpae/observapoa/Pop_Bairro_Censo_2022.csv",
+      "status_verificacao": "confirmado",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "RANK_POP_POA",
+      "nome": "Posição entre os bairros mais populosos de Porto Alegre",
+      "valor": 1,
+      "unidade": "posição",
+      "contexto": "2º: Lomba do Pinheiro (59.200); 3º: Sarandi (51.539); 4º: Mário Quintana (44.068); 5º: Partenon (43.587)",
+      "data_ref": "Censo 2022",
+      "fonte": "ObservaPOA/SMPG — Pop_Bairro_Censo_2022.csv",
+      "status_verificacao": "confirmado",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "RANK_POP_RS",
+      "nome": "Bairro mais populoso do RS; população superior à de ~93% dos municípios gaúchos",
+      "valor": null,
+      "unidade": "afirmação qualitativa",
+      "data_ref": "Censo 2022",
+      "fonte": "Reportado pela imprensa com base no IBGE; conferência exata recomendada via SIDRA tabela 4709",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "RENDA_RESP_SM",
+      "nome": "Rendimento médio dos responsáveis por domicílio",
+      "valor": 2.10,
+      "unidade": "salários mínimos",
+      "data_ref": "Censo 2010",
+      "aviso_vintage": "Dado histórico (2010). Não usar como renda atual; atualizar quando o IBGE/ObservaPOA publicar o recorte 2022.",
+      "fonte": "IBGE via Porto Alegre em Análise (Procempa)",
+      "fonte_url": "https://portoalegreemanalise.procempa.com.br/?regioes=93,0,0",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "RENDA_RESP_ATE2SM_PCT",
+      "nome": "Responsáveis por domicílio com renda até 2 salários mínimos",
+      "valor": 70.16,
+      "unidade": "%",
+      "data_ref": "Censo 2010",
+      "fonte": "IBGE via Porto Alegre em Análise (Procempa)",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "DOM_EXTREMA_POBREZA_PCT",
+      "nome": "Domicílios com rendimento per capita até 1/4 de salário mínimo",
+      "valor": 6.05,
+      "unidade": "%",
+      "data_ref": "Censo 2010",
+      "fonte": "IBGE via Porto Alegre em Análise (Procempa)",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "POP_NEGRA_PCT",
+      "nome": "População negra (pretos + pardos) — Região Restinga",
+      "valor": 38.50,
+      "valor_absoluto": 23382,
+      "unidade": "%",
+      "data_ref": "Censo 2010",
+      "aviso_vintage": "Censo 2022 por bairro ainda não incorporado; imprensa (dez/2025) reporta Restinga com a maior proporção de população negra de POA no Censo 2022 (não confirmado em fonte primária nesta sessão).",
+      "fonte": "IBGE via Porto Alegre em Análise (Procempa)",
+      "fonte_url": "https://portoalegreemanalise.procempa.com.br/?regiao=9_10_234",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "IDH_UDH",
+      "nome": "IDH intraurbano (nível UDH) — região da Restinga",
+      "valor": 0.593,
+      "unidade": "índice (0-1)",
+      "contexto": "Comparativo citado no mesmo estudo: Moinhos de Vento 0,958. Valor por região do Orçamento Participativo: 0,685. IDHM oficial existe apenas por município (Porto Alegre: 0,805 em 2010).",
+      "data_ref": "Atlas Brasil / Censo 2010",
+      "fonte": "Augustin & Soares (2021), Cadernos Metrópole v.23 n.52, DOI 10.1590/2236-9996.2021-5206, citando Atlas Brasil",
+      "fonte_url": "https://www.scielo.br/j/cm/a/m8Y3xQ8RRwSVxnSSTQz4TJj/?lang=pt",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "CMATT30",
+      "nome": "Empregos formais acessíveis em 30 min por transporte coletivo (indicador CMA)",
+      "valor": null,
+      "unidade": "% dos empregos da cidade",
+      "contexto": "Valores reportados na imprensa: Restinga ~0,5% vs Moinhos de Vento ~43,4% (matéria piauí 2020, inacessível nesta sessão). RECOMPUTAR do dado primário antes de publicar.",
+      "data_ref": "AOP/IPEA 2017-2019",
+      "fonte": "Projeto Acesso a Oportunidades (IPEA) — pacote aopdata (hexágonos H3)",
+      "fonte_url": "https://www.ipea.gov.br/acessooportunidades/",
+      "status_verificacao": "nao_confirmado",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "TEMPO_PENDULAR_PICO",
+      "nome": "Tempo de viagem por perna em linhas troncais no pico",
+      "valor": null,
+      "unidade": "minutos",
+      "contexto": "Reportado como 60-80 min por perna (fonte jornalística inacessível nesta sessão). Recomputável via GTFS + Tabela Horária STPoa (DataPOA).",
+      "data_ref": "a recomputar",
+      "fonte": "DataPOA/EPTC — GTFS e STPoa",
+      "fonte_url": "https://dadosabertos.poa.br/dataset/gtfs",
+      "status_verificacao": "nao_confirmado",
+      "verificado_em": "2026-08-31"
+    },
+    {
+      "codigo": "DIST_CENTRO_KM",
+      "nome": "Distância ao Centro Histórico",
+      "valor": 20,
+      "unidade": "km (aprox.)",
+      "contexto": "Referência amplamente citada; distância viária real varia por eixo — calcular por rota no módulo.",
+      "data_ref": "estático",
+      "fonte": "Referência secundária (Wikipédia/estudos)",
+      "status_verificacao": "ressalva",
+      "verificado_em": "2026-08-31"
+    }
+  ],
+  "divergencias_corrigidas": [
+    "Redução de 67% no tempo / 2min50s / ~62 mil usuários refere-se à faixa exclusiva da Av. Goethe (Rio Branco, pauta Prefeitura 20/12/2019) — NÃO à malha interna da Restinga.",
+    "Renda 2,10 SM é Censo 2010 (histórico), não dado atual.",
+    "IDH 0,593 é estimativa UDH/Atlas Brasil (2010) citada em estudo acadêmico; não é IDHM oficial de bairro.",
+    "Operadora 'Tinga' não confirmada; registro oficial de 2019 aponta Consórcio Viva Sul na bacia Sul.",
+    "Painel Saneamento Brasil (Trata Brasil) reprocessa dados SNIS/SINISA — usar SNIS/SINISA como fonte primária."
+  ]
+}
