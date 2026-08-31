@@ -1,0 +1,103 @@
+{
+  "modulo": "sga-restinga",
+  "versao": "0.1",
+  "gerado_em": "2026-08-31",
+  "cenarios": [
+    {
+      "codigo": "CLI-1",
+      "tipo": "climatico",
+      "nome": "Chuva intensa / enxurrada / alagamento (bacia do Arroio do Salso)",
+      "gatilho": {"origem": ["CEMADEN", "INMET"], "metricas": ["chuva_1h", "chuva_24h", "aviso_inmet"], "regra": "limiar CEMADEN municipal OU aviso INMET laranja/vermelho recortado ao território"},
+      "populacao_alvo": "Setores SGB SR_06/07/08 (~1.076 pessoas mapeadas) + áreas baixas da bacia",
+      "impactos": [
+        {"dimensao": "mobilidade", "publico": "cidadao", "severidade": 4, "descricao": "Bloqueio de vias internas e possíveis desvios/suspensão de linhas de ônibus", "acoes": ["consultar status dos eixos antes de sair", "rotas alternativas no app", "evitar áreas dos setores de risco"]},
+        {"dimensao": "operacao_gestao", "publico": "gestor", "severidade": 4, "descricao": "Acionamento de abrigos e equipes; monitorar setores SGB", "acoes": ["pré-posicionar equipes Defesa Civil", "ativar abrigos da base OSM/SGA", "comunicar EPTC para desvios"]},
+        {"dimensao": "saude", "publico": "gestor", "severidade": 3, "descricao": "Sobrecarga potencial de UBS/hospital e acesso dificultado", "acoes": ["reforço no Hospital Restinga e UBS", "vigilância pós-evento (leptospirose)"]}
+      ],
+      "referencia_historica": "Alagamentos na zona Sul 'da Tristeza até Restinga, Belém Novo' em 23/05/2024 (Extra Classe); camada oficial: storymap Smamus da enchente (13/05/2024)"
+    },
+    {
+      "codigo": "CLI-2",
+      "tipo": "climatico",
+      "nome": "Deslizamento / queda de blocos",
+      "gatilho": {"origem": ["CEMADEN"], "metricas": ["chuva_72h"], "regra": "acumulado 72h elevado + setor SGB SR_59 (R3)"},
+      "populacao_alvo": "Setor SGB SR_59 (~136 pessoas)",
+      "impactos": [
+        {"dimensao": "habitacao", "publico": "cidadao", "severidade": 5, "descricao": "Risco direto às moradias do setor", "acoes": ["orientação de evacuação preventiva", "rota de fuga e abrigo mais próximo no app"]},
+        {"dimensao": "operacao_gestao", "publico": "gestor", "severidade": 4, "descricao": "Vistoria e interdição preventiva", "acoes": ["equipe de geotecnia/Defesa Civil no setor", "cadastro das famílias (interface CadÚnico/SUAS)"]}
+      ]
+    },
+    {
+      "codigo": "CLI-3",
+      "tipo": "climatico",
+      "nome": "Calor extremo / onda de calor",
+      "gatilho": {"origem": ["INMET"], "metricas": ["aviso_onda_calor"], "regra": "aviso INMET de onda de calor vigente para POA"},
+      "populacao_alvo": "Idosos, crianças, gestantes, domicílios precários; trabalhadores pendulares expostos em terminais/veículos",
+      "impactos": [
+        {"dimensao": "saude", "publico": "cidadao", "severidade": 3, "descricao": "Risco de desidratação e agravos", "acoes": ["pontos de hidratação/climatização (UBS/CRAS) no app", "recomendação de horários de deslocamento"]},
+        {"dimensao": "operacao_gestao", "publico": "gestor", "severidade": 3, "descricao": "Demanda ampliada na atenção primária", "acoes": ["estender horário de UBS", "ações FASC para população em situação de rua"]}
+      ]
+    },
+    {
+      "codigo": "CLI-4",
+      "tipo": "climatico",
+      "nome": "Vendaval / granizo / tempestade",
+      "gatilho": {"origem": ["INMET"], "metricas": ["aviso_tempestade"], "regra": "aviso INMET laranja/vermelho"},
+      "populacao_alvo": "Todo o bairro (~62.448 hab.)",
+      "impactos": [
+        {"dimensao": "mobilidade", "publico": "cidadao", "severidade": 3, "descricao": "Queda de árvores/energia; bloqueio dos eixos", "acoes": ["orientação de permanência", "status dos eixos e das linhas no app"]},
+        {"dimensao": "operacao_gestao", "publico": "gestor", "severidade": 3, "descricao": "Ocorrências simultâneas (podas, destelhamentos)", "acoes": ["triagem de ocorrências por setor", "lonas/telhas via Defesa Civil"]}
+      ]
+    },
+    {
+      "codigo": "CLI-5",
+      "tipo": "climatico_social",
+      "nome": "Bloqueio dos eixos de saída do bairro (qualquer causa)",
+      "gatilho": {"origem": ["EPTC", "DEFESA_CIVIL", "GESTOR"], "metricas": ["ocorrencia_viaria"], "regra": "interdição registrada em Av. Juca Batista, Av. Edgar Pires de Castro ou Estrada João Antônio da Silveira"},
+      "populacao_alvo": "Moradores e pendulares (bairro inteiro)",
+      "impactos": [
+        {"dimensao": "mobilidade", "publico": "cidadao", "severidade": 4, "descricao": "Aumento significativo do tempo de viagem por perna", "acoes": ["rotas alternativas por eixo no app", "estimativa de tempo adicional", "reprogramação de rotina"]},
+        {"dimensao": "economia", "publico": "gestor", "severidade": 3, "descricao": "Custo de oportunidade: cada minuto/dia perdido pelos ~62 mil moradores ≈ 1.040 horas/dia (estimativa dasimétrica declarada)", "acoes": ["priorizar desbloqueio dos eixos troncais", "comunicação antecipada de obras"]}
+      ]
+    },
+    {
+      "codigo": "SOC-A",
+      "tipo": "estrutural_social",
+      "nome": "Status quo (inércia estrutural)",
+      "base_verificada": "Linha de base 2022/2010 do módulo (baseline.json)",
+      "impactos": [
+        {"dimensao": "economia", "publico": "gestor", "severidade": 4, "descricao": "Alto custo de oportunidade do deslocamento pendular; desgaste da força de trabalho; menor consumo no comércio local"},
+        {"dimensao": "operacao_gestao", "publico": "gestor", "severidade": 3, "descricao": "Pressão sobre subsídio tarifário e descumprimento de tabelas horárias em congestionamento (malha mista)"},
+        {"dimensao": "saude", "publico": "cidadao", "severidade": 3, "descricao": "Exposição prolongada em veículos e terminais lotados"}
+      ]
+    },
+    {
+      "codigo": "SOC-B",
+      "tipo": "estrutural_social",
+      "nome": "Policentralidade e qualificação periférica (PDUS)",
+      "base_verificada": "Novo Plano Diretor (PDUS) sancionado em 14/07/2026; vigência 180 dias após publicação; nº de LC citado como 1075/2026 (agregador) — confirmar no DOPA",
+      "parametros_sensibilidade": [
+        {"parametro": "empregos_locais_novos", "efeito": "cada posto de trabalho no bairro reduz km rodado e demanda de pico nos eixos troncais"},
+        {"parametro": "cmatt30_pct", "efeito": "meta de elevação do % de empregos acessíveis em 30 min (recomputar via aopdata/GTFS)"}
+      ],
+      "impactos": [
+        {"dimensao": "mobilidade", "publico": "gestor", "severidade": 2, "descricao": "Redução do movimento pendular no médio prazo"},
+        {"dimensao": "economia", "publico": "cidadao", "severidade": 2, "descricao": "Oportunidades de trabalho e serviços no próprio bairro"}
+      ]
+    },
+    {
+      "codigo": "SOC-C",
+      "tipo": "estrutural_social",
+      "nome": "Eletrificação da frota / transição energética",
+      "base_verificada": "Autorização Min. Fazenda 27/05/2026 e contrato BNDES 10/07/2026: R$ 447 mi para 100 ônibus elétricos + estações de recarga (Programa Mais Transporte); operação de ônibus 100% elétricos em POA desde 2024",
+      "parametros_sensibilidade": [
+        {"parametro": "frota_eletrica_linhas_restinga", "efeito": "redução de emissões na fase de uso nas linhas troncais do bairro"},
+        {"parametro": "capex_recarga_terminal", "efeito": "custo de infraestrutura de recarga em terminal (candidato natural: Terminal Nilo Wulff — hipótese de projeto, não compromisso oficial)"}
+      ],
+      "impactos": [
+        {"dimensao": "saude", "publico": "cidadao", "severidade": 2, "descricao": "Menos emissões locais nos corredores"},
+        {"dimensao": "operacao_gestao", "publico": "gestor", "severidade": 3, "descricao": "CapEx elevado; necessidade de convênios/financiamento (modelo BNDES verificado)"}
+      ]
+    }
+  ]
+}
