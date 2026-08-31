@@ -74,6 +74,9 @@ const Sidebar = {
       { id:'abrigos',  icon:'Ab', label:'Abrigos e Rotas' },
       { id:'canais',   icon:'C',  label:'Canais de Emissao' },
     ]},
+    { section: 'TERRITORIOS', items: [
+      { id:'restinga', icon:'Rt', label:'Restinga · Porto Alegre', badge:'PILOTO', badgeClass:'b' },
+    ]},
     { section: 'ANALISE', items: [
       { id:'ia',         icon:'IA', label:'IA Preditiva' },
       { id:'municipios', icon:'Mu', label:'Municipios RS', badge:'497', badgeClass:'b' },
