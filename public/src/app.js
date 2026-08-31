@@ -98,6 +98,7 @@ const App = {
           ${MunicipiosPage.render()}
           ${AnaliseEspacialPage.render()}
           ${AbrigosPage.render()}
+          ${RestingaPage.render()}
           ${CanaisPage.render()}
           ${MunicipioPage.render()}
           ${RelatorioPage.render()}
