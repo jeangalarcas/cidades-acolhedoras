@@ -22,6 +22,7 @@ const RestingaPage = {
   _visao: 'cidadao',          // 'cidadao' | 'gestor'
   _base: null, _cen: null, _equip: null, _setores: null,
   _abrigos: null, _feat: null, _timer: null, _carregado: false,
+  _mapaL: null, _abrigosLayer: null,
 
   render() {
     return `
@@ -48,6 +49,18 @@ const RestingaPage = {
         </div>
 
         <div id="rt-alertas"></div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🗺 Mapa do bairro — rede de apoio oficial</div>
+            <span class="pill pill-gray" style="font-size:9px">pinos: CNES/DataSUS · polígono: IBGE CD2022</span>
+          </div>
+          <div class="card-body" style="padding:0"><div id="rt-mapa" style="height:340px"></div></div>
+          <div class="card-body" style="font-size:10px;color:var(--text-3);border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-outline" style="font-size:10px;padding:2px 8px" id="rt-btn-abrigos" onclick="RestingaPage.toggleAbrigos()">🏠 Abrigos potenciais (OSM)</button>
+            <span>Somente coordenadas OFICIAIS no mapa (CNES/DataSUS, validadas no polígono IBGE). CRAS, Brigada Militar, Bombeiros e Terminal ainda sem pino — endereço na tabela abaixo.</span>
+          </div>
+        </div>
 
         <div class="card">
           <div class="card-header">
@@ -110,7 +123,8 @@ const RestingaPage = {
             (Malha de Bairros CD2022 + Agregados do Censo 2022, já carregados no SGA) e do caderno ObservaPOA;
             setores de risco do relatório SGB/CPRM publicado pela Defesa Civil de POA (dez/2022 — recorte espacial
             a confirmar no GeoSGB); rede de apoio confirmada em páginas oficiais (SMS, FASC, Brigada Militar,
-            hospital); chuva ao vivo do CEMADEN e avisos do INMET via API do SGA. Indicadores marcados como
+            CBMRS, hospital), com coordenadas dos equipamentos de saúde vindas do CNES/DataSUS e validadas por
+            point-in-polygon no polígono IBGE do bairro; chuva ao vivo do CEMADEN e avisos do INMET via API do SGA. Indicadores marcados como
             <b>histórico (2010)</b> aguardam os recortes 2022 do IBGE/ObservaPOA. Valores reportados na imprensa e
             ainda não confirmados na fonte primária aparecem como <b>não confirmado</b> e ficam fora dos KPIs.
             Detalhes: <span class="mono">docs/modulo-restinga.md</span>.
@@ -158,7 +172,11 @@ const RestingaPage = {
 
   /* ── carga principal ────────────────────────────────────────────────── */
   async carregar(manual) {
-    if (this._carregado && !manual) { this._aoVivo(); return; }
+    if (this._carregado && !manual) {
+      this._aoVivo();
+      setTimeout(() => this._initMapa(), 150);
+      return;
+    }
     this._marcarBotoes();
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
 
@@ -186,6 +204,9 @@ const RestingaPage = {
 
     // 3) abrigos OSM dentro do bairro (base estadual já em produção)
     this._abrigosNoBairro();
+
+    // 3b) mapa do bairro (polígono IBGE + pinos oficiais CNES)
+    setTimeout(() => this._initMapa(), 250);
 
     // 4) recorte ao vivo (CEMADEN/INMET)
     this._aoVivo();
@@ -248,6 +269,68 @@ const RestingaPage = {
           : 'nenhum local da base OSM caiu dentro do polígono — usar a página Abrigos e Rotas (raio municipal).');
     } catch (e) {
       el.innerHTML = 'Base de abrigos indisponível agora (' + e.message + ') — a página Abrigos e Rotas segue funcionando.';
+    }
+  },
+
+  /* ── mapa do bairro (Leaflet) ───────────────────────────────────────── */
+  async _initMapa() {
+    const el = document.getElementById('rt-mapa');
+    if (!el || !window.L) return;
+    if (this._mapaL) { setTimeout(() => this._mapaL.invalidateSize(), 100); return; }
+    try {
+      const f = await this._feature();
+      this._mapaL = L.map('rt-mapa', { scrollWheelZoom: false });
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap',
+      }).addTo(this._mapaL);
+      if (f) {
+        const pol = L.geoJSON(f, { style: { color: '#E8A23A', weight: 2, fillOpacity: 0.06, fillColor: '#E8A23A' } })
+          .bindTooltip('Bairro Restinga — IBGE CD2022', { sticky: true }).addTo(this._mapaL);
+        this._mapaL.fitBounds(pol.getBounds(), { padding: [14, 14] });
+      } else {
+        this._mapaL.setView([-30.152, -51.137], 13);
+      }
+      const COR = { hospital: '#B83A2E', ubs: '#2D7A5C', caps: '#7B5EA7' };
+      ((this._equip && this._equip.features) || []).forEach(q => {
+        if (!q.geometry) return;
+        const lon = q.geometry.coordinates[0], lat = q.geometry.coordinates[1];
+        const p = q.properties;
+        L.circleMarker([lat, lon], { radius: 8, color: '#fff', weight: 2, fillColor: COR[p.tipo] || '#2D7A5C', fillOpacity: 0.95 })
+          .bindPopup('<b>' + p.nome + '</b><br>' + (p.endereco || '') +
+            (p.telefone ? '<br>☎ ' + p.telefone : '') +
+            (p.codigo_cnes ? '<br>CNES ' + p.codigo_cnes : '') +
+            '<br><span style="opacity:.65">Coordenada oficial CNES/DataSUS · validada no polígono IBGE</span>')
+          .addTo(this._mapaL);
+      });
+      setTimeout(() => this._mapaL.invalidateSize(), 300);
+    } catch (e) { console.warn('[Restinga] mapa:', e.message); }
+  },
+
+  toggleAbrigos() {
+    const m = this._mapaL;
+    const btn = document.getElementById('rt-btn-abrigos');
+    if (!m) return;
+    if (this._abrigosLayer) {
+      m.removeLayer(this._abrigosLayer);
+      this._abrigosLayer = null;
+      if (btn) btn.className = 'btn btn-outline';
+      return;
+    }
+    if (!this._abrigos || !this._abrigos.length) return;
+    this._abrigosLayer = L.layerGroup(this._abrigos.map(x => {
+      const lon = x.geometry.coordinates[0], lat = x.geometry.coordinates[1];
+      return L.circleMarker([lat, lon], { radius: 4, color: '#3C8DBC', weight: 1, fillColor: '#3C8DBC', fillOpacity: 0.7 })
+        .bindTooltip((x.properties.nome || '—') + ' · ' + (x.properties.tipo || ''), { sticky: true });
+    })).addTo(m);
+    if (btn) btn.className = 'btn btn-primary';
+  },
+
+  focar(lat, lon, nome) {
+    const el = document.getElementById('rt-mapa');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (this._mapaL) {
+      this._mapaL.setView([lat, lon], 16);
+      L.popup().setLatLng([lat, lon]).setContent('<b>' + nome + '</b>').openOn(this._mapaL);
     }
   },
 
@@ -366,13 +449,17 @@ const RestingaPage = {
     const ICON = { hospital: '🏥', ubs: '🩺', caps: '🧠', cras: '🤝', brigada_militar: '🛡', bombeiros: '🚒', terminal: '🚌', abrigo: '🏠' };
     tb.innerHTML = this._equip.features.map(f => {
       const p = f.properties;
+      const btnMapa = f.geometry
+        ? ' <button class="btn btn-outline" style="font-size:9px;padding:1px 6px" onclick="RestingaPage.focar(' +
+          f.geometry.coordinates[1] + ',' + f.geometry.coordinates[0] + ",'" + String(p.nome).replace(/'/g, '') + "')\">🗺</button>"
+        : '';
       return `
       <tr>
         <td>${ICON[p.tipo] || '📍'} <span style="font-size:10px">${(p.tipo || '').replace('_', ' ')}</span></td>
-        <td><b>${p.nome}</b>${p.observacao ? '<div style="font-size:9px;color:var(--amber)">⚠ ' + p.observacao + '</div>' : ''}</td>
+        <td><b>${p.nome}</b>${btnMapa}${p.observacao ? '<div style="font-size:9px;color:var(--amber)">⚠ ' + p.observacao + '</div>' : ''}</td>
         <td style="font-size:11px">${p.endereco || '—'}${p.bairro ? ' · ' + p.bairro : ''}</td>
         <td class="mono" style="font-size:11px">${p.telefone || '—'}</td>
-        <td style="font-size:10px;color:var(--text-3)">${p.fonte}<br>${this._selo(p.status_verificacao)}</td>
+        <td style="font-size:10px;color:var(--text-3)">${p.fonte}${p.codigo_cnes ? ' · CNES ' + p.codigo_cnes : ''}<br>${this._selo(p.status_verificacao)}</td>
       </tr>`;
     }).join('');
   },
