@@ -2,7 +2,7 @@ const Router = {
   pages: [
     'painel','controle','mapa','alertas','fluxo','sensores','integracoes',
     'hidroweb','geodados','ia','municipios','analise','abrigos','canais',
-    'municipio','relatorio','relatos'
+    'municipio','relatorio','relatos','restinga'
   ],
 
   go(pageId) {
@@ -37,6 +37,9 @@ const Router = {
     }
     if (pageId === 'relatos' && window.RelatosPage) {
       if (RelatosPage._timer) RelatosPage.carregar(); else RelatosPage.iniciar();
+    }
+    if (pageId === 'restinga' && window.RestingaPage) {
+      if (RestingaPage._timer) RestingaPage.carregar(); else RestingaPage.iniciar();
     }
     if (pageId === 'municipio') setTimeout(function(){
       MunicipioPage.iniciar(MunicipioService.getAtivo() || SGA.config.municipioAtivo);
